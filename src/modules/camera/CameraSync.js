@@ -12,11 +12,7 @@ class CameraSync {
   constructor(mapScene) {
     this._map = mapScene.map
     this._world = mapScene.world
-    this._world.position.x = WORLD_SIZE / 2
-    this._world.position.y = WORLD_SIZE / 2
-    this._world.matrixAutoUpdate = false
     this._camera = mapScene.camera
-    this._camera.matrixAutoUpdate = false
     this._translateCenter = new Matrix4().makeTranslation(
       WORLD_SIZE / 2,
       -WORLD_SIZE / 2,

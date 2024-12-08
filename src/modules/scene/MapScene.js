@@ -13,9 +13,9 @@ const DEF_OPTS = {
   camera: null,
   renderer: null,
   preserveDrawingBuffer: false,
-  renderLoop: (renderer, scene, camera) => {
-    renderer.resetState()
-    renderer.render(scene, camera)
+  renderLoop: (ins) => {
+    ins.renderer.resetState()
+    ins.renderer.render(ins.scene, ins.camera)
   },
 }
 class MapScene {
@@ -29,6 +29,7 @@ class MapScene {
       ...options,
     }
     this._canvas = map.getCanvas()
+
     this._scene = this._options.scene || new Scene()
     this._camera =
       this._options.camera ||
@@ -38,6 +39,7 @@ class MapScene {
         0.1,
         1e21
       )
+    this._camera.matrixAutoUpdate = false
     this._renderer =
       this._options.renderer ||
       new WebGLRenderer({
@@ -52,9 +54,11 @@ class MapScene {
     this._renderer.autoClear = false
     this._world = new Group()
     this._world.name = 'world'
+    this._world.position.set(WORLD_SIZE / 2, WORLD_SIZE / 2, 0)
+    this._world.matrixAutoUpdate = false
     this._scene.add(this._world)
     this._cameraSync = undefined
-    this.map.on('style.load', this._onStyleLoad.bind(this))
+    this._map.on('style.load', this._onStyleLoad.bind(this))
   }
 
   get map() {
@@ -108,7 +112,7 @@ class MapScene {
    * @returns {MapScene}
    */
   render() {
-    this._options.renderLoop(this._renderer, this._scene, this._camera)
+    this._options.renderLoop(this)
     return this
   }
 
