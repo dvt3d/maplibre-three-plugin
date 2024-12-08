@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+        content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title></title>
+  <link href="https://unpkg.com/maplibre-gl@^4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+  <style>
+
+      *{
+          padding: 0 ;
+          margin: 0;
+      }
+      html,body{
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+      }
+
+      .map-container{
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+      }
+  </style>
+</head>
+<body>
+<div id="map-container" class="map-container"></div>
+<script type="importmap">
+  {
+    "imports": {
+      "maplibre-gl": "https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/+esm",
+      "three": "https://cdn.jsdelivr.net/npm/three@0.171.0/build/three.module.min.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.171.0/examples/jsm/",
+      "mtp": "./libs/index.js"
+    }
+  }
+</script>
+
+<script type="module">
+  import maplibregl from 'maplibre-gl';
+  import  * as THREE from 'three'
+  import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+  import { MapScene }  from 'mtp'
+  const map = new maplibregl.Map({
+    container: 'map-container', // container id
+    style: 'https://demotiles.maplibre.org/style.json', // style URL
+    center: [120,31], // starting position [lng, lat]
+    zoom: 17,
+    pitch: 60,
+    maxPitch:85,
+  });
+  const mapScene = new MapScene(map)
+
+  const loader = new GLTFLoader()
+
+  const light = new THREE.AmbientLight(0xffffff,1);
+  light.name = 'ambient_light';
+  mapScene.scene.add(light)
+  map.on('style.load',e=>{
+    let position = mapScene.lngLatToVector3(120,31,0)
+    loader.load('./data/GroundVehicle.glb', gltf  => {
+       let model = gltf.scene
+       model.position.copy(position)
+       model.rotateZ(-Math.PI / 2 )
+       model.rotateX(Math.PI /2)
+       mapScene.world.add( model );
+    })
+  })
+
+
+</script>
+</body>
+</html>

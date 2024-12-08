@@ -56,7 +56,7 @@
 
     map.on('style.load',e=>{
       let position = mapScene.lngLatToVector3(120,31,0)
-      const geometry = new THREE.BoxGeometry( 1, 1, 1 );
+      const geometry = new THREE.BoxGeometry( 1, 1, 1);
       const material = new THREE.MeshBasicMaterial( {color: 0xff0000} );
       const cube = new THREE.Mesh( geometry, material );
       cube.position.copy(position)
