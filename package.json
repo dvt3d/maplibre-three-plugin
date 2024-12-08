@@ -1,5 +1,5 @@
 {
-  "name": "@dcgis/maplibre-three-plugin",
+  "name": "@dvgis/maplibre-three-plugin",
   "version": "1.0.0",
   "main": "dist/index.js",
   "repository": "https://github.com/dvgis/maplibre-three-plugin.git",
@@ -11,6 +11,8 @@
     "build": "rimraf dist && gulp build",
     "build:node": "rimraf dist && gulp buildNode",
     "build:iife": "rimraf dist && gulp buildIIFE",
+    "build:release": "rimraf dist && gulp buildRelease",
+    "prepublishOnly": "yarn run build:release",
     "lint": "eslint --fix src"
   },
   "devDependencies": {
@@ -41,6 +43,9 @@
     "shelljs": "^0.8.5"
   },
   "peerDependencies": {
-    "three": "^0.171.0"
-  }
+    "three": "^0.165.0"
+  },
+  "files": [
+    "dist"
+  ]
 }

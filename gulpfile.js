@@ -51,6 +51,7 @@ async function buildModules(options) {
     await esbuild.build({
       ...buildConfig,
       format: 'esm',
+      platform: 'node',
       minify: options.minify,
       outfile: path.join('dist', 'index.js'),
     })
@@ -95,4 +96,9 @@ export const buildNode = gulp.series(() => buildModules({ node: true }))
 export const build = gulp.series(
   () => buildModules({ iife: true }),
   () => buildModules({ node: true })
+)
+
+export const buildRelease = gulp.series(
+  () => buildModules({ iife: true, minify: true }),
+  () => buildModules({ node: true, minify: true })
 )
