@@ -58,7 +58,7 @@ async function buildModules(options) {
 }
 
 async function regenerate(option, content) {
-  await fse.remove('dist/mtp.min.js')
+  await fse.remove('dist/index.js')
   await buildModules(option)
 }
 
@@ -75,12 +75,12 @@ export const dev = gulp.series(() => {
   })
   watcher
     .on('ready', async () => {
-      await regenerate({ iife: true })
+      await regenerate({ node: true })
       await startServer()
     })
     .on('change', async () => {
       let now = new Date().getTime()
-      await regenerate({ iife: true })
+      await regenerate({ node: true })
       shell.echo(
         chalk.green(`regenerate lib takes ${new Date().getTime() - now} ms`)
       )
