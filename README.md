@@ -6,7 +6,7 @@
 ```shell
 npm install @dvgis/maplibre-three-plugin 
 ----------------------------------------
-yarn add @dvgis/maplibre-three-plugin`
+yarn add @dvgis/maplibre-three-plugin
 ```
 
 ## Start
