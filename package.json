@@ -1,6 +1,6 @@
 {
   "name": "@dvgis/maplibre-three-plugin",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "dist/index.js",
   "repository": "https://github.com/dvgis/maplibre-three-plugin.git",
   "author": "cavencj <cavencj@gmail.com>",
