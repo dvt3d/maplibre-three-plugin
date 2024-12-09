@@ -68,7 +68,7 @@ const mapScene = new MapScene(map)
 
     - `{Number} lat`
 
-  - return
+  - returns
 
     - `Number`
 
@@ -80,7 +80,7 @@ const mapScene = new MapScene(map)
     - `{Number} lat`
     - `{Number} alt`
 
-  - return
+  - returns
 
     - `Vector3`
 
@@ -90,6 +90,6 @@ const mapScene = new MapScene(map)
 
     -`{THREE.Vector3} v3`
 
-  - return
+  - returns
 
     - `Object`
