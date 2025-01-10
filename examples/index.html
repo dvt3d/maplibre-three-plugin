@@ -6,7 +6,7 @@
         content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title></title>
-  <link href="https://unpkg.com/maplibre-gl@^4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+  <link href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css" rel="stylesheet" />
   <style>
 
      *{
@@ -31,9 +31,9 @@
   <script type="importmap">
     {
       "imports": {
-        "maplibre-gl": "https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/+esm",
-        "three": "https://cdn.jsdelivr.net/npm/three@0.171.0/build/three.module.min.js",
-        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.171.0/examples/jsm/",
+        "maplibre-gl": "https://cdn.jsdelivr.net/npm/maplibre-gl@5.0.0/+esm",
+        "three": "https://cdn.jsdelivr.net/npm/three@0.172.0/build/three.module.min.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.172.0/examples/jsm/",
         "mtp": "./libs/index.js"
       }
     }
@@ -45,25 +45,26 @@
     import { MapScene }  from 'mtp'
     const map = new maplibregl.Map({
       container: 'map-container', // container id
-      style: 'https://demotiles.maplibre.org/style.json', // style URL
+      style:{
+        version: 8,
+        sources: {},
+        layers: [],
+      },
       center: [120,31], // starting position [lng, lat]
       zoom: 17,
       pitch: 60,
       maxPitch:85,
     });
+
+
     const mapScene = new MapScene(map)
-
-
-    map.on('style.load',e=>{
-      let position = mapScene.lngLatToVector3(120,31,0)
-      const geometry = new THREE.BoxGeometry( 1, 1, 1);
-      const material = new THREE.MeshBasicMaterial( {color: 0xff0000} );
-      const cube = new THREE.Mesh( geometry, material );
-      cube.position.copy(position)
-      mapScene.world.add( cube );
-    })
-
-
+    map.setStyle("https://api.maptiler.com/maps/basic-v2/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL",{diff:false})
+    let position = mapScene.lngLatToVector3(120,31,0)
+    const geometry = new THREE.BoxGeometry( 1, 1, 1);
+    const material = new THREE.MeshBasicMaterial( {color: 0xff0000} );
+    const cube = new THREE.Mesh( geometry, material );
+    cube.position.copy(position)
+    mapScene.world.add( cube );
   </script>
 </body>
 </html>
