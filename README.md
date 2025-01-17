@@ -29,3 +29,8 @@ const mapScene = new MapScene(map)
 ```
 
 ## Examples
+
+
+## Docs
+
+[wiki](https://github.com/dvgis/maplibre-three-plugin/wiki)
