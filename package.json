@@ -43,7 +43,7 @@
     "shelljs": "^0.8.5"
   },
   "peerDependencies": {
-    "three": "^0.165.0"
+    "three": "^0.176.0"
   },
   "files": [
     "dist"

@@ -1,5 +1,5 @@
 import { Group, PerspectiveCamera, Scene, WebGLRenderer } from 'three'
-import CameraSync from '../camera/CameraSync.js'
+import ThreeLayer from '../layer/ThreeLayer'
 import { WORLD_SIZE } from '../constants'
 
 const DEF_OPTS = {
@@ -15,7 +15,7 @@ const DEF_OPTS = {
 class MapScene {
   constructor(map, options = {}) {
     if (!map) {
-      throw 'miss map'
+      throw 'missing  map'
     }
     this._map = map
     this._options = {
@@ -23,7 +23,6 @@ class MapScene {
       ...options,
     }
     this._canvas = map.getCanvas()
-
     this._scene = this._options.scene || new Scene()
     this._camera =
       this._options.camera ||
@@ -46,12 +45,23 @@ class MapScene {
     this._renderer.setPixelRatio(window.devicePixelRatio)
     this._renderer.setSize(this._canvas.clientWidth, this._canvas.clientHeight)
     this._renderer.autoClear = false
+
+    // init the lights container
+    this._lights = new Group()
+    this._lights.name = 'lights'
+    this._scene.add(this._lights)
+
+    // init the world container
     this._world = new Group()
     this._world.name = 'world'
+    this._world.userData = {
+      isWorld: true,
+      name: 'world',
+    }
     this._world.position.set(WORLD_SIZE / 2, WORLD_SIZE / 2, 0)
     this._world.matrixAutoUpdate = false
     this._scene.add(this._world)
-    this._cameraSync = undefined
+
     this._map.on('style.load', this._onStyleLoad.bind(this))
   }
 
@@ -71,6 +81,10 @@ class MapScene {
     return this._scene
   }
 
+  get lights() {
+    return this._lights
+  }
+
   get world() {
     return this._world
   }
@@ -84,21 +98,7 @@ class MapScene {
    * @private
    */
   _onStyleLoad() {
-    const _this = this
-    this._map.addLayer({
-      id: 'map_scene_layer',
-      type: 'custom',
-      renderingMode: '3d',
-      onAdd: function (map, gl) {
-        if (!_this._cameraSync) {
-          this._cameraSync = new CameraSync(_this)
-          this._cameraSync.syncCamera()
-        }
-      },
-      render: function (gl, matrix) {
-        _this.render()
-      },
-    })
+    this._map.addLayer(new ThreeLayer('map_scene_layer', this))
   }
 
   /**

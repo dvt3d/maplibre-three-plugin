@@ -2,7 +2,7 @@
  * @Author: Caven Chen
  */
 import { DEG2RAD, TILE_SIZE, WORLD_SIZE } from '../constants'
-import Util from '../utils/Util.js'
+import Util from '../utils/Util'
 import { Matrix4, Vector3 } from 'three'
 
 const projectionMatrix = new Matrix4()
@@ -10,10 +10,10 @@ const cameraTranslateZ = new Matrix4()
 const MAX_VALID_LATITUDE = 85.051129
 
 class CameraSync {
-  constructor(mapScene) {
-    this._map = mapScene.map
-    this._world = mapScene.world
-    this._camera = mapScene.camera
+  constructor(map, world, camera) {
+    this._map = map
+    this._world = world
+    this._camera = camera
     this._translateCenter = new Matrix4().makeTranslation(
       WORLD_SIZE / 2,
       -WORLD_SIZE / 2,

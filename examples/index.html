@@ -9,7 +9,7 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <title></title>
     <link
-      href="https://unpkg.com/maplibre-gl@5.0.0/dist/maplibre-gl.css"
+      href="https://unpkg.com/maplibre-gl@5.5.0/dist/maplibre-gl.css"
       rel="stylesheet"
     />
     <style>
@@ -36,10 +36,10 @@
     <script type="importmap">
       {
         "imports": {
-          "maplibre-gl": "https://cdn.jsdelivr.net/npm/maplibre-gl@5.0.0/+esm",
-          "three": "https://cdn.jsdelivr.net/npm/three@0.172.0/build/three.module.min.js",
-          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.172.0/examples/jsm/",
-          "mtp": "./libs/index.js"
+          "maplibre-gl": "https://cdn.jsdelivr.net/npm/maplibre-gl@5.5.0/+esm",
+          "three": "https://cdn.jsdelivr.net/npm/three@0.175.0/build/three.module.min.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.175.0/examples/jsm/",
+          "mtp": "../dist/index.js"
         }
       }
     </script>
@@ -47,25 +47,35 @@
     <script type="module">
       import maplibregl from 'maplibre-gl'
       import * as THREE from 'three'
-      import { MapScene, SceneTransform } from 'mtp'
+      import * as MTP  from 'mtp'
+      import { GLTFLoader } from 'three/addons/Addons.js'
+
       const map = new maplibregl.Map({
         container: 'map-container', // container id
         style: 'https://api.maptiler.com/maps/basic-v2/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL', // style URL
-        center: [120, 31], // starting position [lng, lat]
-        zoom: 17,
+        zoom: 18,
+        center: [148.9819, -35.3981],
         pitch: 60,
+        canvasContextAttributes: {antialias: true},
         maxPitch: 85,
       })
-      const mapScene = new MapScene(map)
 
-      map.on('style.load', (e) => {
-        let position = SceneTransform.lngLatToVector3(120, 31, 0)
-        const geometry = new THREE.BoxGeometry(10, 10, 10)
-        const material = new THREE.MeshBasicMaterial({ color: 0xff0000 })
-        const cube = new THREE.Mesh(geometry, material)
-        cube.position.copy(position)
-        mapScene.world.add(cube)
-      })
+      //init three scene
+      const mapScene = new MTP.MapScene(map)
+
+      //add light
+      mapScene.lights.add(new THREE.AmbientLight())
+
+      // add model
+      const loader = new GLTFLoader();
+      loader.load(
+        'https://maplibre.org/maplibre-gl-js/docs/assets/34M_17/34M_17.gltf',
+        (gltf) => {
+          let rtcGroup = MTP.Creator.createRTCGroup([148.9819, -35.39847])
+          rtcGroup.add(gltf.scene)
+          mapScene.world.add(rtcGroup)
+        }
+      );
     </script>
   </body>
 </html>

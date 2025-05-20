@@ -10,6 +10,14 @@ import {
 class SceneTransform {
   /**
    *
+   * @returns {number}
+   */
+  static projectedMercatorUnitsPerMeter() {
+    return Math.abs(WORLD_SIZE / EARTH_CIRCUMFERENCE)
+  }
+
+  /**
+   *
    * @param lat
    * @returns {number}
    */
