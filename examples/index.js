@@ -5,8 +5,7 @@ import { GLTFLoader } from 'three/addons'
 
 const map = new maplibregl.Map({
   container: 'map-container', // container id
-  style:
-    'https://api.maptiler.com/maps/basic-v2/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL', // style URL
+  style: 'https://demotiles.maplibre.org/style.json', // style URL
   zoom: 18,
   center: [148.9819, -35.3981],
   pitch: 60,
