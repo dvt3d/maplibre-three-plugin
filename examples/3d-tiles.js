@@ -7,8 +7,7 @@ import { DRACOLoader, KTX2Loader } from 'three/addons'
 
 let map = new maplibregl.Map({
   container: 'map',
-  style:
-    'https://api.maptiler.com/maps/basic-v2/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL', // stylesheet location
+  style: 'https://demotiles.maplibre.org/style.json', // style URL
   center: [0, 0],
   zoom: 19,
   maxPitch: 85,
