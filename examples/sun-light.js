@@ -2,10 +2,13 @@ import maplibregl from 'maplibre-gl'
 import * as THREE from 'three'
 import * as MTP from 'mtp'
 import { GLTFLoader } from 'three/addons'
+import config from './config.js'
 
 const map = new maplibregl.Map({
   container: 'map-container', // container id
-  style: 'https://demotiles.maplibre.org/style.json', // style URL
+  style:
+    'https://api.maptiler.com/maps/basic-v2/style.json?key=' +
+    config.maptiler_key, // style URL
   zoom: 18,
   center: [148.9819, -35.3981],
   pitch: 60,

@@ -4,10 +4,13 @@ import * as MTP from '@dvgis/maplibre-three-plugin'
 import { TilesRenderer } from '3d-tiles-renderer'
 import { GLTFExtensionsPlugin } from '3d-tiles-renderer/plugins'
 import { DRACOLoader, KTX2Loader } from 'three/addons'
+import config from './config.js'
 
 let map = new maplibregl.Map({
   container: 'map',
-  style: 'https://demotiles.maplibre.org/style.json', // style URL
+  style:
+    'https://api.maptiler.com/maps/basic-v2/style.json?key=' +
+    config.maptiler_key, // style URL
   center: [0, 0],
   zoom: 19,
   maxPitch: 85,
