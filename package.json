@@ -47,5 +47,8 @@
   },
   "files": [
     "dist"
-  ]
+  ],
+  "dependencies": {
+    "three": "^0.178.0"
+  }
 }

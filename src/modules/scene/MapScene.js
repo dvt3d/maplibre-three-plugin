@@ -1,4 +1,10 @@
-import { Group, PerspectiveCamera, Scene, WebGLRenderer } from 'three'
+import {
+  Group,
+  PerspectiveCamera,
+  Scene,
+  WebGLRenderer,
+  EventDispatcher,
+} from 'three'
 import ThreeLayer from '../layer/ThreeLayer'
 import { WORLD_SIZE } from '../constants'
 
@@ -6,12 +12,10 @@ const DEF_OPTS = {
   scene: null,
   camera: null,
   renderer: null,
+  renderLoop: null,
   preserveDrawingBuffer: false,
-  renderLoop: (ins) => {
-    ins.renderer.resetState()
-    ins.renderer.render(ins.scene, ins.camera)
-  },
 }
+
 class MapScene {
   constructor(map, options = {}) {
     if (!map) {
@@ -63,6 +67,8 @@ class MapScene {
     this._scene.add(this._world)
 
     this._map.on('style.load', this._onStyleLoad.bind(this))
+
+    this._event = new EventDispatcher()
   }
 
   get map() {
@@ -106,7 +112,46 @@ class MapScene {
    * @returns {MapScene}
    */
   render() {
-    this._options.renderLoop(this)
+    if (this._options.renderLoop) {
+      this._options.renderLoop(this)
+    } else {
+      this._event.dispatchEvent({
+        type: 'preRest',
+      })
+      this.renderer.resetState()
+      this._event.dispatchEvent({
+        type: 'postRest',
+      })
+      this._event.dispatchEvent({
+        type: 'preRender',
+      })
+      this.renderer.render(this._scene, this._camera)
+      this._event.dispatchEvent({
+        type: 'postRender',
+      })
+    }
+    return this
+  }
+
+  /**
+   *
+   * @param type
+   * @param callback
+   * @returns {MapScene}
+   */
+  on(type, callback) {
+    this._event.addEventListener(type, callback)
+    return this
+  }
+
+  /**
+   *
+   * @param type
+   * @param callback
+   * @returns {MapScene}
+   */
+  off(type, callback) {
+    this._event.removeEventListener(type, callback)
     return this
   }
 }

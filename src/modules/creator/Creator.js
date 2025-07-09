@@ -1,7 +1,7 @@
 /**
  * @Author: Caven Chen
  */
-import { Group } from 'three'
+import { Group, Mesh, PlaneGeometry, ShadowMaterial } from 'three'
 import SceneTransform from '../transform/SceneTransform'
 
 class Creator {
@@ -58,6 +58,26 @@ class Creator {
       group.scale.set(mercator_scale, mercator_scale, lat_scale)
     }
     return group
+  }
+
+  /**
+   *
+   * @param center
+   * @param width
+   * @param height
+   * @returns {Mesh}
+   */
+  static createShadowGround(center, width = 100, height = 100) {
+    const geo = new PlaneGeometry(width, 1000)
+    const mat = new ShadowMaterial({
+      opacity: 0.5,
+      transparent: true,
+    })
+    let mesh = new Mesh(geo, mat)
+    mesh.position.copy(SceneTransform.lngLatToVector3(center))
+    mesh.receiveShadow = true
+    mesh.name = 'shadow-ground'
+    return mesh
   }
 }
 
