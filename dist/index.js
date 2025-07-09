@@ -1,0 +1,654 @@
+// src/modules/scene/MapScene.js
+import {
+  Group,
+  PerspectiveCamera,
+  Scene,
+  WebGLRenderer,
+  EventDispatcher
+} from "three";
+
+// src/modules/constants/index.js
+var WORLD_SIZE = 512 * 2e3;
+var EARTH_RADIUS = 63710088e-1;
+var EARTH_CIRCUMFERENCE = 2 * Math.PI * EARTH_RADIUS;
+var DEG2RAD = Math.PI / 180;
+var RAD2DEG = 180 / Math.PI;
+var PROJECTION_WORLD_SIZE = WORLD_SIZE / EARTH_CIRCUMFERENCE;
+var TILE_SIZE = 512;
+
+// src/modules/utils/Util.js
+var Util = class {
+  /**
+   *
+   * @param n
+   * @param min
+   * @param max
+   * @returns {number}
+   */
+  static clamp(n, min, max) {
+    return Math.min(max, Math.max(min, n));
+  }
+  /**
+   *
+   * @param fovy
+   * @param aspect
+   * @param near
+   * @param far
+   * @returns {number[]}
+   */
+  static makePerspectiveMatrix(fovy, aspect, near, far) {
+    let f = 1 / Math.tan(fovy / 2);
+    let nf = 1 / (near - far);
+    return [
+      f / aspect,
+      0,
+      0,
+      0,
+      0,
+      f,
+      0,
+      0,
+      0,
+      0,
+      (far + near) * nf,
+      -1,
+      0,
+      0,
+      2 * far * near * nf,
+      0
+    ];
+  }
+  /**
+   *
+   * @param lng
+   * @returns {number}
+   */
+  static mercatorXFromLng(lng) {
+    return (180 + lng) / 360;
+  }
+  /**
+   *
+   * @param lat
+   * @returns {number}
+   */
+  static mercatorYFromLat(lat) {
+    return (180 - 180 / Math.PI * Math.log(Math.tan(Math.PI / 4 + lat * Math.PI / 360))) / 360;
+  }
+};
+var Util_default = Util;
+
+// src/modules/camera/CameraSync.js
+import { Matrix4, Vector3 } from "three";
+var projectionMatrix = new Matrix4();
+var cameraTranslateZ = new Matrix4();
+var MAX_VALID_LATITUDE = 85.051129;
+var CameraSync = class {
+  constructor(map, world, camera) {
+    this._map = map;
+    this._world = world;
+    this._camera = camera;
+    this._translateCenter = new Matrix4().makeTranslation(
+      WORLD_SIZE / 2,
+      -WORLD_SIZE / 2,
+      0
+    );
+    this._worldSizeRatio = TILE_SIZE / WORLD_SIZE;
+    this._map.on("move", this.syncCamera.bind(this));
+    this._map.on("resize", this.syncCamera.bind(this));
+  }
+  /**
+   *
+   */
+  syncCamera() {
+    const transform = this._map.transform;
+    this._camera.aspect = transform.width / transform.height;
+    const centerOffset = transform.centerOffset || new Vector3();
+    const fovInRadians = transform.fov * DEG2RAD;
+    const pitchInRadians = transform.pitch * DEG2RAD;
+    const bearingInRadians = transform.bearing * DEG2RAD;
+    projectionMatrix.elements = Util_default.makePerspectiveMatrix(
+      fovInRadians,
+      this._camera.aspect,
+      transform.height / 50,
+      transform.farZ
+    );
+    this._camera.projectionMatrix = projectionMatrix;
+    this._camera.projectionMatrix.elements[8] = -centerOffset.x * 2 / transform.width;
+    this._camera.projectionMatrix.elements[9] = centerOffset.y * 2 / transform.height;
+    cameraTranslateZ.makeTranslation(0, 0, transform.cameraToCenterDistance);
+    const cameraWorldMatrix = new Matrix4().premultiply(cameraTranslateZ).premultiply(new Matrix4().makeRotationX(pitchInRadians)).premultiply(new Matrix4().makeRotationZ(-bearingInRadians));
+    if (transform.elevation) {
+      cameraWorldMatrix.elements[14] = transform.cameraToCenterDistance * Math.cos(pitchInRadians);
+    }
+    this._camera.matrixWorld.copy(cameraWorldMatrix);
+    const zoomPow = transform.scale * this._worldSizeRatio;
+    const scale = new Matrix4().makeScale(zoomPow, zoomPow, zoomPow);
+    let x = transform.x;
+    let y = transform.y;
+    if (!x || !y) {
+      const center = transform.center;
+      const lat = Util_default.clamp(
+        center.lat,
+        -MAX_VALID_LATITUDE,
+        MAX_VALID_LATITUDE
+      );
+      x = Util_default.mercatorXFromLng(center.lng) * transform.worldSize;
+      y = Util_default.mercatorYFromLat(lat) * transform.worldSize;
+    }
+    const translateMap = new Matrix4().makeTranslation(-x, y, 0);
+    const rotateMap = new Matrix4().makeRotationZ(Math.PI);
+    this._world.matrix = new Matrix4().premultiply(rotateMap).premultiply(this._translateCenter).premultiply(scale).premultiply(translateMap);
+  }
+};
+var CameraSync_default = CameraSync;
+
+// src/modules/layer/ThreeLayer.js
+var ThreeLayer = class {
+  constructor(id, mapScene) {
+    this._id = id;
+    this._mapScene = mapScene;
+    this._cameraSync = new CameraSync_default(
+      this._mapScene.map,
+      this._mapScene.world,
+      this._mapScene.camera
+    );
+  }
+  get id() {
+    return this._id;
+  }
+  get type() {
+    return "custom";
+  }
+  get renderingMode() {
+    return "3d";
+  }
+  onAdd(map, gl) {
+    this._cameraSync.syncCamera();
+  }
+  render() {
+    this._mapScene.render();
+  }
+};
+var ThreeLayer_default = ThreeLayer;
+
+// src/modules/scene/MapScene.js
+var DEF_OPTS = {
+  scene: null,
+  camera: null,
+  renderer: null,
+  renderLoop: null,
+  preserveDrawingBuffer: false
+};
+var MapScene = class {
+  constructor(map, options = {}) {
+    if (!map) {
+      throw "missing  map";
+    }
+    this._map = map;
+    this._options = {
+      ...DEF_OPTS,
+      ...options
+    };
+    this._canvas = map.getCanvas();
+    this._scene = this._options.scene || new Scene();
+    this._camera = this._options.camera || new PerspectiveCamera(
+      this._map.transform.fov,
+      this._map.transform.width / this._map.transform.height,
+      0.1,
+      1e21
+    );
+    this._camera.matrixAutoUpdate = false;
+    this._renderer = this._options.renderer || new WebGLRenderer({
+      alpha: true,
+      antialias: true,
+      preserveDrawingBuffer: this._options.preserveDrawingBuffer,
+      canvas: this._canvas,
+      context: this._canvas.getContext("webgl2")
+    });
+    this._renderer.setPixelRatio(window.devicePixelRatio);
+    this._renderer.setSize(this._canvas.clientWidth, this._canvas.clientHeight);
+    this._renderer.autoClear = false;
+    this._lights = new Group();
+    this._lights.name = "lights";
+    this._scene.add(this._lights);
+    this._world = new Group();
+    this._world.name = "world";
+    this._world.userData = {
+      isWorld: true,
+      name: "world"
+    };
+    this._world.position.set(WORLD_SIZE / 2, WORLD_SIZE / 2, 0);
+    this._world.matrixAutoUpdate = false;
+    this._scene.add(this._world);
+    this._map.on("style.load", this._onStyleLoad.bind(this));
+    this._event = new EventDispatcher();
+  }
+  get map() {
+    return this._map;
+  }
+  get canvas() {
+    return this._canvas;
+  }
+  get camera() {
+    return this._camera;
+  }
+  get scene() {
+    return this._scene;
+  }
+  get lights() {
+    return this._lights;
+  }
+  get world() {
+    return this._world;
+  }
+  get renderer() {
+    return this._renderer;
+  }
+  /**
+   *
+   * @private
+   */
+  _onStyleLoad() {
+    this._map.addLayer(new ThreeLayer_default("map_scene_layer", this));
+  }
+  /**
+   *
+   * @returns {MapScene}
+   */
+  render() {
+    if (this._options.renderLoop) {
+      this._options.renderLoop(this);
+    } else {
+      this._event.dispatchEvent({
+        type: "preRest"
+      });
+      this.renderer.resetState();
+      this._event.dispatchEvent({
+        type: "postRest"
+      });
+      this._event.dispatchEvent({
+        type: "preRender"
+      });
+      this.renderer.render(this._scene, this._camera);
+      this._event.dispatchEvent({
+        type: "postRender"
+      });
+    }
+    return this;
+  }
+  /**
+   *
+   * @param type
+   * @param callback
+   * @returns {MapScene}
+   */
+  on(type, callback) {
+    this._event.addEventListener(type, callback);
+    return this;
+  }
+  /**
+   *
+   * @param type
+   * @param callback
+   * @returns {MapScene}
+   */
+  off(type, callback) {
+    this._event.removeEventListener(type, callback);
+    return this;
+  }
+};
+var MapScene_default = MapScene;
+
+// src/modules/transform/SceneTransform.js
+import { Vector3 as Vector32 } from "three";
+var SceneTransform = class {
+  /**
+   *
+   * @returns {number}
+   */
+  static projectedMercatorUnitsPerMeter() {
+    return Math.abs(WORLD_SIZE / EARTH_CIRCUMFERENCE);
+  }
+  /**
+   *
+   * @param lat
+   * @returns {number}
+   */
+  static projectedUnitsPerMeter(lat) {
+    return Math.abs(WORLD_SIZE / Math.cos(DEG2RAD * lat) / EARTH_CIRCUMFERENCE);
+  }
+  /**
+   *
+   * @param lng
+   * @param lat
+   * @param alt
+   * @returns {Vector3}
+   */
+  static lngLatToVector3(lng, lat, alt = 0) {
+    let v = [0, 0, 0];
+    if (Array.isArray(lng)) {
+      v = [
+        -EARTH_RADIUS * DEG2RAD * lng[0] * PROJECTION_WORLD_SIZE,
+        -EARTH_RADIUS * Math.log(Math.tan(Math.PI * 0.25 + 0.5 * DEG2RAD * lng[1])) * PROJECTION_WORLD_SIZE
+      ];
+      if (!lng[2]) {
+        v.push(0);
+      } else {
+        v.push(lng[2] * this.projectedUnitsPerMeter(lng[1]));
+      }
+    } else {
+      v = [
+        -EARTH_RADIUS * DEG2RAD * lng * PROJECTION_WORLD_SIZE,
+        -EARTH_RADIUS * Math.log(Math.tan(Math.PI * 0.25 + 0.5 * DEG2RAD * lat)) * PROJECTION_WORLD_SIZE
+      ];
+      if (!alt) {
+        v.push(0);
+      } else {
+        v.push(alt * this.projectedUnitsPerMeter(lat));
+      }
+    }
+    return new Vector32(v[0], v[1], v[2]);
+  }
+  /**
+   *
+   * @param v
+   * @returns {{lng: number, alt: number, lat: number}}
+   */
+  static vector3ToLngLat(v) {
+    let result = { lng: 0, lat: 0, alt: 0 };
+    if (v) {
+      result.lng = -v.x / (EARTH_RADIUS * DEG2RAD * PROJECTION_WORLD_SIZE);
+      result.lat = 2 * (Math.atan(Math.exp(v.y / (PROJECTION_WORLD_SIZE * -EARTH_RADIUS))) - Math.PI / 4) / DEG2RAD;
+      result.alt = v.z / this.projectedUnitsPerMeter(result.lat);
+    }
+    return result;
+  }
+};
+var SceneTransform_default = SceneTransform;
+
+// src/modules/creator/Creator.js
+import { Group as Group2, Mesh, PlaneGeometry, ShadowMaterial } from "three";
+var Creator = class {
+  /**
+   *
+   * @param center
+   * @param rotation
+   * @param scale
+   */
+  static createRTCGroup(center, rotation, scale) {
+    const group = new Group2();
+    group.name = "rtc";
+    group.position.copy(SceneTransform_default.lngLatToVector3(center));
+    if (rotation) {
+      group.rotateX(rotation[0] || 0);
+      group.rotateY(rotation[1] || 0);
+      group.rotateZ(rotation[2] || 0);
+    } else {
+      group.rotateX(Math.PI / 2);
+      group.rotateY(Math.PI);
+    }
+    if (scale) {
+      group.scale.set(scale[0] || 1, scale[1] || 1, scale[2] || 1);
+    } else {
+      let lat_scale = 1;
+      if (Array.isArray(center)) {
+        lat_scale = SceneTransform_default.projectedUnitsPerMeter(center[1]);
+      } else if (typeof center === "string") {
+        lat_scale = SceneTransform_default.projectedUnitsPerMeter(center.split(",")[1]);
+      }
+      group.scale.set(lat_scale, lat_scale, lat_scale);
+    }
+    return group;
+  }
+  /**
+   *
+   * @param center
+   * @param rotation
+   * @param scale
+   */
+  static createMercatorRTCGroup(center, rotation, scale) {
+    const group = this.createRTCGroup(center, rotation, scale);
+    if (!scale) {
+      let lat_scale = 1;
+      let mercator_scale = SceneTransform_default.projectedMercatorUnitsPerMeter();
+      if (Array.isArray(center)) {
+        lat_scale = SceneTransform_default.projectedUnitsPerMeter(center[1]);
+      } else if (typeof center === "string") {
+        lat_scale = SceneTransform_default.projectedUnitsPerMeter(center.split(",")[1]);
+      }
+      group.scale.set(mercator_scale, mercator_scale, lat_scale);
+    }
+    return group;
+  }
+  /**
+   *
+   * @param center
+   * @param width
+   * @param height
+   * @returns {Mesh}
+   */
+  static createShadowGround(center, width = 100, height = 100) {
+    const geo = new PlaneGeometry(width, 1e3);
+    const mat = new ShadowMaterial({
+      opacity: 0.5,
+      transparent: true
+    });
+    let mesh = new Mesh(geo, mat);
+    mesh.position.copy(SceneTransform_default.lngLatToVector3(center));
+    mesh.receiveShadow = true;
+    mesh.name = "shadow-ground";
+    return mesh;
+  }
+};
+var Creator_default = Creator;
+
+// src/modules/utils/SunCalc.js
+var PI = Math.PI;
+var sin = Math.sin;
+var cos = Math.cos;
+var tan = Math.tan;
+var asin = Math.asin;
+var atan = Math.atan2;
+var acos = Math.acos;
+var rad = PI / 180;
+var dayMs = 1e3 * 60 * 60 * 24;
+var J1970 = 2440588;
+var J2000 = 2451545;
+function toJulian(date) {
+  return date.valueOf() / dayMs - 0.5 + J1970;
+}
+function fromJulian(j) {
+  return new Date((j + 0.5 - J1970) * dayMs);
+}
+function toDays(date) {
+  return toJulian(date) - J2000;
+}
+var e = rad * 23.4397;
+function rightAscension(l, b) {
+  return atan(sin(l) * cos(e) - tan(b) * sin(e), cos(l));
+}
+function declination(l, b) {
+  return asin(sin(b) * cos(e) + cos(b) * sin(e) * sin(l));
+}
+function azimuth(H, phi, dec) {
+  return atan(sin(H), cos(H) * sin(phi) - tan(dec) * cos(phi));
+}
+function altitude(H, phi, dec) {
+  return asin(sin(phi) * sin(dec) + cos(phi) * cos(dec) * cos(H));
+}
+function siderealTime(d, lw) {
+  return rad * (280.16 + 360.9856235 * d) - lw;
+}
+function astroRefraction(h) {
+  if (h < 0)
+    h = 0;
+  return 2967e-7 / Math.tan(h + 312536e-8 / (h + 0.08901179));
+}
+function solarMeanAnomaly(d) {
+  return rad * (357.5291 + 0.98560028 * d);
+}
+function eclipticLongitude(M) {
+  let C = rad * (1.9148 * sin(M) + 0.02 * sin(2 * M) + 3e-4 * sin(3 * M)), P = rad * 102.9372;
+  return M + C + P + PI;
+}
+function sunCoords(d) {
+  let M = solarMeanAnomaly(d), L = eclipticLongitude(M);
+  return {
+    dec: declination(L, 0),
+    ra: rightAscension(L, 0)
+  };
+}
+var SunCalc = {};
+SunCalc.getPosition = function(date, lat, lng) {
+  let lw = rad * -lng, phi = rad * lat, d = toDays(date), c = sunCoords(d), H = siderealTime(d, lw) - c.ra;
+  return {
+    azimuth: azimuth(H, phi, c.dec),
+    altitude: altitude(H, phi, c.dec)
+  };
+};
+var times = SunCalc.times = [
+  [-0.833, "sunrise", "sunset"],
+  [-0.3, "sunriseEnd", "sunsetStart"],
+  [-6, "dawn", "dusk"],
+  [-12, "nauticalDawn", "nauticalDusk"],
+  [-18, "nightEnd", "night"],
+  [6, "goldenHourEnd", "goldenHour"]
+];
+SunCalc.addTime = function(angle, riseName, setName) {
+  times.push([angle, riseName, setName]);
+};
+var J0 = 9e-4;
+function julianCycle(d, lw) {
+  return Math.round(d - J0 - lw / (2 * PI));
+}
+function approxTransit(Ht, lw, n) {
+  return J0 + (Ht + lw) / (2 * PI) + n;
+}
+function solarTransitJ(ds, M, L) {
+  return J2000 + ds + 53e-4 * sin(M) - 69e-4 * sin(2 * L);
+}
+function hourAngle(h, phi, d) {
+  return acos((sin(h) - sin(phi) * sin(d)) / (cos(phi) * cos(d)));
+}
+function observerAngle(height) {
+  return -2.076 * Math.sqrt(height) / 60;
+}
+function getSetJ(h, lw, phi, dec, n, M, L) {
+  let w = hourAngle(h, phi, dec), a = approxTransit(w, lw, n);
+  return solarTransitJ(a, M, L);
+}
+SunCalc.getTimes = function(date, lat, lng, height) {
+  height = height || 0;
+  let lw = rad * -lng, phi = rad * lat, dh = observerAngle(height), d = toDays(date), n = julianCycle(d, lw), ds = approxTransit(0, lw, n), M = solarMeanAnomaly(ds), L = eclipticLongitude(M), dec = declination(L, 0), Jnoon = solarTransitJ(ds, M, L), i, len, time, h0, Jset, Jrise;
+  let result = {
+    solarNoon: fromJulian(Jnoon),
+    nadir: fromJulian(Jnoon - 0.5)
+  };
+  for (i = 0, len = times.length; i < len; i += 1) {
+    time = times[i];
+    h0 = (time[0] + dh) * rad;
+    Jset = getSetJ(h0, lw, phi, dec, n, M, L);
+    Jrise = Jnoon - (Jset - Jnoon);
+    result[time[1]] = fromJulian(Jrise);
+    result[time[2]] = fromJulian(Jset);
+  }
+  return result;
+};
+function moonCoords(d) {
+  let L = rad * (218.316 + 13.176396 * d), M = rad * (134.963 + 13.064993 * d), F = rad * (93.272 + 13.22935 * d), l = L + rad * 6.289 * sin(M), b = rad * 5.128 * sin(F), dt = 385001 - 20905 * cos(M);
+  return {
+    ra: rightAscension(l, b),
+    dec: declination(l, b),
+    dist: dt
+  };
+}
+SunCalc.getMoonPosition = function(date, lat, lng) {
+  let lw = rad * -lng, phi = rad * lat, d = toDays(date), c = moonCoords(d), H = siderealTime(d, lw) - c.ra, h = altitude(H, phi, c.dec), pa = atan(sin(H), tan(phi) * cos(c.dec) - sin(c.dec) * cos(H));
+  h = h + astroRefraction(h);
+  return {
+    azimuth: azimuth(H, phi, c.dec),
+    altitude: h,
+    distance: c.dist,
+    parallacticAngle: pa
+  };
+};
+SunCalc.getMoonIllumination = function(date) {
+  let d = toDays(date || /* @__PURE__ */ new Date()), s = sunCoords(d), m = moonCoords(d), sdist = 149598e3, phi = acos(
+    sin(s.dec) * sin(m.dec) + cos(s.dec) * cos(m.dec) * cos(s.ra - m.ra)
+  ), inc = atan(sdist * sin(phi), m.dist - sdist * cos(phi)), angle = atan(
+    cos(s.dec) * sin(s.ra - m.ra),
+    sin(s.dec) * cos(m.dec) - cos(s.dec) * sin(m.dec) * cos(s.ra - m.ra)
+  );
+  return {
+    fraction: (1 + cos(inc)) / 2,
+    phase: 0.5 + 0.5 * inc * (angle < 0 ? -1 : 1) / Math.PI,
+    angle
+  };
+};
+function hoursLater(date, h) {
+  return new Date(date.valueOf() + h * dayMs / 24);
+}
+SunCalc.getMoonTimes = function(date, lat, lng, inUTC) {
+  let t = new Date(date);
+  if (inUTC)
+    t.setUTCHours(0, 0, 0, 0);
+  else
+    t.setHours(0, 0, 0, 0);
+  let hc = 0.133 * rad, h0 = SunCalc.getMoonPosition(t, lat, lng).altitude - hc, h1, h2, rise, set, a, b, xe, ye, d, roots, x1, x2, dx;
+  for (let i = 1; i <= 24; i += 2) {
+    h1 = SunCalc.getMoonPosition(hoursLater(t, i), lat, lng).altitude - hc;
+    h2 = SunCalc.getMoonPosition(hoursLater(t, i + 1), lat, lng).altitude - hc;
+    a = (h0 + h2) / 2 - h1;
+    b = (h2 - h0) / 2;
+    xe = -b / (2 * a);
+    ye = (a * xe + b) * xe + h1;
+    d = b * b - 4 * a * h1;
+    roots = 0;
+    if (d >= 0) {
+      dx = Math.sqrt(d) / (Math.abs(a) * 2);
+      x1 = xe - dx;
+      x2 = xe + dx;
+      if (Math.abs(x1) <= 1)
+        roots++;
+      if (Math.abs(x2) <= 1)
+        roots++;
+      if (x1 < -1)
+        x1 = x2;
+    }
+    if (roots === 1) {
+      if (h0 < 0)
+        rise = i + x1;
+      else
+        set = i + x1;
+    } else if (roots === 2) {
+      rise = i + (ye < 0 ? x2 : x1);
+      set = i + (ye < 0 ? x1 : x2);
+    }
+    if (rise && set)
+      break;
+    h0 = h2;
+  }
+  let result = {};
+  if (rise)
+    result.rise = hoursLater(t, rise);
+  if (set)
+    result.set = hoursLater(t, set);
+  if (!rise && !set)
+    result[ye > 0 ? "alwaysUp" : "alwaysDown"] = true;
+  return result;
+};
+var SunCalc_default = SunCalc;
+
+// src/index.js
+if (window.THREE) {
+  window.MapScene = MapScene_default;
+  window.SceneTransform = SceneTransform_default;
+  window.Creator = Creator_default;
+  window.SunCalc = SunCalc_default;
+}
+export {
+  Creator_default as Creator,
+  MapScene_default as MapScene,
+  SceneTransform_default as SceneTransform,
+  SunCalc_default as SunCalc
+};

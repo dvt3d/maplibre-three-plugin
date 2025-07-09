@@ -9,7 +9,6 @@ import fse from 'fs-extra'
 import path from 'path'
 import gulp from 'gulp'
 import esbuild from 'esbuild'
-import startServer from './server.js'
 import GlobalsPlugin from 'esbuild-plugin-globals'
 import shell from 'shelljs'
 import chalk from 'chalk'
@@ -45,7 +44,6 @@ async function buildModules(options) {
       outfile: path.join('dist', 'mtp.min.js'),
     })
   }
-
   // Build Node
   if (options.node) {
     await esbuild.build({
@@ -63,8 +61,6 @@ async function regenerate(option, content) {
   await buildModules(option)
 }
 
-export const server = gulp.series(startServer)
-
 export const dev = gulp.series(() => {
   shell.echo(chalk.yellow('============= start dev =============='))
   const watcher = gulp.watch('src', {
@@ -77,7 +73,6 @@ export const dev = gulp.series(() => {
   watcher
     .on('ready', async () => {
       await regenerate({ node: true })
-      await startServer()
     })
     .on('change', async () => {
       let now = new Date().getTime()
