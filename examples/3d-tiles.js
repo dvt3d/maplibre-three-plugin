@@ -109,9 +109,9 @@ tileset.lruCache.maxBytesSize = Infinity
 tileset.lruCache.minSize = 0
 tileset.lruCache.maxSize = Infinity
 tileset.errorTarget = 6
+
 const centerCartographic = { lat: 0, lon: 0, height: 0 }
 let centerDegrees = { lng: 0, lat: 0, height: 0 }
-let rtcGroup = null
 
 function getViewPosition(size) {
   const transform = map.transform
@@ -134,30 +134,35 @@ function getViewPosition(size) {
   }
 }
 
+let rtcGroup = null
+const _box = new THREE.Box3()
+const _sphere = new THREE.Sphere()
+const _center = new THREE.Vector3()
+const _size = new THREE.Vector3()
+
 tileset.addEventListener('load-tile-set', (e) => {
   if (!rtcGroup) {
     rtcGroup = new THREE.Group()
     rtcGroup.name = 'tileset-rtc'
     mapScene.world.add(rtcGroup)
-    const box = new THREE.Box3()
-    const sphere = new THREE.Sphere()
-    let center = new THREE.Vector3()
-    let size = new THREE.Vector3()
-    if (tileset.getBoundingBox(box)) {
-      box.getCenter(center)
-      box.getSize(size)
-    } else if (tileset.getBoundingSphere(sphere)) {
-      center = sphere.center
-      size.set(sphere.radius, sphere.radius, sphere.radius)
+
+    if (tileset.getBoundingBox(_box)) {
+      _box.getCenter(_center)
+      _box.getSize(_size)
+    } else if (tileset.getBoundingSphere(_sphere)) {
+      _center.copy(_sphere.center)
+      _size.set(_sphere.radius, _sphere.radius, _sphere.radius)
     } else {
       return
     }
-    tileset.ellipsoid.getPositionToCartographic(center, centerCartographic)
+    tileset.ellipsoid.getPositionToCartographic(_center, centerCartographic)
+
     centerDegrees = {
       lng: centerCartographic.lon * RAD2DEG,
       lat: centerCartographic.lat * RAD2DEG,
       height: centerCartographic.height,
     }
+
     rtcGroup.position.copy(
       MTP.SceneTransform.lngLatToVector3(
         centerDegrees.lng,
@@ -165,22 +170,25 @@ tileset.addEventListener('load-tile-set', (e) => {
         centerDegrees.height
       )
     )
+
     const scale = MTP.SceneTransform.projectedUnitsPerMeter(centerDegrees.lat)
     rtcGroup.scale.set(scale, scale, scale)
+
     rtcGroup.rotateX(Math.PI)
     rtcGroup.rotateY(Math.PI)
+    rtcGroup.updateMatrixWorld()
+
     const enuMatrix = tileset.ellipsoid.getEastNorthUpFrame(
       centerCartographic.lat,
       centerCartographic.lon,
       centerCartographic.height,
       new THREE.Matrix4()
     )
+
     const modelMatrix = enuMatrix.clone().invert()
-    modelMatrix.decompose(
-      tileset.group.position,
-      tileset.group.quaternion,
-      tileset.group.scale
-    )
+    tileset.group.applyMatrix4(modelMatrix)
+    tileset.group.updateMatrixWorld()
+
     rtcGroup.add(tileset.group)
     const shadowGround = MTP.Creator.createShadowGround(
       [centerDegrees.lng, centerDegrees.lat],
@@ -188,7 +196,8 @@ tileset.addEventListener('load-tile-set', (e) => {
       1000
     )
     mapScene.world.add(shadowGround)
-    let view = getViewPosition(size)
+
+    let view = getViewPosition(_size)
     map.easeTo({
       center: view.center,
       zoom: view.zoom,
