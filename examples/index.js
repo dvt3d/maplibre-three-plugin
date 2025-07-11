@@ -1,6 +1,6 @@
 import maplibregl from 'maplibre-gl'
 import * as THREE from 'three'
-import * as MTP from 'mtp'
+import * as MTP from '@dvt3d/maplibre-three-plugin'
 import { GLTFLoader } from 'three/addons'
 import config from './config.js'
 

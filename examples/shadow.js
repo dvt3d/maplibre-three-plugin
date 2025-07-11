@@ -1,6 +1,6 @@
 import maplibregl from 'maplibre-gl'
 import * as THREE from 'three'
-import * as MTP from 'mtp'
+import * as MTP from '@dvt3d/maplibre-three-plugin'
 import { GLTFLoader } from 'three/addons'
 import config from './config.js'
 
@@ -25,18 +25,14 @@ mapScene.lights.add(new THREE.AmbientLight())
 
 const dirLight = new THREE.DirectionalLight(0xffffff, 1)
 dirLight.castShadow = true
-
 dirLight.shadow.radius = 2
 dirLight.shadow.mapSize.width = 8192
 dirLight.shadow.mapSize.height = 8192
-
 dirLight.shadow.camera.top = dirLight.shadow.camera.right = 1000
 dirLight.shadow.camera.bottom = dirLight.shadow.camera.left = -1000
-
 dirLight.shadow.camera.near = 1
 dirLight.shadow.camera.far = 1e8
 dirLight.shadow.camera.visible = true
-
 dirLight.position.set(30, 100, 100)
 dirLight.updateMatrixWorld()
 

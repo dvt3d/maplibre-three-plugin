@@ -68,7 +68,7 @@ class Creator {
    * @returns {Mesh}
    */
   static createShadowGround(center, width = 100, height = 100) {
-    const geo = new PlaneGeometry(width, 1000)
+    const geo = new PlaneGeometry(width, height)
     const mat = new ShadowMaterial({
       opacity: 0.5,
       transparent: true,

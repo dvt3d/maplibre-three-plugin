@@ -1,8 +1,8 @@
 import maplibregl from 'maplibre-gl'
-import * as THREE from 'three'
-import * as MTP from 'mtp'
-import { GLTFLoader } from 'three/addons'
+import * as MTP from '@dvt3d/maplibre-three-plugin'
 import config from './config.js'
+import Sun from './src/Sun.js'
+import ModelLoaderUtil from './src/ModelLoaderUtil.js'
 
 const map = new maplibregl.Map({
   container: 'map-container', // container id
@@ -18,53 +18,21 @@ const map = new maplibregl.Map({
 
 //init three scene
 const mapScene = new MTP.MapScene(map)
-
 mapScene.renderer.shadowMap.enabled = true
 
-let sun = new THREE.DirectionalLight(0xffffff, 1)
-let hemiLight = new THREE.HemisphereLight(
-  new THREE.Color(0xffffff),
-  new THREE.Color(0xffffff),
-  0.6
-)
-mapScene.lights.add(sun)
-
+//init sun
+const sun = new Sun()
+sun.currentTime = '2025/7/12 12:00:00'
 sun.castShadow = true
-sun.shadow.radius = 1
-sun.shadow.mapSize.width = 8192
-sun.shadow.mapSize.height = 8192
-sun.shadow.camera.top = sun.shadow.camera.right = 1000
-sun.shadow.camera.bottom = sun.shadow.camera.left = -1000
-sun.shadow.camera.near = 1
-sun.shadow.camera.visible = true
-sun.shadow.camera.far = 1e8
-hemiLight.color.setHSL(0.661, 0.96, 0.12)
-hemiLight.groundColor.setHSL(0.11, 0.96, 0.14)
-hemiLight.position.set(0, 0, 50)
-mapScene.lights.add(hemiLight)
-
-function updateSun(newDate = new Date()) {
-  const WORLD_SIZE = 512 * 2000
-  let date = new Date('2025/7/8 12:00:00')
-  let mapCenter = map.getCenter()
-  let sunPosition = MTP.SunCalc.getPosition(date, mapCenter.lat, mapCenter.lng)
-  let altitude = sunPosition.altitude
-  let azimuth = Math.PI + sunPosition.azimuth
-  let radius = WORLD_SIZE / 2
-  let alt = Math.sin(altitude)
-  let altRadius = Math.cos(altitude)
-  let azCos = Math.cos(azimuth) * altRadius
-  let azSin = Math.sin(azimuth) * altRadius
-  sun.position.set(azSin, azCos, alt)
-  sun.position.multiplyScalar(radius)
-  sun.intensity = Math.max(alt, 0)
-  hemiLight.intensity = Math.max(alt * 1, 0.1)
-  sun.updateMatrixWorld()
-}
+sun.setShadow()
+mapScene.lights.add(sun.root)
 
 mapScene
   .on('preRender', () => {
-    updateSun()
+    sun.update({
+      center: map.getCenter(),
+      scene: mapScene,
+    })
   })
   .on('postRender', () => {
     map.triggerRepaint()
@@ -74,8 +42,7 @@ const shadowGround = MTP.Creator.createShadowGround([148.9819, -35.39847])
 mapScene.world.add(shadowGround)
 
 // add model
-const loader = new GLTFLoader()
-loader.load('./assets/34M_17/34M_17.gltf', (gltf) => {
+ModelLoaderUtil.loadGLTF('./assets/34M_17/34M_17.gltf').then((gltf) => {
   let rtcGroup = MTP.Creator.createRTCGroup([148.9819, -35.39847])
   rtcGroup.add(gltf.scene)
   rtcGroup.traverse(function (obj) {
