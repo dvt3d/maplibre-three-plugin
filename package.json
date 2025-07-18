@@ -43,12 +43,9 @@
     "shelljs": "^0.8.5"
   },
   "peerDependencies": {
-    "three": "^0.176.0"
+    "three": "^0.178.0"
   },
   "files": [
     "dist"
-  ],
-  "dependencies": {
-    "three": "^0.178.0"
-  }
+  ]
 }

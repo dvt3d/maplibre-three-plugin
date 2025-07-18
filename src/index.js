@@ -1,10 +1,10 @@
-import { MapScene, SceneTransform, Creator, SunCalc } from './modules'
+import { MapScene, SceneTransform, Creator, Sun } from './modules'
 
 if (window.THREE) {
   window.MapScene = MapScene
   window.SceneTransform = SceneTransform
   window.Creator = Creator
-  window.SunCalc = SunCalc
+  window.Sun = Sun
 }
 
-export { MapScene, SceneTransform, Creator, SunCalc }
+export { MapScene, SceneTransform, Creator, Sun }

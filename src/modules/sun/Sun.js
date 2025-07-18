@@ -1,26 +1,26 @@
-import * as THREE from 'three'
-import { SunCalc } from '@dvt3d/maplibre-three-plugin'
+import { Group, DirectionalLight, HemisphereLight, Color } from 'three'
+import SunCalc from '../utils/SunCalc'
 
 class Sun {
   constructor() {
-    this._root = new THREE.Group()
-    this._root.name = 'Sun'
-    this._sunLight = new THREE.DirectionalLight(0xffffff, 1)
-    this._hemiLight = new THREE.HemisphereLight(
-      new THREE.Color(0xffffff),
-      new THREE.Color(0xffffff),
+    this._delegate = new Group()
+    this._delegate.name = 'Sun'
+    this._sunLight = new DirectionalLight(0xffffff, 1)
+    this._hemiLight = new HemisphereLight(
+      new Color(0xffffff),
+      new Color(0xffffff),
       0.6
     )
     this._hemiLight.color.setHSL(0.661, 0.96, 0.12)
     this._hemiLight.groundColor.setHSL(0.11, 0.96, 0.14)
     this._hemiLight.position.set(0, 0, 50)
-    this._root.add(this._sunLight)
-    this._root.add(this._hemiLight)
+    this._delegate.add(this._sunLight)
+    this._delegate.add(this._hemiLight)
     this._currentTime = null
   }
 
-  get root() {
-    return this._root
+  get delegate() {
+    return this._delegate
   }
 
   set castShadow(castShadow) {

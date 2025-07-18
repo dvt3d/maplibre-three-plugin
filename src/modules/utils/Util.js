@@ -1,3 +1,5 @@
+import { DEG2RAD, EARTH_CIRCUMFERENCE } from '../constants'
+
 class Util {
   /**
    *
@@ -62,6 +64,43 @@ class Util {
           Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360))) /
       360
     )
+  }
+
+  /**
+   *
+   * @param map
+   * @param center
+   * @param boundingSize
+   * @returns {{center: (number|*)[], cameraHeight: number, zoom: number}}
+   */
+  static getViewInfo(transform, center, boundingSize) {
+    const fovInRadians = transform.fov * DEG2RAD
+    const pitchInRadians = transform.pitch * DEG2RAD
+    if (Array.isArray(center)) {
+      center = { lng: center[0], lat: center[1] }
+    }
+    if (typeof center === 'string') {
+      center = center.split(',')
+    }
+    const distance =
+      Math.max(boundingSize.x, boundingSize.y, boundingSize.z) /
+      (2 * Math.tan(fovInRadians / 2))
+
+    const cameraHeight = distance * Math.cos(pitchInRadians)
+    const pixelAltitude = Math.abs(
+      Math.cos(pitchInRadians) * transform.cameraToCenterDistance
+    )
+    const metersInWorldAtLat =
+      EARTH_CIRCUMFERENCE * Math.abs(Math.cos(center.lat * DEG2RAD))
+
+    const worldSize = (pixelAltitude / cameraHeight) * metersInWorldAtLat
+    const zoom = Math.round(Math.log(worldSize / transform.tileSize) / Math.LN2)
+
+    return {
+      center: [center.lng, center.lat],
+      cameraHeight,
+      zoom,
+    }
   }
 }
 

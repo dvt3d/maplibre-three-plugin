@@ -7,6 +7,7 @@ import {
 } from 'three'
 import ThreeLayer from '../layer/ThreeLayer'
 import { WORLD_SIZE } from '../constants'
+import Util from '../utils/Util.js'
 
 const DEF_OPTS = {
   scene: null,
@@ -131,6 +132,92 @@ class MapScene {
       })
     }
     return this
+  }
+
+  /**
+   *
+   * @param light
+   * @returns {MapScene}
+   */
+  addLight(light) {
+    this._lights.add(light.delegate || light)
+    return this
+  }
+
+  /**
+   *
+   * @param light
+   */
+  removeLight(light) {
+    this._lights.remove(light.delegate || light)
+    return this
+  }
+
+  /**
+   *
+   * @param object
+   * @returns {MapScene}
+   */
+  addObject(object) {
+    this._world.add(object.delegate || object)
+    return this
+  }
+
+  /**
+   *
+   * @param object
+   * @returns {MapScene}
+   */
+  removeObject(object) {
+    object.traverse((obj) => {
+      if (obj.geometry) obj.geometry.dispose()
+      if (obj.material) {
+        if (Array.isArray(obj.material)) {
+          obj.material.forEach((m) => m.dispose())
+        } else {
+          obj.material.dispose()
+        }
+      }
+      if (obj.texture) obj.texture.dispose()
+      this._world.remove(object)
+    })
+    return this
+  }
+
+  /**
+   *
+   * @param target
+   * @param completed
+   * @param duration
+   * @returns {MapScene}
+   */
+  flyTo(target, completed = null, duration = 3) {
+    if (target && target.centerDegrees && target.size) {
+      if (completed) {
+        this._map.once('moveend', completed)
+      }
+      const viewInfo = Util.getViewInfo(
+        this._map.transform,
+        target.centerDegrees,
+        target.size
+      )
+      this._map.flyTo({
+        center: viewInfo.center,
+        zoom: viewInfo.zoom,
+        duration: duration * 1000,
+      })
+    }
+    return this
+  }
+
+  /**
+   *
+   * @param target
+   * @param completed
+   * @returns {MapScene}
+   */
+  zoomTo(target, completed) {
+    return this.flyTo(target, completed, 0)
   }
 
   /**

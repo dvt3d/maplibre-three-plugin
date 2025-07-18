@@ -1,8 +1,7 @@
 import maplibregl from 'maplibre-gl'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
 import config from './config.js'
-import Sun from './src/Sun.js'
-import ModelLoaderUtil from './src/ModelLoaderUtil.js'
+import Model from './src/Model.js'
 
 const map = new maplibregl.Map({
   container: 'map-container', // container id
@@ -21,11 +20,11 @@ const mapScene = new MTP.MapScene(map)
 mapScene.renderer.shadowMap.enabled = true
 
 //init sun
-const sun = new Sun()
+const sun = new MTP.Sun()
 sun.currentTime = '2025/7/12 12:00:00'
 sun.castShadow = true
 sun.setShadow()
-mapScene.lights.add(sun.root)
+mapScene.addLight(sun)
 
 mapScene
   .on('preRender', () => {
@@ -41,12 +40,10 @@ mapScene
 const shadowGround = MTP.Creator.createShadowGround([148.9819, -35.39847])
 mapScene.world.add(shadowGround)
 
-// add model
-ModelLoaderUtil.loadGLTF('./assets/34M_17/34M_17.gltf').then((gltf) => {
-  let rtcGroup = MTP.Creator.createRTCGroup([148.9819, -35.39847])
-  rtcGroup.add(gltf.scene)
-  rtcGroup.traverse(function (obj) {
-    if (obj.isMesh) obj.castShadow = true
-  })
-  mapScene.world.add(rtcGroup)
+Model.fromGltfAsync({
+  url: './assets/34M_17/34M_17.gltf',
+  center: [148.9819, -35.39847],
+  castShadow: true,
+}).then((model) => {
+  mapScene.addObject(model)
 })

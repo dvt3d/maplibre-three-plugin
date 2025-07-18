@@ -1,4 +1,4 @@
-import * as THREE from 'three'
+import { Group, Vector3, Matrix4, Box3, Sphere } from 'three'
 import { TilesRenderer } from '3d-tiles-renderer'
 import {
   GLTFExtensionsPlugin,
@@ -11,8 +11,8 @@ import {
 import { SceneTransform } from '@dvt3d/maplibre-three-plugin'
 import Util from './Util.js'
 
-const _box = new THREE.Box3()
-const _sphere = new THREE.Sphere()
+const _box = new Box3()
+const _sphere = new Sphere()
 
 const DEF_OPTS = {
   fetchOptions: {
@@ -30,30 +30,31 @@ const DEF_OPTS = {
   ionAccessToken: null,
   ionAssetId: null,
 }
+
 class Tileset {
   constructor(url, options = {}) {
     this._url = url
     this._options = options
-    this._delegate = new TilesRenderer(this._url)
+    this._renderer = new TilesRenderer(this._url)
 
-    this._delegate.registerPlugin(
+    this._renderer.registerPlugin(
       new GLTFExtensionsPlugin({
         dracoLoader: options.dracoLoader,
         ktxLoader: options.ktxLoader,
       })
     )
 
-    options.useDebug && this._delegate.registerPlugin(new DebugTilesPlugin())
+    options.useDebug && this._renderer.registerPlugin(new DebugTilesPlugin())
 
-    options.useUnload && this._delegate.registerPlugin(new UnloadTilesPlugin())
+    options.useUnload && this._renderer.registerPlugin(new UnloadTilesPlugin())
 
     options.useUpdate &&
-      this._delegate.registerPlugin(new UpdateOnChangePlugin())
+      this._renderer.registerPlugin(new UpdateOnChangePlugin())
 
-    options.useFade && this._delegate.registerPlugin(new TilesFadePlugin())
+    options.useFade && this._renderer.registerPlugin(new TilesFadePlugin())
 
     if (options.ionAccessToken && options.ionAssetId) {
-      this._delegate.registerPlugin(
+      this._renderer.registerPlugin(
         new CesiumIonAuthPlugin({
           apiToken: options.ionAccessToken,
           assetId: options.ionAssetId,
@@ -62,60 +63,60 @@ class Tileset {
     }
 
     Util.merge(
-      this._delegate.fetchOptions,
+      this._renderer.fetchOptions,
       DEF_OPTS.fetchOptions,
       this._options.fetchOptions || {}
     )
 
     Util.merge(
-      this._delegate.lruCache,
+      this._renderer.lruCache,
       DEF_OPTS.lruCache,
       this._options.lruCache || {}
     )
 
     this._isLoaded = false
-    this._root = new THREE.Group()
-    this._root.name = 'tileset-root'
-    this._center = new THREE.Vector3()
-    this._size = new THREE.Vector3()
+    this._delegate = new Group()
+    this._delegate.name = 'tileset-root'
+    this._center = new Vector3()
+    this._size = new Vector3()
     this._centerCartographic = { lat: 0, lon: 0, height: 0 }
     this._centerDegrees = { lng: 0, lat: 0, height: 0 }
-    this._delegate.addEventListener(
+    this._renderer.addEventListener(
       'load-tile-set',
       this._onTilesLoaded.bind(this)
     )
   }
 
   get fetchOptions() {
-    return this._delegate.fetchOptions
+    return this._renderer.fetchOptions
   }
 
   set lruCache(lruCache) {
-    this._delegate.lruCache = lruCache
+    this._renderer.lruCache = lruCache
   }
 
   get lruCache() {
-    return this._delegate.lruCache
+    return this._renderer.lruCache
   }
 
   set autoDisableRendererCulling(autoDisableRendererCulling) {
-    this._delegate.autoDisableRendererCulling = autoDisableRendererCulling
+    this._renderer.autoDisableRendererCulling = autoDisableRendererCulling
   }
 
   get autoDisableRendererCulling() {
-    return this._delegate.autoDisableRendererCulling
+    return this._renderer.autoDisableRendererCulling
   }
 
   set errorTarget(errorTarget) {
-    this._delegate.errorTarget = errorTarget
+    this._renderer.errorTarget = errorTarget
   }
 
   get errorTarget() {
-    return this._delegate.errorTarget
+    return this._renderer.errorTarget
   }
 
-  get root() {
-    return this._root
+  get delegate() {
+    return this._delegate
   }
 
   get center() {
@@ -142,16 +143,16 @@ class Tileset {
   _onTilesLoaded(e) {
     if (!this._isLoaded) {
       this._isLoaded = true
-      if (this._delegate.getBoundingBox(_box)) {
+      if (this._renderer.getBoundingBox(_box)) {
         _box.getCenter(this._center)
         _box.getSize(this._size)
-      } else if (this._delegate.getBoundingSphere(_sphere)) {
+      } else if (this._renderer.getBoundingSphere(_sphere)) {
         this._center.copy(_sphere.center)
         this._size.set(_sphere.radius, _sphere.radius, _sphere.radius)
       } else {
         return
       }
-      this._delegate.ellipsoid.getPositionToCartographic(
+      this._renderer.ellipsoid.getPositionToCartographic(
         this._center,
         this._centerCartographic
       )
@@ -160,7 +161,7 @@ class Tileset {
         lat: (this._centerCartographic.lat * 180) / Math.PI,
         height: this._centerCartographic.height,
       }
-      this._root.position.copy(
+      this._delegate.position.copy(
         SceneTransform.lngLatToVector3(
           this._centerDegrees.lng,
           this._centerDegrees.lat,
@@ -170,39 +171,40 @@ class Tileset {
       const scale = SceneTransform.projectedUnitsPerMeter(
         this._centerDegrees.lat
       )
-      this._root.scale.set(scale, scale, scale)
-      this._root.rotateX(Math.PI)
-      this._root.rotateY(Math.PI)
-      this._root.updateMatrixWorld()
+      this._delegate.scale.set(scale, scale, scale)
+      this._delegate.rotateX(Math.PI)
+      this._delegate.rotateY(Math.PI)
+      this._delegate.updateMatrixWorld()
 
-      const enuMatrix = this._delegate.ellipsoid.getEastNorthUpFrame(
+      const enuMatrix = this._renderer.ellipsoid.getEastNorthUpFrame(
         this._centerCartographic.lat,
         this._centerCartographic.lon,
         this._centerCartographic.height,
-        new THREE.Matrix4()
+        new Matrix4()
       )
       const modelMatrix = enuMatrix.clone().invert()
-      this._delegate.group.applyMatrix4(modelMatrix)
-      this._delegate.group.updateMatrixWorld()
-      this._root.add(this._delegate.group)
+      this._renderer.group.applyMatrix4(modelMatrix)
+      this._renderer.group.updateMatrixWorld()
+      this._delegate.add(this._renderer.group)
       this.fire('loaded')
     }
-    this._delegate.removeEventListener(
+    this._renderer.removeEventListener(
       'load-tile-set',
       this._onTilesLoaded.bind(this)
     )
   }
+
   /**
    *
    * @param scene
    */
   update(frameState) {
-    this._delegate.setCamera(frameState.scene.camera)
-    this._delegate.setResolutionFromRenderer(
+    this._renderer.setCamera(frameState.scene.camera)
+    this._renderer.setResolutionFromRenderer(
       frameState.scene.camera,
       frameState.scene.renderer
     )
-    this._delegate.update()
+    this._renderer.update()
   }
 
   /**
@@ -212,7 +214,7 @@ class Tileset {
    * @returns {Tileset}
    */
   on(type, callback) {
-    this._delegate.addEventListener(type, callback)
+    this._renderer.addEventListener(type, callback)
     return this
   }
 
@@ -223,7 +225,7 @@ class Tileset {
    * @returns {Tileset}
    */
   off(type, callback) {
-    this._delegate.removeEventListener(type, callback)
+    this._renderer.removeEventListener(type, callback)
     return this
   }
 
@@ -234,7 +236,7 @@ class Tileset {
    * @returns {Tileset}
    */
   fire(type, params = {}) {
-    this._delegate.dispatchEvent({
+    this._renderer.dispatchEvent({
       type: type,
       params: params,
     })

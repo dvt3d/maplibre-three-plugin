@@ -1,8 +1,7 @@
 import maplibregl from 'maplibre-gl'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
 import config from './config.js'
-import Sun from './src/Sun.js'
-import ModelLoaderUtil from './src/ModelLoaderUtil.js'
+import Model from './src/Model.js'
 
 const map = new maplibregl.Map({
   container: 'map-container', // container id
@@ -18,8 +17,8 @@ const map = new maplibregl.Map({
 
 const mapScene = new MTP.MapScene(map)
 
-const sun = new Sun()
-mapScene.lights.add(sun.root)
+const sun = new MTP.Sun()
+mapScene.addLight(sun)
 
 mapScene
   .on('preRender', () => {
@@ -32,9 +31,9 @@ mapScene
     map.triggerRepaint()
   })
 
-// add model
-ModelLoaderUtil.loadGLTF('./assets/34M_17/34M_17.gltf').then((gltf) => {
-  let rtcGroup = MTP.Creator.createRTCGroup([148.9819, -35.39847])
-  rtcGroup.add(gltf.scene)
-  mapScene.world.add(rtcGroup)
+Model.fromGltfAsync({
+  url: './assets/34M_17/34M_17.gltf',
+  center: [148.9819, -35.39847],
+}).then((model) => {
+  mapScene.addObject(model)
 })

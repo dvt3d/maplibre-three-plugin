@@ -1,8 +1,8 @@
 import maplibregl from 'maplibre-gl'
 import * as THREE from 'three'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
-import { GLTFLoader } from 'three/addons'
 import config from './config.js'
+import Model from './src/Model.js'
 
 const map = new maplibregl.Map({
   container: 'map-container', // container id
@@ -39,15 +39,12 @@ dirLight.updateMatrixWorld()
 mapScene.lights.add(dirLight)
 
 const shadowGround = MTP.Creator.createShadowGround([148.9819, -35.39847])
-mapScene.world.add(shadowGround)
+mapScene.addObject(shadowGround)
 
-// add model
-const loader = new GLTFLoader()
-loader.load('./assets/34M_17/34M_17.gltf', (gltf) => {
-  let rtcGroup = MTP.Creator.createRTCGroup([148.9819, -35.39847])
-  rtcGroup.add(gltf.scene)
-  rtcGroup.traverse(function (obj) {
-    if (obj.isMesh) obj.castShadow = true
-  })
-  mapScene.world.add(rtcGroup)
+Model.fromGltfAsync({
+  url: './assets/34M_17/34M_17.gltf',
+  center: [148.9819, -35.39847],
+  castShadow: true,
+}).then((model) => {
+  mapScene.addObject(model)
 })
