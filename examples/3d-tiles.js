@@ -4,7 +4,6 @@ import * as MTP from '@dvt3d/maplibre-three-plugin'
 import config from './config.js'
 import ModelLoaderUtil from './src/ModelLoaderUtil.js'
 import Tileset from './src/Tileset.js'
-import Util from './src/Util.js'
 
 const map = new maplibregl.Map({
   container: 'map',
@@ -40,16 +39,8 @@ tileset.autoDisableRendererCulling = true
 tileset.errorTarget = 6
 
 tileset.on('loaded', () => {
-  mapScene.world.add(tileset.root)
-  let view = Util.getViewPosition(
-    map.transform,
-    tileset.centerDegrees,
-    tileset.size
-  )
-  map.easeTo({
-    center: view.center,
-    zoom: view.zoom,
-  })
+  mapScene.addObject(tileset)
+  mapScene.flyTo(tileset)
 })
 
 mapScene

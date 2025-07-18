@@ -1,7 +1,6 @@
 import maplibregl from 'maplibre-gl'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
 import config from './config.js'
-import Sun from './src/Sun.js'
 import ModelLoaderUtil from './src/ModelLoaderUtil.js'
 import Tileset from './src/Tileset.js'
 import Util from './src/Util.js'
@@ -20,11 +19,11 @@ let mapScene = new MTP.MapScene(map)
 
 mapScene.renderer.shadowMap.enabled = true
 
-const sun = new Sun()
+const sun = new MTP.Sun()
 sun.currentTime = '2025/7/12 8:00:00'
 sun.castShadow = true
 sun.setShadow()
-mapScene.lights.add(sun.root)
+mapScene.addLight(sun)
 
 ModelLoaderUtil.setDracoLoader({
   path: 'https://cdn.jsdelivr.net/npm/three/examples/jsm/libs/draco/',
@@ -44,22 +43,14 @@ tileset.autoDisableRendererCulling = true
 tileset.errorTarget = 6
 
 tileset.on('loaded', () => {
-  mapScene.world.add(tileset.root)
   const shadowGround = MTP.Creator.createShadowGround(
     [tileset.centerDegrees.lng, tileset.centerDegrees.lat],
     1000,
     1000
   )
-  mapScene.world.add(shadowGround)
-  const view = Util.getViewPosition(
-    map.transform,
-    tileset.centerDegrees,
-    tileset.size
-  )
-  map.easeTo({
-    center: view.center,
-    zoom: view.zoom,
-  })
+  mapScene.addObject(shadowGround)
+  mapScene.addObject(tileset)
+  mapScene.flyTo(tileset)
 })
 
 tileset.on('load-model', (e) => {
