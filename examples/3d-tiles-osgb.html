@@ -7,43 +7,33 @@
     content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
   />
   <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-  <title>maplibre three</title>
+  <title>3d - tiles - osgb</title>
   <link
     href="https://cdn.jsdelivr.net/npm/maplibre-gl/dist/maplibre-gl.min.css"
     rel="stylesheet"
   />
   <style>
       * {
-          padding: 0;
           margin: 0;
-      }
-
-      html,
-      body {
-          width: 100%;
-          height: 100%;
-          overflow: hidden;
-      }
-
-      .map-container {
-          width: 100%;
-          height: 100%;
-          overflow: hidden;
+          padding: 0;
       }
   </style>
 </head>
 <body>
-<div id="map-container" class="map-container"></div>
+<div id="map" style="width: 100vw; height: 100vh"></div>
 <script type="importmap">
   {
     "imports": {
       "maplibre-gl": "https://cdn.jsdelivr.net/npm/maplibre-gl/+esm",
       "three": "https://cdn.jsdelivr.net/npm/three/build/three.module.min.js",
+      "three/examples/": "https://cdn.jsdelivr.net/npm/three/examples/",
       "three/addons": "https://cdn.jsdelivr.net/npm/three/examples/jsm/Addons.js",
+      "3d-tiles-renderer": "https://cdn.jsdelivr.net/npm/3d-tiles-renderer/src/index.js",
+      "3d-tiles-renderer/plugins": "https://cdn.jsdelivr.net/npm/3d-tiles-renderer/src/plugins/index.js",
       "@dvt3d/maplibre-three-plugin": "../dist/index.js"
     }
   }
 </script>
-<script src="index.js" type="module"></script>
+<script src="3d-tiles-osgb.js" type="module"></script>
 </body>
 </html>

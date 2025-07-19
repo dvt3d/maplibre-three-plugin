@@ -36,7 +36,7 @@ dirLight.shadow.camera.visible = true
 dirLight.position.set(30, 100, 100)
 dirLight.updateMatrixWorld()
 
-mapScene.lights.add(dirLight)
+mapScene.addLight(dirLight)
 
 const shadowGround = MTP.Creator.createShadowGround([148.9819, -35.39847])
 mapScene.addObject(shadowGround)

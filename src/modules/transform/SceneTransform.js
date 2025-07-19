@@ -68,15 +68,15 @@ class SceneTransform {
    * @returns {{lng: number, alt: number, lat: number}}
    */
   static vector3ToLngLat(v) {
-    let result = { lng: 0, lat: 0, alt: 0 }
+    let result = [0, 0, 0]
     if (v) {
-      result.lng = -v.x / (EARTH_RADIUS * DEG2RAD * PROJECTION_WORLD_SIZE)
-      result.lat =
+      result[0] = -v.x / (EARTH_RADIUS * DEG2RAD * PROJECTION_WORLD_SIZE)
+      result[1] =
         (2 *
           (Math.atan(Math.exp(v.y / (PROJECTION_WORLD_SIZE * -EARTH_RADIUS))) -
             Math.PI / 4)) /
         DEG2RAD
-      result.alt = v.z / this.projectedUnitsPerMeter(result.lat)
+      result[2] = v.z / this.projectedUnitsPerMeter(result[1])
     }
     return result
   }

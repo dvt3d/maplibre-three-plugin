@@ -4,10 +4,13 @@ import {
   Scene,
   WebGLRenderer,
   EventDispatcher,
+  Box3,
+  Vector3,
 } from 'three'
 import ThreeLayer from '../layer/ThreeLayer'
 import { WORLD_SIZE } from '../constants'
 import Util from '../utils/Util.js'
+import SceneTransform from '../transform/SceneTransform'
 
 const DEF_OPTS = {
   scene: null,
@@ -169,17 +172,17 @@ class MapScene {
    * @returns {MapScene}
    */
   removeObject(object) {
-    object.traverse((obj) => {
-      if (obj.geometry) obj.geometry.dispose()
-      if (obj.material) {
-        if (Array.isArray(obj.material)) {
-          obj.material.forEach((m) => m.dispose())
+    this._world.remove(object)
+    object.traverse((child) => {
+      if (child.geometry) child.geometry.dispose()
+      if (child.material) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach((m) => m.dispose())
         } else {
-          obj.material.dispose()
+          child.material.dispose()
         }
       }
-      if (obj.texture) obj.texture.dispose()
-      this._world.remove(object)
+      if (child.texture) child.texture.dispose()
     })
     return this
   }
@@ -192,14 +195,19 @@ class MapScene {
    * @returns {MapScene}
    */
   flyTo(target, completed = null, duration = 3) {
-    if (target && target.centerDegrees && target.size) {
+    if (target && target.position) {
       if (completed) {
         this._map.once('moveend', completed)
       }
+      let size = target.size
+      if (!size) {
+        size = new Vector3()
+        new Box3().setFromObject(target.delegate || target, true).getSize(size)
+      }
       const viewInfo = Util.getViewInfo(
         this._map.transform,
-        target.centerDegrees,
-        target.size
+        SceneTransform.vector3ToLngLat(target.position),
+        size
       )
       this._map.flyTo({
         center: viewInfo.center,

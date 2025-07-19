@@ -76,17 +76,20 @@ class Util {
   static getViewInfo(transform, center, boundingSize) {
     const fovInRadians = transform.fov * DEG2RAD
     const pitchInRadians = transform.pitch * DEG2RAD
+
     if (Array.isArray(center)) {
-      center = { lng: center[0], lat: center[1] }
+      center = { lng: center[0], lat: center[1], alt: center[2] || 0 }
     }
+
     if (typeof center === 'string') {
-      center = center.split(',')
+      let arr = center.split(',')
+      center = { lng: arr[0], lat: arr[1], alt: arr[2] || 0 }
     }
     const distance =
       Math.max(boundingSize.x, boundingSize.y, boundingSize.z) /
       (2 * Math.tan(fovInRadians / 2))
 
-    const cameraHeight = distance * Math.cos(pitchInRadians)
+    const cameraHeight = distance * Math.cos(pitchInRadians) + center.alt
     const pixelAltitude = Math.abs(
       Math.cos(pitchInRadians) * transform.cameraToCenterDistance
     )

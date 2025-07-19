@@ -4,7 +4,9 @@ import {
   PerspectiveCamera,
   Scene,
   WebGLRenderer,
-  EventDispatcher
+  EventDispatcher,
+  Box3,
+  Vector3 as Vector33
 } from "three";
 
 // src/modules/constants/index.js
@@ -85,13 +87,14 @@ var Util = class {
     const fovInRadians = transform.fov * DEG2RAD;
     const pitchInRadians = transform.pitch * DEG2RAD;
     if (Array.isArray(center)) {
-      center = { lng: center[0], lat: center[1] };
+      center = { lng: center[0], lat: center[1], alt: center[2] || 0 };
     }
     if (typeof center === "string") {
-      center = center.split(",");
+      let arr = center.split(",");
+      center = { lng: arr[0], lat: arr[1], alt: arr[2] || 0 };
     }
     const distance = Math.max(boundingSize.x, boundingSize.y, boundingSize.z) / (2 * Math.tan(fovInRadians / 2));
-    const cameraHeight = distance * Math.cos(pitchInRadians);
+    const cameraHeight = distance * Math.cos(pitchInRadians) + center.alt;
     const pixelAltitude = Math.abs(
       Math.cos(pitchInRadians) * transform.cameraToCenterDistance
     );
@@ -200,6 +203,73 @@ var ThreeLayer = class {
   }
 };
 var ThreeLayer_default = ThreeLayer;
+
+// src/modules/transform/SceneTransform.js
+import { Vector3 as Vector32 } from "three";
+var SceneTransform = class {
+  /**
+   *
+   * @returns {number}
+   */
+  static projectedMercatorUnitsPerMeter() {
+    return Math.abs(WORLD_SIZE / EARTH_CIRCUMFERENCE);
+  }
+  /**
+   *
+   * @param lat
+   * @returns {number}
+   */
+  static projectedUnitsPerMeter(lat) {
+    return Math.abs(WORLD_SIZE / Math.cos(DEG2RAD * lat) / EARTH_CIRCUMFERENCE);
+  }
+  /**
+   *
+   * @param lng
+   * @param lat
+   * @param alt
+   * @returns {Vector3}
+   */
+  static lngLatToVector3(lng, lat, alt = 0) {
+    let v = [0, 0, 0];
+    if (Array.isArray(lng)) {
+      v = [
+        -EARTH_RADIUS * DEG2RAD * lng[0] * PROJECTION_WORLD_SIZE,
+        -EARTH_RADIUS * Math.log(Math.tan(Math.PI * 0.25 + 0.5 * DEG2RAD * lng[1])) * PROJECTION_WORLD_SIZE
+      ];
+      if (!lng[2]) {
+        v.push(0);
+      } else {
+        v.push(lng[2] * this.projectedUnitsPerMeter(lng[1]));
+      }
+    } else {
+      v = [
+        -EARTH_RADIUS * DEG2RAD * lng * PROJECTION_WORLD_SIZE,
+        -EARTH_RADIUS * Math.log(Math.tan(Math.PI * 0.25 + 0.5 * DEG2RAD * lat)) * PROJECTION_WORLD_SIZE
+      ];
+      if (!alt) {
+        v.push(0);
+      } else {
+        v.push(alt * this.projectedUnitsPerMeter(lat));
+      }
+    }
+    return new Vector32(v[0], v[1], v[2]);
+  }
+  /**
+   *
+   * @param v
+   * @returns {{lng: number, alt: number, lat: number}}
+   */
+  static vector3ToLngLat(v) {
+    let result = [0, 0, 0];
+    if (v) {
+      result[0] = -v.x / (EARTH_RADIUS * DEG2RAD * PROJECTION_WORLD_SIZE);
+      result[1] = 2 * (Math.atan(Math.exp(v.y / (PROJECTION_WORLD_SIZE * -EARTH_RADIUS))) - Math.PI / 4) / DEG2RAD;
+      result[2] = v.z / this.projectedUnitsPerMeter(result[1]);
+    }
+    return result;
+  }
+};
+var SceneTransform_default = SceneTransform;
 
 // src/modules/scene/MapScene.js
 var DEF_OPTS = {
@@ -338,19 +408,19 @@ var MapScene = class {
    * @returns {MapScene}
    */
   removeObject(object) {
-    object.traverse((obj) => {
-      if (obj.geometry)
-        obj.geometry.dispose();
-      if (obj.material) {
-        if (Array.isArray(obj.material)) {
-          obj.material.forEach((m) => m.dispose());
+    this._world.remove(object);
+    object.traverse((child) => {
+      if (child.geometry)
+        child.geometry.dispose();
+      if (child.material) {
+        if (Array.isArray(child.material)) {
+          child.material.forEach((m) => m.dispose());
         } else {
-          obj.material.dispose();
+          child.material.dispose();
         }
       }
-      if (obj.texture)
-        obj.texture.dispose();
-      this._world.remove(object);
+      if (child.texture)
+        child.texture.dispose();
     });
     return this;
   }
@@ -362,14 +432,19 @@ var MapScene = class {
    * @returns {MapScene}
    */
   flyTo(target, completed = null, duration = 3) {
-    if (target && target.centerDegrees && target.size) {
+    if (target && target.position) {
       if (completed) {
         this._map.once("moveend", completed);
       }
+      let size = target.size;
+      if (!size) {
+        size = new Vector33();
+        new Box3().setFromObject(target.delegate || target, true).getSize(size);
+      }
       const viewInfo = Util_default.getViewInfo(
         this._map.transform,
-        target.centerDegrees,
-        target.size
+        SceneTransform_default.vector3ToLngLat(target.position),
+        size
       );
       this._map.flyTo({
         center: viewInfo.center,
@@ -410,73 +485,6 @@ var MapScene = class {
   }
 };
 var MapScene_default = MapScene;
-
-// src/modules/transform/SceneTransform.js
-import { Vector3 as Vector32 } from "three";
-var SceneTransform = class {
-  /**
-   *
-   * @returns {number}
-   */
-  static projectedMercatorUnitsPerMeter() {
-    return Math.abs(WORLD_SIZE / EARTH_CIRCUMFERENCE);
-  }
-  /**
-   *
-   * @param lat
-   * @returns {number}
-   */
-  static projectedUnitsPerMeter(lat) {
-    return Math.abs(WORLD_SIZE / Math.cos(DEG2RAD * lat) / EARTH_CIRCUMFERENCE);
-  }
-  /**
-   *
-   * @param lng
-   * @param lat
-   * @param alt
-   * @returns {Vector3}
-   */
-  static lngLatToVector3(lng, lat, alt = 0) {
-    let v = [0, 0, 0];
-    if (Array.isArray(lng)) {
-      v = [
-        -EARTH_RADIUS * DEG2RAD * lng[0] * PROJECTION_WORLD_SIZE,
-        -EARTH_RADIUS * Math.log(Math.tan(Math.PI * 0.25 + 0.5 * DEG2RAD * lng[1])) * PROJECTION_WORLD_SIZE
-      ];
-      if (!lng[2]) {
-        v.push(0);
-      } else {
-        v.push(lng[2] * this.projectedUnitsPerMeter(lng[1]));
-      }
-    } else {
-      v = [
-        -EARTH_RADIUS * DEG2RAD * lng * PROJECTION_WORLD_SIZE,
-        -EARTH_RADIUS * Math.log(Math.tan(Math.PI * 0.25 + 0.5 * DEG2RAD * lat)) * PROJECTION_WORLD_SIZE
-      ];
-      if (!alt) {
-        v.push(0);
-      } else {
-        v.push(alt * this.projectedUnitsPerMeter(lat));
-      }
-    }
-    return new Vector32(v[0], v[1], v[2]);
-  }
-  /**
-   *
-   * @param v
-   * @returns {{lng: number, alt: number, lat: number}}
-   */
-  static vector3ToLngLat(v) {
-    let result = { lng: 0, lat: 0, alt: 0 };
-    if (v) {
-      result.lng = -v.x / (EARTH_RADIUS * DEG2RAD * PROJECTION_WORLD_SIZE);
-      result.lat = 2 * (Math.atan(Math.exp(v.y / (PROJECTION_WORLD_SIZE * -EARTH_RADIUS))) - Math.PI / 4) / DEG2RAD;
-      result.alt = v.z / this.projectedUnitsPerMeter(result.lat);
-    }
-    return result;
-  }
-};
-var SceneTransform_default = SceneTransform;
 
 // src/modules/sun/Sun.js
 import { Group as Group2, DirectionalLight, HemisphereLight, Color } from "three";

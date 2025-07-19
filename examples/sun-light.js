@@ -33,7 +33,7 @@ mapScene
 
 Model.fromGltfAsync({
   url: './assets/34M_17/34M_17.gltf',
-  center: [148.9819, -35.39847],
+  position: MTP.SceneTransform.lngLatToVector3(148.9819, -35.39847),
 }).then((model) => {
   mapScene.addObject(model)
 })

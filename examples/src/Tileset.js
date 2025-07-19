@@ -77,10 +77,10 @@ class Tileset {
     this._isLoaded = false
     this._delegate = new Group()
     this._delegate.name = 'tileset-root'
-    this._center = new Vector3()
+    this._position = new Vector3()
     this._size = new Vector3()
-    this._centerCartographic = { lat: 0, lon: 0, height: 0 }
-    this._centerDegrees = { lng: 0, lat: 0, height: 0 }
+    this._positionCartographic = { lat: 0, lon: 0, height: 0 }
+    this._positionDegrees = { lng: 0, lat: 0, height: 0 }
     this._renderer.addEventListener(
       'load-tile-set',
       this._onTilesLoaded.bind(this)
@@ -119,20 +119,25 @@ class Tileset {
     return this._delegate
   }
 
-  get center() {
-    return this._center
+  set position(position) {
+    this._position = position
+    this._delegate.position.copy(this._position)
+  }
+
+  get position() {
+    return this._position
   }
 
   get size() {
     return this._size
   }
 
-  get centerCartographic() {
-    return this._centerCartographic
+  get positionCartographic() {
+    return this._positionCartographic
   }
 
-  get centerDegrees() {
-    return this._centerDegrees
+  get positionDegrees() {
+    return this._positionDegrees
   }
 
   /**
@@ -143,45 +148,49 @@ class Tileset {
   _onTilesLoaded(e) {
     if (!this._isLoaded) {
       this._isLoaded = true
+      const center = new Vector3()
       if (this._renderer.getBoundingBox(_box)) {
-        _box.getCenter(this._center)
+        _box.getCenter(center)
         _box.getSize(this._size)
       } else if (this._renderer.getBoundingSphere(_sphere)) {
-        this._center.copy(_sphere.center)
+        center.copy(_sphere.center)
         this._size.set(_sphere.radius, _sphere.radius, _sphere.radius)
       } else {
         return
       }
       this._renderer.ellipsoid.getPositionToCartographic(
-        this._center,
-        this._centerCartographic
+        center,
+        this._positionCartographic
       )
-      this._centerDegrees = {
-        lng: (this._centerCartographic.lon * 180) / Math.PI,
-        lat: (this._centerCartographic.lat * 180) / Math.PI,
-        height: this._centerCartographic.height,
+      this._positionDegrees = {
+        lng: (this._positionCartographic.lon * 180) / Math.PI,
+        lat: (this._positionCartographic.lat * 180) / Math.PI,
+        height: this._positionCartographic.height,
       }
-      this._delegate.position.copy(
-        SceneTransform.lngLatToVector3(
-          this._centerDegrees.lng,
-          this._centerDegrees.lat,
-          this._centerDegrees.height
-        )
+
+      this._position = SceneTransform.lngLatToVector3(
+        this._positionDegrees.lng,
+        this._positionDegrees.lat,
+        this._positionDegrees.height
       )
+      this._delegate.position.copy(this._position)
+
       const scale = SceneTransform.projectedUnitsPerMeter(
-        this._centerDegrees.lat
+        this._positionDegrees.lat
       )
+
       this._delegate.scale.set(scale, scale, scale)
       this._delegate.rotateX(Math.PI)
       this._delegate.rotateY(Math.PI)
       this._delegate.updateMatrixWorld()
 
       const enuMatrix = this._renderer.ellipsoid.getEastNorthUpFrame(
-        this._centerCartographic.lat,
-        this._centerCartographic.lon,
-        this._centerCartographic.height,
+        this._positionCartographic.lat,
+        this._positionCartographic.lon,
+        this._positionCartographic.height,
         new Matrix4()
       )
+
       const modelMatrix = enuMatrix.clone().invert()
       this._renderer.group.applyMatrix4(modelMatrix)
       this._renderer.group.updateMatrixWorld()
@@ -205,6 +214,21 @@ class Tileset {
       frameState.scene.renderer
     )
     this._renderer.update()
+  }
+
+  /**
+   *
+   * @param height
+   * @returns {Tileset}
+   */
+  setHeight(height) {
+    this._position = SceneTransform.lngLatToVector3(
+      this._positionDegrees.lng,
+      this._positionDegrees.lat,
+      this._positionDegrees.height + height
+    )
+    this._delegate.position.copy(this._position)
+    return this
   }
 
   /**
