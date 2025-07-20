@@ -838,14 +838,6 @@ var Creator = class {
   }
 };
 var Creator_default = Creator;
-
-// src/index.js
-if (window.THREE) {
-  window.MapScene = MapScene_default;
-  window.SceneTransform = SceneTransform_default;
-  window.Creator = Creator_default;
-  window.Sun = Sun_default;
-}
 export {
   Creator_default as Creator,
   MapScene_default as MapScene,

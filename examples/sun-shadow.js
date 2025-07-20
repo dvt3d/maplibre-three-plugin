@@ -1,7 +1,7 @@
 import maplibregl from 'maplibre-gl'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
 import config from './config.js'
-import Model from './src/Model.js'
+import { Model } from './src'
 
 const map = new maplibregl.Map({
   container: 'map-container', // container id
@@ -38,7 +38,7 @@ mapScene
   })
 
 const shadowGround = MTP.Creator.createShadowGround([148.9819, -35.39847])
-mapScene.world.add(shadowGround)
+mapScene.addObject(shadowGround)
 
 Model.fromGltfAsync({
   url: './assets/34M_17/34M_17.gltf',

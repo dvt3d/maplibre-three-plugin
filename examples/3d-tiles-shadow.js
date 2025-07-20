@@ -1,9 +1,8 @@
 import maplibregl from 'maplibre-gl'
+import * as THREE from 'three'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
 import config from './config.js'
-import ModelLoaderUtil from './src/ModelLoaderUtil.js'
-import Tileset from './src/Tileset.js'
-import Util from './src/Util.js'
+import { ModelLoaderUtil, Tileset } from './src'
 
 let map = new maplibregl.Map({
   container: 'map',
@@ -44,11 +43,11 @@ tileset.errorTarget = 6
 
 tileset.on('loaded', () => {
   const shadowGround = MTP.Creator.createShadowGround(
-    [tileset.positionDegrees.lng, tileset.positionDegrees.lat],
+    [tileset.positionDegrees[0], tileset.positionDegrees[1]],
     1000,
     1000
   )
-  mapScene.addObject(shadowGround)
+  mapScene.world.add(shadowGround)
   mapScene.addObject(tileset)
   mapScene.flyTo(tileset)
 })

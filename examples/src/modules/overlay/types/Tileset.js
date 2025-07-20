@@ -1,3 +1,7 @@
+/**
+ * @author Caven Chen
+ */
+
 import { Group, Vector3, Matrix4, Box3, Sphere } from 'three'
 import { TilesRenderer } from '3d-tiles-renderer'
 import {
@@ -9,7 +13,8 @@ import {
   UpdateOnChangePlugin,
 } from '3d-tiles-renderer/plugins'
 import { SceneTransform } from '@dvt3d/maplibre-three-plugin'
-import Util from './Util.js'
+import Overlay from '../Overlay.js'
+import { Util } from '../../utils/index.js'
 
 const _box = new Box3()
 const _sphere = new Sphere()
@@ -31,12 +36,12 @@ const DEF_OPTS = {
   ionAssetId: null,
 }
 
-class Tileset {
+class Tileset extends Overlay {
   constructor(url, options = {}) {
+    super()
     this._url = url
     this._options = options
     this._renderer = new TilesRenderer(this._url)
-
     this._renderer.registerPlugin(
       new GLTFExtensionsPlugin({
         dracoLoader: options.dracoLoader,
@@ -73,18 +78,19 @@ class Tileset {
       DEF_OPTS.lruCache,
       this._options.lruCache || {}
     )
-
     this._isLoaded = false
+
     this._delegate = new Group()
     this._delegate.name = 'tileset-root'
-    this._position = new Vector3()
+
+    this._rtcGroup = new Group()
+    this._rtcGroup.name = 'rtc'
+    this._delegate.add(this._rtcGroup)
+
     this._size = new Vector3()
-    this._positionCartographic = { lat: 0, lon: 0, height: 0 }
-    this._positionDegrees = { lng: 0, lat: 0, height: 0 }
-    this._renderer.addEventListener(
-      'load-tile-set',
-      this._onTilesLoaded.bind(this)
-    )
+    this._event = this._renderer
+
+    this.on('load-tile-set', this._onTilesLoaded.bind(this))
   }
 
   get fetchOptions() {
@@ -115,29 +121,8 @@ class Tileset {
     return this._renderer.errorTarget
   }
 
-  get delegate() {
-    return this._delegate
-  }
-
-  set position(position) {
-    this._position = position
-    this._delegate.position.copy(this._position)
-  }
-
-  get position() {
-    return this._position
-  }
-
   get size() {
     return this._size
-  }
-
-  get positionCartographic() {
-    return this._positionCartographic
-  }
-
-  get positionDegrees() {
-    return this._positionDegrees
   }
 
   /**
@@ -158,43 +143,43 @@ class Tileset {
       } else {
         return
       }
-      this._renderer.ellipsoid.getPositionToCartographic(
-        center,
-        this._positionCartographic
-      )
-      this._positionDegrees = {
-        lng: (this._positionCartographic.lon * 180) / Math.PI,
-        lat: (this._positionCartographic.lat * 180) / Math.PI,
-        height: this._positionCartographic.height,
+
+      const cartographic = { lon: 0, lat: 0, height: 0 }
+
+      this._renderer.ellipsoid.getPositionToCartographic(center, cartographic)
+
+      const positionDegrees = {
+        lng: (cartographic.lon * 180) / Math.PI,
+        lat: (cartographic.lat * 180) / Math.PI,
+        height: cartographic.height,
       }
 
       this._position = SceneTransform.lngLatToVector3(
-        this._positionDegrees.lng,
-        this._positionDegrees.lat,
-        this._positionDegrees.height
+        positionDegrees.lng,
+        positionDegrees.lat,
+        positionDegrees.height
       )
-      this._delegate.position.copy(this._position)
+      this._rtcGroup.position.copy(this._position)
 
-      const scale = SceneTransform.projectedUnitsPerMeter(
-        this._positionDegrees.lat
-      )
+      const scale = SceneTransform.projectedUnitsPerMeter(positionDegrees.lat)
 
-      this._delegate.scale.set(scale, scale, scale)
-      this._delegate.rotateX(Math.PI)
-      this._delegate.rotateY(Math.PI)
-      this._delegate.updateMatrixWorld()
+      this._rtcGroup.scale.set(scale, scale, scale)
+      this._rtcGroup.rotateX(Math.PI)
+      this._rtcGroup.rotateY(Math.PI)
+      this._rtcGroup.updateMatrixWorld()
 
       const enuMatrix = this._renderer.ellipsoid.getEastNorthUpFrame(
-        this._positionCartographic.lat,
-        this._positionCartographic.lon,
-        this._positionCartographic.height,
+        cartographic.lat,
+        cartographic.lon,
+        cartographic.height,
         new Matrix4()
       )
 
       const modelMatrix = enuMatrix.clone().invert()
       this._renderer.group.applyMatrix4(modelMatrix)
       this._renderer.group.updateMatrixWorld()
-      this._delegate.add(this._renderer.group)
+      this._rtcGroup.add(this._renderer.group)
+
       this.fire('loaded')
     }
     this._renderer.removeEventListener(
@@ -222,48 +207,15 @@ class Tileset {
    * @returns {Tileset}
    */
   setHeight(height) {
+    const positionDegrees = this.positionDegrees
+
+    console.log(positionDegrees)
     this._position = SceneTransform.lngLatToVector3(
-      this._positionDegrees.lng,
-      this._positionDegrees.lat,
-      this._positionDegrees.height + height
+      positionDegrees[0],
+      positionDegrees[1],
+      positionDegrees[2] + height
     )
-    this._delegate.position.copy(this._position)
-    return this
-  }
-
-  /**
-   *
-   * @param type
-   * @param callback
-   * @returns {Tileset}
-   */
-  on(type, callback) {
-    this._renderer.addEventListener(type, callback)
-    return this
-  }
-
-  /**
-   *
-   * @param type
-   * @param callback
-   * @returns {Tileset}
-   */
-  off(type, callback) {
-    this._renderer.removeEventListener(type, callback)
-    return this
-  }
-
-  /**
-   *
-   * @param type
-   * @param params
-   * @returns {Tileset}
-   */
-  fire(type, params = {}) {
-    this._renderer.dispatchEvent({
-      type: type,
-      params: params,
-    })
+    this._rtcGroup.position.copy(this._position)
     return this
   }
 }

@@ -1,7 +1,7 @@
 import maplibregl from 'maplibre-gl'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
 import config from './config.js'
-import Model from './src/Model.js'
+import { Model } from './src'
 
 const map = new maplibregl.Map({
   container: 'map-container', // container id
@@ -15,6 +15,7 @@ const map = new maplibregl.Map({
   maxPitch: 85,
 })
 
+//init three scene
 const mapScene = new MTP.MapScene(map)
 
 const sun = new MTP.Sun()

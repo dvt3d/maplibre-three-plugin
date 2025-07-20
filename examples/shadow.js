@@ -2,7 +2,7 @@ import maplibregl from 'maplibre-gl'
 import * as THREE from 'three'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
 import config from './config.js'
-import Model from './src/Model.js'
+import { Model } from './src'
 
 const map = new maplibregl.Map({
   container: 'map-container', // container id
@@ -21,7 +21,7 @@ const mapScene = new MTP.MapScene(map)
 
 mapScene.renderer.shadowMap.enabled = true
 
-mapScene.lights.add(new THREE.AmbientLight())
+mapScene.addLight(new THREE.AmbientLight())
 
 const dirLight = new THREE.DirectionalLight(0xffffff, 1)
 dirLight.castShadow = true
@@ -43,7 +43,7 @@ mapScene.addObject(shadowGround)
 
 Model.fromGltfAsync({
   url: './assets/34M_17/34M_17.gltf',
-  center: [148.9819, -35.39847],
+  position: MTP.SceneTransform.lngLatToVector3(148.9819, -35.39847),
   castShadow: true,
 }).then((model) => {
   mapScene.addObject(model)

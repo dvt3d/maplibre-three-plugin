@@ -2,8 +2,7 @@ import maplibregl from 'maplibre-gl'
 import * as THREE from 'three'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
 import config from './config.js'
-import ModelLoaderUtil from './src/ModelLoaderUtil.js'
-import Tileset from './src/Tileset.js'
+import { ModelLoaderUtil, Tileset } from './src'
 
 const map = new maplibregl.Map({
   container: 'map',
@@ -17,7 +16,7 @@ const map = new maplibregl.Map({
 
 const mapScene = new MTP.MapScene(map)
 
-mapScene.lights.add(new THREE.AmbientLight())
+mapScene.addLight(new THREE.AmbientLight())
 
 ModelLoaderUtil.setDracoLoader({
   path: 'https://cdn.jsdelivr.net/npm/three/examples/jsm/libs/draco/',
