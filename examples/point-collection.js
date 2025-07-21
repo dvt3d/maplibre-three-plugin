@@ -3,6 +3,7 @@ import * as THREE from 'three'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
 import config from './config.js'
 import { Point } from './src'
+import PointCollection from './src/modules/overlay/types/PointCollection.js'
 
 const map = new maplibregl.Map({
   container: 'map',
@@ -27,14 +28,11 @@ function generatePosition(num) {
 }
 mapScene.addLight(new THREE.AmbientLight())
 
-const positions = generatePosition(30)
-
-let point = undefined
-positions.forEach((position) => {
-  point = new Point(
+const positions = generatePosition(10000)
+let pointCollection = new PointCollection(
+  positions.map((position) =>
     MTP.SceneTransform.lngLatToVector3(position[0], position[1])
   )
-  mapScene.addObject(point)
-})
-
-mapScene.flyTo(point)
+)
+mapScene.addObject(pointCollection)
+mapScene.flyTo(pointCollection)

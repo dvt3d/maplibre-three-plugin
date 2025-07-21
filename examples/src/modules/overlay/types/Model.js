@@ -1,7 +1,7 @@
 /**
  * @author Caven Chen
  */
-import { Group, Box3, Vector3 } from 'three'
+import { Box3, Vector3 } from 'three'
 import { ModelLoaderUtil } from '../../utils'
 import { Creator, SceneTransform } from '@dvt3d/maplibre-three-plugin'
 import Overlay from '../Overlay.js'
@@ -11,17 +11,16 @@ class Model extends Overlay {
   constructor(content, options) {
     super()
     this._content = content
-    this._delegate = new Group()
-    this._delegate.name = 'model-root'
     this._position = options.position
-    this._rtcGroup = Creator.createRTCGroup(
+    this._delegate = Creator.createRTCGroup(
       SceneTransform.vector3ToLngLat(this._position)
     )
-    this._rtcGroup.add(this._content)
-    this._delegate.add(this._rtcGroup)
+    this._delegate.name = 'model-root'
+    this._delegate.add(this._content)
     this._size = new Vector3()
     _box.setFromObject(this._content, true).getSize(this._size)
     this._castShadow = false
+    this._type = 'Model'
   }
 
   get size() {

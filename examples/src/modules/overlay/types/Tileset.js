@@ -83,13 +83,10 @@ class Tileset extends Overlay {
     this._delegate = new Group()
     this._delegate.name = 'tileset-root'
 
-    this._rtcGroup = new Group()
-    this._rtcGroup.name = 'rtc'
-    this._delegate.add(this._rtcGroup)
-
     this._size = new Vector3()
     this._event = this._renderer
 
+    this._type = 'Tileset'
     this.on('load-tile-set', this._onTilesLoaded.bind(this))
   }
 
@@ -159,14 +156,14 @@ class Tileset extends Overlay {
         positionDegrees.lat,
         positionDegrees.height
       )
-      this._rtcGroup.position.copy(this._position)
+      this._delegate.position.copy(this._position)
 
       const scale = SceneTransform.projectedUnitsPerMeter(positionDegrees.lat)
 
-      this._rtcGroup.scale.set(scale, scale, scale)
-      this._rtcGroup.rotateX(Math.PI)
-      this._rtcGroup.rotateY(Math.PI)
-      this._rtcGroup.updateMatrixWorld()
+      this._delegate.scale.set(scale, scale, scale)
+      this._delegate.rotateX(Math.PI)
+      this._delegate.rotateY(Math.PI)
+      this._delegate.updateMatrixWorld()
 
       const enuMatrix = this._renderer.ellipsoid.getEastNorthUpFrame(
         cartographic.lat,
@@ -178,7 +175,7 @@ class Tileset extends Overlay {
       const modelMatrix = enuMatrix.clone().invert()
       this._renderer.group.applyMatrix4(modelMatrix)
       this._renderer.group.updateMatrixWorld()
-      this._rtcGroup.add(this._renderer.group)
+      this._delegate.add(this._renderer.group)
 
       this.fire('loaded')
     }
@@ -208,14 +205,12 @@ class Tileset extends Overlay {
    */
   setHeight(height) {
     const positionDegrees = this.positionDegrees
-
-    console.log(positionDegrees)
     this._position = SceneTransform.lngLatToVector3(
       positionDegrees[0],
       positionDegrees[1],
       positionDegrees[2] + height
     )
-    this._rtcGroup.position.copy(this._position)
+    this._delegate.position.copy(this._position)
     return this
   }
 }

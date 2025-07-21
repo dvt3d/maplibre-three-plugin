@@ -9,23 +9,23 @@ class Overlay {
   constructor() {
     this._id = Util.uuid()
     this._delegate = undefined
-    this._rtcGroup = undefined
     this._style = {}
     this._show = true
     this._position = new Vector3()
     this._event = new EventDispatcher()
+    this._type = 'overlay'
   }
 
   get id() {
     return this._id
   }
 
-  get delegate() {
-    return this._delegate
+  get type() {
+    return this._type
   }
 
-  get rtcGroup() {
-    return this._rtcGroup
+  get delegate() {
+    return this._delegate
   }
 
   set show(show) {
@@ -42,9 +42,7 @@ class Overlay {
 
   set position(position) {
     this._position = position
-    if (this._rtcGroup) {
-      this._rtcGroup.position.copy(this._position)
-    }
+    this._delegate.position.copy(this._position)
   }
 
   get position() {
