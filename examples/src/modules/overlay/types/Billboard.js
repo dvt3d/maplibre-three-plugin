@@ -10,6 +10,12 @@ import { MaterialCache } from '../../material'
 class Billboard extends Overlay {
   constructor(position, image) {
     super()
+    if (!position) {
+      throw 'position is required'
+    }
+    if (!image) {
+      throw 'image is required'
+    }
     this._position = position
     this._image = image
     this._delegate = new Group()
@@ -31,6 +37,9 @@ class Billboard extends Overlay {
    * @returns {Billboard}
    */
   setStyle(style) {
+    if (!style || Object.keys(style).length === 0) {
+      return this
+    }
     Util.merge(this._style, style)
     if (this._object3d.material) {
       Util.merge(this._object3d.material, this._style)

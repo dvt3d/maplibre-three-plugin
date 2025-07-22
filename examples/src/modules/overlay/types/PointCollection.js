@@ -2,28 +2,33 @@
  * @author Caven Chen
  */
 
-import { Points, Float32BufferAttribute } from 'three'
+import { Group, Points, Float32BufferAttribute } from 'three'
 import Overlay from '../Overlay.js'
-import { Creator, SceneTransform } from '@dvt3d/maplibre-three-plugin'
+import { SceneTransform } from '@dvt3d/maplibre-three-plugin'
 import { Util } from '../../utils'
 import PointMaterial from '../../material/types/PointMaterial.js'
 
 class PointCollection extends Overlay {
   constructor(positions) {
     super()
+    if (!positions || !positions.length) {
+      throw 'positions length must be greater than 0'
+    }
     this._positions = positions
-    this._delegate = Creator.createRTCGroup(
-      SceneTransform.vector3ToLngLat(this._positions[0]),
-      [0, 0, 0]
-    )
+    this._delegate = new Group()
+
     this._delegate.name = 'point-collection-root'
+    this._delegate.position.copy(this._positions[0])
+
     this._object3d = new Points()
-    const local_positions = this._positions.map((position) =>
-      position.clone().sub(this._positions[0]).toArray()
-    )
     this._object3d.geometry.setAttribute(
       'position',
-      new Float32BufferAttribute(local_positions.flat(), 3)
+      new Float32BufferAttribute(
+        this._positions
+          .map((position) => position.clone().sub(this._positions[0]).toArray())
+          .flat(),
+        3
+      )
     )
     this._object3d.geometry.needsUpdate = true
     this._object3d.material = new PointMaterial()
@@ -36,14 +41,19 @@ class PointCollection extends Overlay {
    * @param positions
    */
   set positions(positions) {
+    if (!positions || !positions.length) {
+      throw 'positions length must be greater than 0'
+    }
     this._positions = positions
     this._delegate.position.copy(this._positions[0])
-    const local_positions = this._positions.map((position) =>
-      position.clone().sub(this._positions[0]).toArray()
-    )
     this._object3d.geometry.setAttribute(
       'position',
-      new Float32BufferAttribute(local_positions.flat(), 3)
+      new Float32BufferAttribute(
+        this._positions
+          .map((position) => position.clone().sub(this._positions[0]).toArray())
+          .flat(),
+        3
+      )
     )
     this._object3d.geometry.needsUpdate = true
   }

@@ -47,6 +47,12 @@ class Model extends Overlay {
    * @returns {Promise<Model>}
    */
   static async fromGltfAsync(options = {}) {
+    if (!options.url) {
+      throw 'url is required'
+    }
+    if (!options.position) {
+      throw 'position is required'
+    }
     let gltf = await ModelLoaderUtil.loadGLTF(options.url)
     let model = new Model(gltf.scene, options)
     model.castShadow = options.castShadow
@@ -58,7 +64,7 @@ class Model extends Overlay {
    * @param options
    * @returns {Promise<void>}
    */
-  static async fromB3DMAsync(options) {
+  static async fromB3dmAsync(options) {
     return
   }
 }

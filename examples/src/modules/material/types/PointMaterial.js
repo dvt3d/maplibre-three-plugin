@@ -15,7 +15,7 @@ class PointMaterial extends ShaderMaterial {
       transparent: !!options.transparent,
       uniforms: {
         pixelSize: {
-          value: 20,
+          value: 30,
         },
         color: { value: options.color || new Color().setStyle('#ffffff') },
         outlineWidth: {
@@ -37,7 +37,7 @@ class PointMaterial extends ShaderMaterial {
   }
 
   set pixelSize(pixelSize) {
-    this.uniforms.pixelSize.value = pixelSize
+    this.uniforms.pixelSize.value = pixelSize * 30
   }
 
   get pixelSize() {

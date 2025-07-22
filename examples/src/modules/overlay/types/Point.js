@@ -2,9 +2,8 @@
  * @author Caven Chen
  */
 
-import { Points, Float32BufferAttribute } from 'three'
+import { Group, Points, Float32BufferAttribute } from 'three'
 import Overlay from '../Overlay.js'
-import { Creator, SceneTransform } from '@dvt3d/maplibre-three-plugin'
 import { Util } from '../../utils'
 import { PointMaterial } from '../../material'
 
@@ -12,10 +11,9 @@ class Point extends Overlay {
   constructor(position) {
     super()
     this._position = position
-    this._delegate = Creator.createRTCGroup(
-      SceneTransform.vector3ToLngLat(this._position)
-    )
+    this._delegate = new Group()
     this._delegate.name = 'point-root'
+    this._delegate.position.copy(position)
 
     this._object3d = new Points()
     this._object3d.geometry.setAttribute(
@@ -24,6 +22,7 @@ class Point extends Overlay {
     )
     this._object3d.geometry.needsUpdate = true
     this._object3d.material = new PointMaterial()
+
     this._delegate.add(this._object3d)
     this._type = 'Point'
   }

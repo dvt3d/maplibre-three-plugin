@@ -73,7 +73,7 @@ class Util {
    * @param boundingSize
    * @returns {{center: (number|*)[], cameraHeight: number, zoom: number}}
    */
-  static getViewInfo(transform, center, boundingSize) {
+  static getViewInfoByBoundingSize(transform, center, boundingSize) {
     const fovInRadians = transform.fov * DEG2RAD
     const pitchInRadians = transform.pitch * DEG2RAD
 
@@ -97,13 +97,45 @@ class Util {
       EARTH_CIRCUMFERENCE * Math.abs(Math.cos(center.lat * DEG2RAD))
 
     const worldSize = (pixelAltitude / cameraHeight) * metersInWorldAtLat
-    const zoom = Math.round(Math.log(worldSize / transform.tileSize) / Math.LN2)
+    const zoom = Math.round(Math.log2(worldSize / transform.tileSize))
 
     return {
       center: [center.lng, center.lat],
       cameraHeight,
       zoom,
     }
+  }
+
+  /**
+   *
+   * @param transform
+   * @param lat
+   * @param height
+   * @returns {number}
+   */
+  static getZoomByHeight(transform, height) {
+    const pixelAltitude = Math.abs(
+      Math.cos(transform.pitch * DEG2RAD) * transform.cameraToCenterDistance
+    )
+    const metersInWorldAtLat =
+      EARTH_CIRCUMFERENCE * Math.abs(Math.cos(transform.center.lat * DEG2RAD))
+    const worldSize = (pixelAltitude / height) * metersInWorldAtLat
+    return Math.round(Math.log2(worldSize / transform.tileSize))
+  }
+
+  /**
+   *
+   * @param transform
+   * @returns {number}
+   */
+  static getHeightByZoom(transform, zoom) {
+    const pixelAltitude = Math.abs(
+      Math.cos(transform.pitch * DEG2RAD) * transform.cameraToCenterDistance
+    )
+    const metersInWorldAtLat =
+      EARTH_CIRCUMFERENCE * Math.abs(Math.cos(transform.center.lat * DEG2RAD))
+    const worldSize = Math.pow(2, zoom) * transform.tileSize
+    return (pixelAltitude * metersInWorldAtLat) / worldSize
   }
 }
 

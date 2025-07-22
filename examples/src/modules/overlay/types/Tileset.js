@@ -38,6 +38,9 @@ const DEF_OPTS = {
 
 class Tileset extends Overlay {
   constructor(url, options = {}) {
+    if (!url) {
+      throw 'position is required'
+    }
     super()
     this._url = url
     this._options = options

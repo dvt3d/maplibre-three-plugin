@@ -189,6 +189,22 @@ class MapScene {
 
   /**
    *
+   * @returns {{position: *[], heading: *, pitch}}
+   */
+  getViewPosition() {
+    return {
+      position: [
+        this._map.transform.center.lng,
+        this._map.transform.center.lat,
+        Util.getHeightByZoom(this._map.transform, this._map.transform.zoom),
+      ],
+      heading: this._map.transform.bearing,
+      pitch: this._map.transform.pitch,
+    }
+  }
+
+  /**
+   *
    * @param target
    * @param completed
    * @param duration
@@ -204,7 +220,7 @@ class MapScene {
         size = new Vector3()
         new Box3().setFromObject(target.delegate || target, true).getSize(size)
       }
-      const viewInfo = Util.getViewInfo(
+      const viewInfo = Util.getViewInfoByBoundingSize(
         this._map.transform,
         SceneTransform.vector3ToLngLat(target.position),
         size
@@ -226,6 +242,32 @@ class MapScene {
    */
   zoomTo(target, completed) {
     return this.flyTo(target, completed, 0)
+  }
+
+  /**
+   *
+   * @returns {MapScene}
+   */
+  flyToPosition(position, hpr = [0, 0, 0], completed = null, duration = 3) {
+    if (completed) {
+      this._map.once('moveend', completed)
+    }
+    this._map.flyTo({
+      center: [position[0], position[1]],
+      zoom: Util.getZoomByHeight(this._map.transform, position[2]),
+      bearing: hpr[0],
+      pitch: hpr[1],
+      duration: duration * 1000,
+    })
+    return this
+  }
+
+  /**
+   *
+   * @returns {MapScene}
+   */
+  zoomToPosition(position, hpr = [0, 0, 0], completed = null, duration = 3) {
+    return this.flyToPosition(position, hpr, completed, 0)
   }
 
   /**

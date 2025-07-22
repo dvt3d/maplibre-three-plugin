@@ -1,3 +1,7 @@
+/**
+ * @author Caven Chen
+ */
+
 import BillboardMaterial from './types/BillboardMaterial.js'
 
 const cache = {}
