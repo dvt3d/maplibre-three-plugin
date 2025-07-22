@@ -17,17 +17,17 @@ class PointCollection extends Overlay {
       [0, 0, 0]
     )
     this._delegate.name = 'point-collection-root'
-    this._points = new Points()
+    this._object3d = new Points()
     const local_positions = this._positions.map((position) =>
       position.clone().sub(this._positions[0]).toArray()
     )
-    this._points.geometry.setAttribute(
+    this._object3d.geometry.setAttribute(
       'position',
       new Float32BufferAttribute(local_positions.flat(), 3)
     )
-    this._points.geometry.needsUpdate = true
-    this._points.material = new PointMaterial()
-    this._delegate.add(this._points)
+    this._object3d.geometry.needsUpdate = true
+    this._object3d.material = new PointMaterial()
+    this._delegate.add(this._object3d)
     this._type = 'PointCollection'
   }
 
@@ -41,11 +41,11 @@ class PointCollection extends Overlay {
     const local_positions = this._positions.map((position) =>
       position.clone().sub(this._positions[0]).toArray()
     )
-    this._points.geometry.setAttribute(
+    this._object3d.geometry.setAttribute(
       'position',
       new Float32BufferAttribute(local_positions.flat(), 3)
     )
-    this._points.geometry.needsUpdate = true
+    this._object3d.geometry.needsUpdate = true
   }
 
   get positions() {
@@ -67,9 +67,9 @@ class PointCollection extends Overlay {
    */
   setStyle(style) {
     Util.merge(this._style, style)
-    if (this._points.material) {
-      Util.merge(this._points.material, this._style)
-      this._points.material.needsUpdate = true
+    if (this._object3d.material) {
+      Util.merge(this._object3d.material, this._style)
+      this._object3d.material.needsUpdate = true
     }
     return this
   }

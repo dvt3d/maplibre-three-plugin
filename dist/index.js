@@ -776,6 +776,14 @@ var Creator = class {
     const group = new Group3();
     group.name = "rtc";
     group.position.copy(SceneTransform_default.lngLatToVector3(center));
+    if (rotation) {
+      group.rotateX(rotation[0] || 0);
+      group.rotateY(rotation[1] || 0);
+      group.rotateZ(rotation[2] || 0);
+    } else {
+      group.rotateX(Math.PI / 2);
+      group.rotateY(Math.PI);
+    }
     if (scale) {
       group.scale.set(scale[0] || 1, scale[1] || 1, scale[2] || 1);
     } else {

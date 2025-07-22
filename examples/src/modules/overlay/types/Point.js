@@ -6,7 +6,7 @@ import { Points, Float32BufferAttribute } from 'three'
 import Overlay from '../Overlay.js'
 import { Creator, SceneTransform } from '@dvt3d/maplibre-three-plugin'
 import { Util } from '../../utils'
-import PointMaterial from '../../material/types/PointMaterial.js'
+import { PointMaterial } from '../../material'
 
 class Point extends Overlay {
   constructor(position) {
@@ -17,14 +17,14 @@ class Point extends Overlay {
     )
     this._delegate.name = 'point-root'
 
-    this._points = new Points()
-    this._points.geometry.setAttribute(
+    this._object3d = new Points()
+    this._object3d.geometry.setAttribute(
       'position',
       new Float32BufferAttribute([0, 0, 0], 3)
     )
-    this._points.geometry.needsUpdate = true
-    this._points.material = new PointMaterial()
-    this._delegate.add(this._points)
+    this._object3d.geometry.needsUpdate = true
+    this._object3d.material = new PointMaterial()
+    this._delegate.add(this._object3d)
     this._type = 'Point'
   }
 
@@ -35,9 +35,9 @@ class Point extends Overlay {
    */
   setStyle(style) {
     Util.merge(this._style, style)
-    if (this._points.material) {
+    if (this._object3d.material) {
       Util.merge(this._points.material, this._style)
-      this._points.material.needsUpdate = true
+      this._object3d.material.needsUpdate = true
     }
     return this
   }

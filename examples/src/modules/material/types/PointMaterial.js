@@ -1,3 +1,6 @@
+/**
+ * @author Caven Chen
+ */
 import { ShaderMaterial, Color } from 'three'
 import point_vs from '../../shaders/point_vs.glsl.js'
 import point_fs from '../../shaders/point_fs.glsl.js'
