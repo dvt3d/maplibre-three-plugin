@@ -9,7 +9,7 @@ import {
 } from 'three'
 import ThreeLayer from '../layer/ThreeLayer'
 import { WORLD_SIZE } from '../constants'
-import Util from '../utils/Util.js'
+import Util from '../utils/Util'
 import SceneTransform from '../transform/SceneTransform'
 
 const DEF_OPTS = {
