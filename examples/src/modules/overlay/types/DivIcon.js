@@ -12,7 +12,7 @@ class DivIcon extends Overlay {
       throw 'position is required'
     }
     if (!content) {
-      throw 'position is required'
+      throw 'content is required'
     }
     super()
     this._position = position

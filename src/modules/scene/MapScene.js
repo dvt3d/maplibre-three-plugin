@@ -8,7 +8,7 @@ import {
   Vector3,
 } from 'three'
 import ThreeLayer from '../layer/ThreeLayer'
-import { WORLD_SIZE } from '../constants'
+import { EARTH_CIRCUMFERENCE, WORLD_SIZE } from '../constants'
 import Util from '../utils/Util'
 import SceneTransform from '../transform/SceneTransform'
 
@@ -192,14 +192,21 @@ class MapScene {
    * @returns {{position: *[], heading: *, pitch}}
    */
   getViewPosition() {
+    const transform = this._map.transform
+    const center = transform.center
     return {
       position: [
-        this._map.transform.center.lng,
-        this._map.transform.center.lat,
-        Util.getHeightByZoom(this._map.transform, this._map.transform.zoom),
+        center.lng,
+        center.lat,
+        Util.getHeightByZoom(
+          transform,
+          transform.zoom,
+          center.lat,
+          transform.pitch
+        ),
       ],
-      heading: this._map.transform.bearing,
-      pitch: this._map.transform.pitch,
+      heading: transform.bearing,
+      pitch: transform.pitch,
     }
   }
 
@@ -220,7 +227,7 @@ class MapScene {
         size = new Vector3()
         new Box3().setFromObject(target.delegate || target, true).getSize(size)
       }
-      const viewInfo = Util.getViewInfoByBoundingSize(
+      const viewInfo = Util.getViewInfo(
         this._map.transform,
         SceneTransform.vector3ToLngLat(target.position),
         size
@@ -254,7 +261,12 @@ class MapScene {
     }
     this._map.flyTo({
       center: [position[0], position[1]],
-      zoom: Util.getZoomByHeight(this._map.transform, position[2]),
+      zoom: Util.getZoomByHeight(
+        this._map.transform,
+        position[2],
+        position[1],
+        hpr[1] || 0
+      ),
       bearing: hpr[0],
       pitch: hpr[1],
       duration: duration * 1000,

@@ -36,5 +36,4 @@ positions.forEach((position) => {
   )
   mapScene.addObject(point)
 })
-
 mapScene.flyTo(point)

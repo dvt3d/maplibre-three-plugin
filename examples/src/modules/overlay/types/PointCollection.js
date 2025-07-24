@@ -10,10 +10,10 @@ import PointMaterial from '../../material/types/PointMaterial.js'
 
 class PointCollection extends Overlay {
   constructor(positions) {
-    super()
     if (!positions || !positions.length) {
       throw 'positions length must be greater than 0'
     }
+    super()
     this._positions = positions
     this._delegate = new Group()
 

@@ -73,7 +73,7 @@ class Util {
    * @param boundingSize
    * @returns {{center: (number|*)[], cameraHeight: number, zoom: number}}
    */
-  static getViewInfoByBoundingSize(transform, center, boundingSize) {
+  static getViewInfo(transform, center, boundingSize) {
     const fovInRadians = transform.fov * DEG2RAD
     const pitchInRadians = transform.pitch * DEG2RAD
 
@@ -109,33 +109,37 @@ class Util {
   /**
    *
    * @param transform
+   * @param zoom
    * @param lat
-   * @param height
+   * @param pitch
    * @returns {number}
    */
-  static getZoomByHeight(transform, height) {
+  static getHeightByZoom(transform, zoom, lat, pitch) {
     const pixelAltitude = Math.abs(
-      Math.cos(transform.pitch * DEG2RAD) * transform.cameraToCenterDistance
+      Math.cos(pitch * DEG2RAD) * transform.cameraToCenterDistance
     )
     const metersInWorldAtLat =
-      EARTH_CIRCUMFERENCE * Math.abs(Math.cos(transform.center.lat * DEG2RAD))
-    const worldSize = (pixelAltitude / height) * metersInWorldAtLat
-    return Math.round(Math.log2(worldSize / transform.tileSize))
+      EARTH_CIRCUMFERENCE * Math.abs(Math.cos(lat * DEG2RAD))
+    const worldSize = Math.pow(2, zoom) * transform.tileSize
+    return (pixelAltitude * metersInWorldAtLat) / worldSize
   }
 
   /**
    *
    * @param transform
+   * @param height
+   * @param lat
+   * @param pitch
    * @returns {number}
    */
-  static getHeightByZoom(transform, zoom) {
+  static getZoomByHeight(transform, height, lat, pitch) {
     const pixelAltitude = Math.abs(
-      Math.cos(transform.pitch * DEG2RAD) * transform.cameraToCenterDistance
+      Math.cos(pitch * DEG2RAD) * transform.cameraToCenterDistance
     )
     const metersInWorldAtLat =
-      EARTH_CIRCUMFERENCE * Math.abs(Math.cos(transform.center.lat * DEG2RAD))
-    const worldSize = Math.pow(2, zoom) * transform.tileSize
-    return (pixelAltitude * metersInWorldAtLat) / worldSize
+      EARTH_CIRCUMFERENCE * Math.abs(Math.cos(lat * DEG2RAD))
+    const worldSize = (pixelAltitude / height) * metersInWorldAtLat
+    return Math.round(Math.log2(worldSize / transform.tileSize))
   }
 }
 

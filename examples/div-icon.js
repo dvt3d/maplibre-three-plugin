@@ -11,7 +11,6 @@ const map = new maplibregl.Map({
     'https://api.maptiler.com/maps/basic-v2/style.json?key=' +
     config.maptiler_key,
   maxPitch: 85,
-  pitch: 60,
   canvasContextAttributes: { antialias: true },
 })
 
@@ -45,7 +44,7 @@ function generatePosition(num) {
   return list
 }
 
-const positions = generatePosition(10)
+const positions = generatePosition(20)
 
 let divIcon = undefined
 positions.forEach((position) => {
@@ -54,4 +53,11 @@ positions.forEach((position) => {
     '数字视界科技'
   )
   mapScene.addObject(divIcon)
+})
+
+map.on('style.load', () => {
+  mapScene.flyToPosition(
+    [120.6465605955243, 31.228473719008534, 15208.762327849023],
+    [0, 75, 0]
+  )
 })
