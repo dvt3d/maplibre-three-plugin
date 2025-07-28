@@ -52,6 +52,11 @@ glTFLoader.load('./assets/34M_17/34M_17.gltf', (gltf) => {
 ```
 
 ## Examples
+ | ![pic](./examples/index.png)         | ![pic](./examples/point.png)         | ![pic](./examples/point-collection.png)              | ![pic](./examples/billboard.png)       |
+ |--------------------------------------|--------------------------------------|------------------------------------------------------|----------------------------------------|
+ | [model](./examples/index.html)       | [point](./examples/point.html)       | [point-collection](./examples/point-collection.html) | [billboard](./examples/billboard.html) |
+ | ![pic](./examples/div-icon.png)      | ![pic](./examples/3d-tiles.png)      | ![pic](./examples/point-3d-tiles-osgb.png)           | ![pic](./examples/sun-light.png)       |
+ | [div-icon](./examples/div-icon.html) | [3d-tiles](./examples/3d-tiles.html) | [3d-tiles-osgb](./examples/3d-tiles-osgb.html)       | [sun-light](./examples/sun-light.html) |
 
 
 ## Docs
@@ -80,7 +85,7 @@ Object({
 })
 ```
 
-### event hooks
+#### event hooks
 
 - `preRest` : A hook that calls `renderer.resetState` before each animation frame
 - `postRest`: A hook that calls `renderer.resetState` after each animation frame
@@ -89,13 +94,13 @@ Object({
 
 #### properties
 
-- `{maplibregl.Map} map ` 
-- `{HTMLCanvasElement} canvas ` 
-- `{THREE.Camera} camera `
-- `{THREE.Sence} scene` 
-- `{THREE.Group} lights`
-- `{THREE.Group} world`
-- `{THREE.WebGLRenderer} renderer`
+- `{maplibregl.Map} map ` : `readonly`
+- `{HTMLCanvasElement} canvas ` : `readonly`
+- `{THREE.Camera} camera `: `readonly`
+- `{THREE.Sence} scene` : `readonly`
+- `{THREE.Group} lights`: `readonly`
+- `{THREE.Group} world` : `readonly`
+- `{THREE.WebGLRenderer} renderer` : `readonly`
 
 #### methods
 
@@ -169,6 +174,12 @@ Object({
 
 ### SceneTransform
 
+#### examples
+
+```js
+const scale = new SceneTransform.projectedUnitsPerMeter(map)
+```
+
 #### static methods
 
 - **_projectedMercatorUnitsPerMeter()_**
@@ -198,28 +209,63 @@ Object({
 
 ### Sun
 
+#### examples
+
+```js
+const sun=  new Sun()
+```
+
+#### creation
+- constructor()
+  - params
+
+
+#### properties
+
+- `{THREE.Group} delegate ` : `readonly`
+- `{Boolean} castShadow `
+- `{Date || String} currentTime `
+- `{THREE.DirectionalLight} sunLight` : `readonly`
+- `{THREE.HemisphereLight} hemiLight`: `readonly`
+
+#### methods
+
+- **_update(frameState)_**
+    - params
+        - `{Object} frameState`: 
+    - returns
+        - `this` 
+
 ### Creator
+
+#### examples
+
+```js
+const rtcGroup =  Creator.createRTCGroup([-1000,0,0])
+```
 
 #### static methods
 
 - **_createRTCGroup(center, [rotation], [scale])_**
     - params
         - `{Array} center`
-        - `{Array} rotation`
-        - `{Array} scale`
+        - `{Array} rotation`: default value is [0,0,0]
+        - `{Array} scale`: scale corresponding to the current latitude
     - returns
         - `{THREE.Group} rtc`
 
 - **_createMercatorRTCGroup(center, [rotation], [scale])_**
     - params
         - `{Array} center`
-        - `{Array} rotation`
-        - `{Array} scale`
+        - `{Array} rotation`: default value is [0,0,0]
+        - `{Array} scale`: scale corresponding to the current latitude
     - returns
         - `{THREE.Group} rtc`
 
 - **_createShadowGround(center, [width], [height])_**
     - params
-        - `{THREE.Vector3} v`
+        - `{THREE.Vector3} center`
+        - `{Number} width`: default value is 100
+        - `{Number} height` : default value is 100
     - returns
-        - `{Object} value`
+        - `{Object} rtc`

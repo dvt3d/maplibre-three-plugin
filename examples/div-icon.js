@@ -30,8 +30,8 @@ window.addEventListener('resize', () => {
   domRenderer.setSize(mapScene.canvas.clientWidth, mapScene.canvas.clientHeight)
 })
 
-mapScene.on('preRender', () => {
-  domRenderer.render(mapScene.scene, mapScene.camera)
+mapScene.on('preRender', (e) => {
+  domRenderer.render(e.frameState.scene, e.frameState.camera)
 })
 
 function generatePosition(num) {

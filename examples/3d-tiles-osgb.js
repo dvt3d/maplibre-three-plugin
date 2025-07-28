@@ -44,8 +44,8 @@ tileset.on('loaded', () => {
 })
 
 mapScene
-  .on('preRender', () => {
-    tileset.update({ scene: mapScene })
+  .on('preRender', (e) => {
+    tileset.update(e.frameState)
   })
   .on('postRender', () => {
     map.triggerRepaint()

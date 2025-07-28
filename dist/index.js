@@ -391,19 +391,29 @@ var MapScene = class {
     if (this._options.renderLoop) {
       this._options.renderLoop(this);
     } else {
+      const frameState = {
+        center: this._map.getCenter(),
+        scene: this._scene,
+        camera: this._camera,
+        renderer: this._renderer
+      };
       this._event.dispatchEvent({
-        type: "preRest"
+        type: "preRest",
+        frameState
       });
       this.renderer.resetState();
       this._event.dispatchEvent({
-        type: "postRest"
+        type: "postRest",
+        frameState
       });
       this._event.dispatchEvent({
-        type: "preRender"
+        type: "preRender",
+        frameState
       });
       this.renderer.render(this._scene, this._camera);
       this._event.dispatchEvent({
-        type: "postRender"
+        type: "postRender",
+        frameState
       });
     }
     return this;
@@ -798,6 +808,9 @@ var Sun = class {
   }
   set currentTime(currentTime) {
     this._currentTime = currentTime;
+  }
+  get currentTime() {
+    return this._currentTime;
   }
   get sunLight() {
     return this._sunLight;

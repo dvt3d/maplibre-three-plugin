@@ -119,19 +119,29 @@ class MapScene {
     if (this._options.renderLoop) {
       this._options.renderLoop(this)
     } else {
+      const frameState = {
+        center: this._map.getCenter(),
+        scene: this._scene,
+        camera: this._camera,
+        renderer: this._renderer,
+      }
       this._event.dispatchEvent({
         type: 'preRest',
+        frameState,
       })
       this.renderer.resetState()
       this._event.dispatchEvent({
         type: 'postRest',
+        frameState,
       })
       this._event.dispatchEvent({
         type: 'preRender',
+        frameState,
       })
       this.renderer.render(this._scene, this._camera)
       this._event.dispatchEvent({
         type: 'postRender',
+        frameState,
       })
     }
     return this

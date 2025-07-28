@@ -62,13 +62,9 @@ tileset.on('load-model', (e) => {
 })
 
 mapScene
-  .on('preRender', () => {
-    const frameState = {
-      center: map.getCenter(),
-      scene: mapScene,
-    }
-    sun.update(frameState)
-    tileset.update(frameState)
+  .on('preRender', (e) => {
+    sun.update(e.frameState)
+    tileset.update(e.frameState)
   })
   .on('postRender', () => {
     map.triggerRepaint()

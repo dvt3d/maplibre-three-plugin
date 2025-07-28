@@ -193,10 +193,10 @@ class Tileset extends Overlay {
    * @param scene
    */
   update(frameState) {
-    this._renderer.setCamera(frameState.scene.camera)
+    this._renderer.setCamera(frameState.camera)
     this._renderer.setResolutionFromRenderer(
-      frameState.scene.camera,
-      frameState.scene.renderer
+      frameState.camera,
+      frameState.renderer
     )
     this._renderer.update()
   }

@@ -35,6 +35,10 @@ class Sun {
     this._currentTime = currentTime
   }
 
+  get currentTime() {
+    return this._currentTime
+  }
+
   get sunLight() {
     return this._sunLight
   }

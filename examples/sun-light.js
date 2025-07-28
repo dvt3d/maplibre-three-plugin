@@ -22,11 +22,8 @@ const sun = new MTP.Sun()
 mapScene.addLight(sun)
 
 mapScene
-  .on('preRender', () => {
-    sun.update({
-      center: map.getCenter(),
-      scene: mapScene,
-    })
+  .on('preRender', (e) => {
+    sun.update(e.frameState)
   })
   .on('postRender', () => {
     map.triggerRepaint()

@@ -21,8 +21,8 @@ mapScene.addLight(new THREE.AmbientLight())
 function generatePosition(num) {
   let list = []
   for (let i = 0; i < num; i++) {
-    let lng = 120.38105869 + Math.random() * 0.5
-    let lat = 31.10115627 + Math.random() * 0.5
+    let lng = 120.38105869 + Math.random() * 0.1
+    let lat = 31.10115627 + Math.random() * 0.1
     list.push([lng, lat])
   }
   return list
