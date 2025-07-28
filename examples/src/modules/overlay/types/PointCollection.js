@@ -5,7 +5,7 @@
 import { Group, Points, Float32BufferAttribute } from 'three'
 import Overlay from '../Overlay.js'
 import { SceneTransform } from '@dvt3d/maplibre-three-plugin'
-import { Util } from '../../utils'
+import { Util } from '../../utils/index.js'
 import PointMaterial from '../../material/types/PointMaterial.js'
 
 class PointCollection extends Overlay {

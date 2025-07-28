@@ -4,8 +4,8 @@
 
 import { Group, Points, Float32BufferAttribute } from 'three'
 import Overlay from '../Overlay.js'
-import { Util } from '../../utils'
-import { PointMaterial } from '../../material'
+import { Util } from '../../utils/index.js'
+import { PointMaterial } from '../../material/index.js'
 
 class Point extends Overlay {
   constructor(position) {

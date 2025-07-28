@@ -3,7 +3,7 @@
  */
 import { EventDispatcher, Vector3 } from 'three'
 import { SceneTransform } from '@dvt3d/maplibre-three-plugin'
-import { Util } from '../utils'
+import { Util } from '../utils/index.js'
 
 class Overlay {
   constructor() {

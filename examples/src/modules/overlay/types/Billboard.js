@@ -4,8 +4,8 @@
 
 import { Group, Sprite } from 'three'
 import Overlay from '../Overlay.js'
-import { Util } from '../../utils'
-import { MaterialCache } from '../../material'
+import { Util } from '../../utils/index.js'
+import { MaterialCache } from '../../material/index.js'
 
 class Billboard extends Overlay {
   constructor(position, image) {
