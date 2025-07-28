@@ -2,4 +2,4 @@
  * @author Caven Chen
  */
 
-export * from './modules'
+export * from './modules/index.js'

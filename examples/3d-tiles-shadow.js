@@ -1,8 +1,7 @@
 import maplibregl from 'maplibre-gl'
-import * as THREE from 'three'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
 import config from './config.js'
-import { ModelLoaderUtil, Tileset } from './src'
+import { ModelLoaderUtil, Tileset } from './src/index.js'
 
 let map = new maplibregl.Map({
   container: 'map',

@@ -1,7 +1,7 @@
 import maplibregl from 'maplibre-gl'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
 import config from './config.js'
-import { Model } from './src'
+import { Model } from './src/index.js'
 
 const map = new maplibregl.Map({
   container: 'map-container', // container id

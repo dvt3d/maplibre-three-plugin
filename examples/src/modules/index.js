@@ -2,5 +2,5 @@
  * @author Caven Chen
  */
 
-export * from './overlay'
-export * from './utils'
+export * from './overlay/index.js'
+export * from './utils/index.js'

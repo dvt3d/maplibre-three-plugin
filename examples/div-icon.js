@@ -3,7 +3,7 @@ import * as THREE from 'three'
 import { CSS3DRenderer } from 'three/addons'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
 import config from './config.js'
-import { DivIcon } from './src'
+import { DivIcon } from './src/index.js'
 
 const map = new maplibregl.Map({
   container: 'map',

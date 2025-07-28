@@ -2,7 +2,7 @@ import maplibregl from 'maplibre-gl'
 import * as THREE from 'three'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
 import config from './config.js'
-import { PointCollection } from './src'
+import { PointCollection } from './src/index.js'
 
 const map = new maplibregl.Map({
   container: 'map',
