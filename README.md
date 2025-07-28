@@ -105,6 +105,7 @@ Object({
 #### methods
 
 - **_addLight(light)_**
+  
   Add light to the scene, support custom light objects, but the custom light objects need to support the `delegate` property, and the `delegate` type is `THREE.Object3D`
     - params
         - `{THREE.Object3D | Sun | CustomLight } light `
