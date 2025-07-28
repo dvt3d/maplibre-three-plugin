@@ -39,7 +39,7 @@ const DEF_OPTS = {
 class Tileset extends Overlay {
   constructor(url, options = {}) {
     if (!url) {
-      throw 'position is required'
+      throw 'url is required'
     }
     super()
     this._url = url
@@ -166,6 +166,7 @@ class Tileset extends Overlay {
       this._delegate.scale.set(scale, scale, scale)
       this._delegate.rotateX(Math.PI)
       this._delegate.rotateY(Math.PI)
+      this._delegate.rotateZ(Math.PI)
       this._delegate.updateMatrixWorld()
 
       const enuMatrix = this._renderer.ellipsoid.getEastNorthUpFrame(
