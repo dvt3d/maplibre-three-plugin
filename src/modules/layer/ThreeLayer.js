@@ -30,6 +30,11 @@ class ThreeLayer {
   render() {
     this._mapScene.render()
   }
+
+  onRemove() {
+    this._cameraSync = null
+    this._mapScene = null
+  }
 }
 
 export default ThreeLayer
