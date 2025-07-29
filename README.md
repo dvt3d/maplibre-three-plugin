@@ -5,9 +5,9 @@
 ## Install
 
 ```shell
-npm install @dvgis/maplibre-three-plugin
+npm install @dvt3d/maplibre-three-plugin
 ----------------------------------------
-yarn add @dvgis/maplibre-three-plugin
+yarn add @dvt3d/maplibre-three-plugin
 ```
 
 ## Quickly Start
