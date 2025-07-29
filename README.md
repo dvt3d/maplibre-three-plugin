@@ -178,7 +178,7 @@ Object({
 #### examples
 
 ```js
-const scale = new SceneTransform.projectedUnitsPerMeter(map)
+const scale = new SceneTransform.projectedUnitsPerMeter(24)
 ```
 
 #### static methods
