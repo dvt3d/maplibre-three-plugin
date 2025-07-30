@@ -27,9 +27,9 @@ ModelLoaderUtil.setKtx2loader({
   renderer: mapScene.renderer,
 })
 
-let ljz_url = '//resource.dvgis.cn/data/3dtiles/dayanta/tileset.json'
+let url = '//resource.dvgis.cn/data/3dtiles/dayanta/tileset.json'
 
-let tileset = new Tileset(ljz_url, {
+let tileset = new Tileset(url, {
   dracoLoader: ModelLoaderUtil.getDracoLoader(),
   ktxLoader: ModelLoaderUtil.getKtx2loader(),
 })
