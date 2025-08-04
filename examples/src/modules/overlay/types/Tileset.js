@@ -15,7 +15,10 @@ import {
 import { SceneTransform } from '@dvt3d/maplibre-three-plugin'
 import Overlay from '../Overlay.js'
 import { Util } from '../../utils/index.js'
-import { GLTFSpzGaussianSplattingExtension } from '../../extensions/index.js'
+import {
+  GLTFGaussianSplattingExtension,
+  GLTFSpzGaussianSplattingExtension,
+} from '../../extensions/index.js'
 
 const _box = new Box3()
 const _sphere = new Sphere()
@@ -50,7 +53,10 @@ class Tileset extends Overlay {
       new GLTFExtensionsPlugin({
         dracoLoader: options.dracoLoader,
         ktxLoader: options.ktxLoader,
-        plugins: [(parser) => new GLTFSpzGaussianSplattingExtension(parser)],
+        plugins: [
+          (parser) => new GLTFGaussianSplattingExtension(parser),
+          (parser) => new GLTFSpzGaussianSplattingExtension(parser),
+        ],
       })
     )
 

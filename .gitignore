@@ -14,4 +14,4 @@ pack/
 package-lock.json
 .DS_Store
 .history
-examples/config.js
+*/config.js
