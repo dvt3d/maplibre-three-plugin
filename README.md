@@ -87,8 +87,8 @@ Object({
 
 #### event hooks
 
-- `preRest` : A hook that calls `renderer.resetState` before each animation frame
-- `postRest`: A hook that calls `renderer.resetState` after each animation frame
+- `preReset` : A hook that calls `renderer.resetState` before each animation frame
+- `postReset`: A hook that calls `renderer.resetState` after each animation frame
 - `preRender`: A hook that calls `renderer.render` before each animation frame
 - `postRender`: A hook that calls `renderer.render` after each animation frame
 

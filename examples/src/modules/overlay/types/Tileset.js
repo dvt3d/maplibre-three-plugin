@@ -15,6 +15,7 @@ import {
 import { SceneTransform } from '@dvt3d/maplibre-three-plugin'
 import Overlay from '../Overlay.js'
 import { Util } from '../../utils/index.js'
+import { GLTFSpzGaussianSplattingExtension } from '../../extensions/index.js'
 
 const _box = new Box3()
 const _sphere = new Sphere()
@@ -49,8 +50,18 @@ class Tileset extends Overlay {
       new GLTFExtensionsPlugin({
         dracoLoader: options.dracoLoader,
         ktxLoader: options.ktxLoader,
+        plugins: [(parser) => new GLTFSpzGaussianSplattingExtension(parser)],
       })
     )
+
+    if (options.cesiumIon && options.cesiumIon.token) {
+      this._renderer.registerPlugin(
+        new CesiumIonAuthPlugin({
+          apiToken: options.cesiumIon.token,
+          assetId: this.url,
+        })
+      )
+    }
 
     options.useDebug && this._renderer.registerPlugin(new DebugTilesPlugin())
 
@@ -60,15 +71,6 @@ class Tileset extends Overlay {
       this._renderer.registerPlugin(new UpdateOnChangePlugin())
 
     options.useFade && this._renderer.registerPlugin(new TilesFadePlugin())
-
-    if (options.ionAccessToken && options.ionAssetId) {
-      this._renderer.registerPlugin(
-        new CesiumIonAuthPlugin({
-          apiToken: options.ionAccessToken,
-          assetId: options.ionAssetId,
-        })
-      )
-    }
 
     Util.merge(
       this._renderer.fetchOptions,
@@ -214,6 +216,27 @@ class Tileset extends Overlay {
       positionDegrees[2] + height
     )
     this._delegate.position.copy(this._position)
+    return this
+  }
+
+  /**
+   *
+   * @param rotation
+   * @returns {Tileset}
+   */
+  setRotation(rotation) {
+    if (rotation[0]) {
+      this._delegate.rotateX(rotation[0])
+    }
+
+    if (rotation[1]) {
+      this._delegate.rotateY(rotation[1])
+    }
+
+    if (rotation[2]) {
+      this._delegate.rotateZ(rotation[2])
+    }
+
     return this
   }
 }
