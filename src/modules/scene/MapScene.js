@@ -8,7 +8,7 @@ import {
   Vector3,
 } from 'three'
 import ThreeLayer from '../layer/ThreeLayer'
-import { EARTH_CIRCUMFERENCE, WORLD_SIZE } from '../constants'
+import { WORLD_SIZE } from '../constants'
 import Util from '../utils/Util'
 import SceneTransform from '../transform/SceneTransform'
 
@@ -69,9 +69,7 @@ class MapScene {
     this._world.position.set(WORLD_SIZE / 2, WORLD_SIZE / 2, 0)
     this._world.matrixAutoUpdate = false
     this._scene.add(this._world)
-
-    this._map.on('style.load', this._onStyleLoad.bind(this))
-
+    this._map.on('render', this._onMapRender.bind(this))
     this._event = new EventDispatcher()
   }
 
@@ -107,8 +105,10 @@ class MapScene {
    *
    * @private
    */
-  _onStyleLoad() {
-    this._map.addLayer(new ThreeLayer('map_scene_layer', this))
+  _onMapRender() {
+    if (!this._map.getLayer('map_scene_layer')) {
+      this._map.addLayer(new ThreeLayer('map_scene_layer', this))
+    }
   }
 
   /**
@@ -126,12 +126,12 @@ class MapScene {
         renderer: this._renderer,
       }
       this._event.dispatchEvent({
-        type: 'preRest',
+        type: 'preReset',
         frameState,
       })
       this.renderer.resetState()
       this._event.dispatchEvent({
-        type: 'postRest',
+        type: 'postReset',
         frameState,
       })
       this._event.dispatchEvent({
