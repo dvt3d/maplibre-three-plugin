@@ -24,7 +24,7 @@ class ThreeLayer {
   }
 
   onAdd(map, gl) {
-    this._cameraSync.syncCamera()
+    this._cameraSync.syncCamera(true)
   }
 
   render() {

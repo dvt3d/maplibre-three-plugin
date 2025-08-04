@@ -20,38 +20,44 @@ class CameraSync {
       0
     )
     this._worldSizeRatio = TILE_SIZE / WORLD_SIZE
-    this._map.on('move', this.syncCamera.bind(this))
-    this._map.on('resize', this.syncCamera.bind(this))
+    this._map.on('move', () => {
+      this.syncCamera(false)
+    })
+    this._map.on('resize', () => {
+      this.syncCamera(true)
+    })
   }
 
   /**
    *
    */
-  syncCamera() {
+  syncCamera(updateProjectionMatrix) {
     const transform = this._map.transform
-    this._camera.aspect = transform.width / transform.height
-    const centerOffset = transform.centerOffset || new Vector3()
-    const fovInRadians = transform.fov * DEG2RAD
+
     const pitchInRadians = transform.pitch * DEG2RAD
     const bearingInRadians = transform.bearing * DEG2RAD
 
-    // set camera projection matrix
-    projectionMatrix.elements = Util.makePerspectiveMatrix(
-      fovInRadians,
-      this._camera.aspect,
-      transform.height / 50,
-      transform.farZ
-    )
+    if (updateProjectionMatrix) {
+      const fovInRadians = transform.fov * DEG2RAD
+      const centerOffset = transform.centerOffset || new Vector3()
+      this._camera.aspect = transform.width / transform.height
 
-    this._camera.projectionMatrix = projectionMatrix
+      // set camera projection matrix
+      projectionMatrix.elements = Util.makePerspectiveMatrix(
+        fovInRadians,
+        this._camera.aspect,
+        transform.height / 50,
+        transform.farZ
+      )
+      this._camera.projectionMatrix = projectionMatrix
 
-    this._camera.projectionMatrix.elements[8] =
-      (-centerOffset.x * 2) / transform.width
-    this._camera.projectionMatrix.elements[9] =
-      (centerOffset.y * 2) / transform.height
+      this._camera.projectionMatrix.elements[8] =
+        (-centerOffset.x * 2) / transform.width
+      this._camera.projectionMatrix.elements[9] =
+        (centerOffset.y * 2) / transform.height
+    }
 
     //set camera world Matrix
-
     cameraTranslateZ.makeTranslation(0, 0, transform.cameraToCenterDistance)
 
     const cameraWorldMatrix = new Matrix4()
