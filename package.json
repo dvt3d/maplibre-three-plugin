@@ -25,6 +25,7 @@
     "dev": "rimraf dist && gulp dev",
     "build": "tsdown",
     "prepublishOnly": "pnpm run build",
+    "build:example": "pnpm --filter @mtp/examples run build",
     "lint": "eslint --fix src"
   },
   "peerDependencies": {
