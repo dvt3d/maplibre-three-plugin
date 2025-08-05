@@ -16,3 +16,4 @@ package-lock.json
 .history
 */config.js
 dist
+examples-dist

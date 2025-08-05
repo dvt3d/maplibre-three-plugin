@@ -2,23 +2,23 @@
  * @author Caven Chen
  */
 
-import { Group, Vector3, Matrix4, Box3, Sphere } from 'three'
 import { TilesRenderer } from '3d-tiles-renderer'
 import {
-  GLTFExtensionsPlugin,
-  UnloadTilesPlugin,
-  DebugTilesPlugin,
-  TilesFadePlugin,
   CesiumIonAuthPlugin,
+  DebugTilesPlugin,
+  GLTFExtensionsPlugin,
+  TilesFadePlugin,
+  UnloadTilesPlugin,
   UpdateOnChangePlugin,
 } from '3d-tiles-renderer/plugins'
 import { SceneTransform } from '@dvt3d/maplibre-three-plugin'
-import Overlay from '../Overlay.js'
-import { Util } from '../../utils/index.js'
+import { Box3, Group, Matrix4, Sphere, Vector3 } from 'three'
 import {
   GLTFGaussianSplattingExtension,
   GLTFSpzGaussianSplattingExtension,
 } from '../../extensions/index.js'
+import { Util } from '../../utils/index.js'
+import Overlay from '../Overlay.js'
 
 const _box = new Box3()
 const _sphere = new Sphere()
@@ -54,10 +54,10 @@ class Tileset extends Overlay {
         dracoLoader: options.dracoLoader,
         ktxLoader: options.ktxLoader,
         plugins: [
-          (parser) => new GLTFGaussianSplattingExtension(parser),
-          (parser) => new GLTFSpzGaussianSplattingExtension(parser),
+          parser => new GLTFGaussianSplattingExtension(parser),
+          parser => new GLTFSpzGaussianSplattingExtension(parser),
         ],
-      })
+      }),
     )
 
     if (options.cesiumIon && options.cesiumIon.token) {
@@ -65,7 +65,7 @@ class Tileset extends Overlay {
         new CesiumIonAuthPlugin({
           apiToken: options.cesiumIon.token,
           assetId: this.url,
-        })
+        }),
       )
     }
 
@@ -73,21 +73,21 @@ class Tileset extends Overlay {
 
     options.useUnload && this._renderer.registerPlugin(new UnloadTilesPlugin())
 
-    options.useUpdate &&
-      this._renderer.registerPlugin(new UpdateOnChangePlugin())
+    options.useUpdate
+    && this._renderer.registerPlugin(new UpdateOnChangePlugin())
 
     options.useFade && this._renderer.registerPlugin(new TilesFadePlugin())
 
     Util.merge(
       this._renderer.fetchOptions,
       DEF_OPTS.fetchOptions,
-      this._options.fetchOptions || {}
+      this._options.fetchOptions || {},
     )
 
     Util.merge(
       this._renderer.lruCache,
       DEF_OPTS.lruCache,
-      this._options.lruCache || {}
+      this._options.lruCache || {},
     )
     this._isLoaded = false
 
@@ -145,10 +145,12 @@ class Tileset extends Overlay {
       if (this._renderer.getBoundingBox(_box)) {
         _box.getCenter(center)
         _box.getSize(this._size)
-      } else if (this._renderer.getBoundingSphere(_sphere)) {
+      }
+      else if (this._renderer.getBoundingSphere(_sphere)) {
         center.copy(_sphere.center)
         this._size.set(_sphere.radius, _sphere.radius, _sphere.radius)
-      } else {
+      }
+      else {
         return
       }
 
@@ -165,7 +167,7 @@ class Tileset extends Overlay {
       this._position = SceneTransform.lngLatToVector3(
         positionDegrees.lng,
         positionDegrees.lat,
-        positionDegrees.height
+        positionDegrees.height,
       )
       this._delegate.position.copy(this._position)
 
@@ -180,7 +182,7 @@ class Tileset extends Overlay {
         cartographic.lat,
         cartographic.lon,
         cartographic.height,
-        new Matrix4()
+        new Matrix4(),
       )
 
       const modelMatrix = enuMatrix.clone().invert()
@@ -192,7 +194,7 @@ class Tileset extends Overlay {
     }
     this._renderer.removeEventListener(
       'load-tile-set',
-      this._onTilesLoaded.bind(this)
+      this._onTilesLoaded.bind(this),
     )
   }
 
@@ -204,7 +206,7 @@ class Tileset extends Overlay {
     this._renderer.setCamera(frameState.camera)
     this._renderer.setResolutionFromRenderer(
       frameState.camera,
-      frameState.renderer
+      frameState.renderer,
     )
     this._renderer.update()
   }
@@ -219,7 +221,7 @@ class Tileset extends Overlay {
     this._position = SceneTransform.lngLatToVector3(
       positionDegrees[0],
       positionDegrees[1],
-      positionDegrees[2] + height
+      positionDegrees[2] + height,
     )
     this._delegate.position.copy(this._position)
     return this
