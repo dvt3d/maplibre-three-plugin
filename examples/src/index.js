@@ -25,7 +25,7 @@ mapScene.addLight(new THREE.AmbientLight())
 
 // add model
 const loader = new GLTFLoader()
-loader.load('/assets/34M_17/34M_17.gltf', (gltf) => {
+loader.load('/maplibre-three-plugin/assets/34M_17/34M_17.gltf', (gltf) => {
   const rtcGroup = MTP.Creator.createRTCGroup([148.9819, -35.39847])
   rtcGroup.add(gltf.scene)
   mapScene.addObject(rtcGroup)

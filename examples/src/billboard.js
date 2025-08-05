@@ -35,7 +35,7 @@ let billboard
 positions.forEach((position) => {
   billboard = new Billboard(
     MTP.SceneTransform.lngLatToVector3(position[0], position[1]),
-    '/assets/icon/camera.png',
+    '/maplibre-three-plugin/assets/icon/camera.png',
   )
   mapScene.addObject(billboard)
 })

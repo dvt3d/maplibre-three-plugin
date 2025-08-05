@@ -43,7 +43,7 @@ const shadowGround = MTP.Creator.createShadowGround([148.9819, -35.39847])
 mapScene.addObject(shadowGround)
 
 Model.fromGltfAsync({
-  url: '/assets/34M_17/34M_17.gltf',
+  url: '/maplibre-three-plugin/assets/34M_17/34M_17.gltf',
   position: MTP.SceneTransform.lngLatToVector3(148.9819, -35.39847),
   castShadow: true,
 }).then((model) => {
