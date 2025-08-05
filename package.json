@@ -1,32 +1,41 @@
 {
   "name": "@dvt3d/maplibre-three-plugin",
+  "type": "module",
   "version": "1.1.0",
-  "main": "dist/index.js",
-  "repository": "https://github.com/dvt3d/maplibre-three-plugin.git",
+  "packageManager": "pnpm@10.14.0",
+  "description": "A plugin to integrate Three.js with MapLibre GL JS",
   "author": "cavencj <cavencj@gmail.com>",
   "license": "MIT",
-  "type": "module",
+  "repository": "https://github.com/dvt3d/maplibre-three-plugin.git",
+  "keywords": ["maplibre", "three.js", "3d", "map", "plugin"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "browser": "./dist/index.iife.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "rimraf dist && gulp dev",
-    "build": "rimraf dist && gulp build",
-    "build:node": "rimraf dist && gulp buildNode",
-    "build:iife": "rimraf dist && gulp buildIIFE",
-    "build:release": "rimraf dist && gulp buildRelease",
-    "prepublishOnly": "yarn run build:release",
+    "build": "tsdown",
+    "prepublishOnly": "pnpm run build",
     "lint": "eslint --fix src"
+  },
+  "peerDependencies": {
+    "maplibre-gl": "^5.6.1",
+    "three": "^0.178.0"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^5.1.0",
     "@types/three": "^0.179.0",
     "eslint": "^9.32.0",
     "tsdown": "^0.13.3"
-  },
-  "peerDependencies": {
-    "maplibre-gl": "^5.6.1",
-    "three": "^0.178.0"
-  },
-  "files": [
-    "dist"
-  ],
-  "packageManager": "pnpm@10.14.0"
+  }
 }
