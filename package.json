@@ -17,10 +17,12 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "^5.1.0",
+    "@types/three": "^0.179.0",
     "eslint": "^9.32.0",
     "tsdown": "^0.13.3"
   },
   "peerDependencies": {
+    "maplibre-gl": "^5.6.1",
     "three": "^0.178.0"
   },
   "files": [

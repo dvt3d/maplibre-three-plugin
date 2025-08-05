@@ -1,4 +1,6 @@
-import {defineConfig} from "tsdown"
+import { defineConfig } from 'tsdown'
+
 export default defineConfig({
-  entry:["./src"]
+  entry: './src/index.ts',
+  dts: true,
 })

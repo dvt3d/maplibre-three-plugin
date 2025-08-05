@@ -1,23 +1,40 @@
 /**
  * @Author: Caven Chen
+ * Class responsible for synchronizing Maplibre GL map camera with Three.js perspective camera.
+ * Handles projection matrix updates, camera positioning, and world transformations.
  */
+import type { Map as IMap } from 'maplibre-gl'
+import type { Group, PerspectiveCamera } from 'three'
+
+import { Matrix4, Vector3 } from 'three'
 import { DEG2RAD, TILE_SIZE, WORLD_SIZE } from '../constants'
 import Util from '../utils/Util'
-import { Matrix4, Vector3 } from 'three'
 
 const projectionMatrix = new Matrix4()
 const cameraTranslateZ = new Matrix4()
 const MAX_VALID_LATITUDE = 85.051129
 
 class CameraSync {
-  constructor(map, world, camera) {
+  private _map: IMap
+  private _world: Group
+  private _camera: PerspectiveCamera
+  private _translateCenter: Matrix4
+  private readonly _worldSizeRatio: number
+
+  /**
+   * Creates a new CameraSync instance.
+   * @param map - The Maplibre GL map instance
+   * @param world - Three.js Group containing the map objects
+   * @param camera - Three.js PerspectiveCamera to synchronize with the map
+   */
+  constructor(map: IMap, world: Group, camera: PerspectiveCamera) {
     this._map = map
     this._world = world
     this._camera = camera
     this._translateCenter = new Matrix4().makeTranslation(
       WORLD_SIZE / 2,
       -WORLD_SIZE / 2,
-      0
+      0,
     )
     this._worldSizeRatio = TILE_SIZE / WORLD_SIZE
     this._map.on('move', () => {
@@ -29,9 +46,11 @@ class CameraSync {
   }
 
   /**
-   *
+   * Synchronizes the Three.js camera with the Maplibre map view.
+   * Updates projection matrix, camera position, and world transformations.
+   * @param updateProjectionMatrix - Whether to update the camera's projection matrix
    */
-  syncCamera(updateProjectionMatrix) {
+  syncCamera(updateProjectionMatrix: boolean) {
     const transform = this._map.transform
 
     const pitchInRadians = transform.pitch * DEG2RAD
@@ -47,17 +66,17 @@ class CameraSync {
         fovInRadians,
         this._camera.aspect,
         transform.height / 50,
-        transform.farZ
+        transform.farZ,
       )
       this._camera.projectionMatrix = projectionMatrix
 
-      this._camera.projectionMatrix.elements[8] =
-        (-centerOffset.x * 2) / transform.width
-      this._camera.projectionMatrix.elements[9] =
-        (centerOffset.y * 2) / transform.height
+      this._camera.projectionMatrix.elements[8]
+        = (-centerOffset.x * 2) / transform.width
+      this._camera.projectionMatrix.elements[9]
+        = (centerOffset.y * 2) / transform.height
     }
 
-    //set camera world Matrix
+    // set camera world Matrix
     cameraTranslateZ.makeTranslation(0, 0, transform.cameraToCenterDistance)
 
     const cameraWorldMatrix = new Matrix4()
@@ -66,8 +85,8 @@ class CameraSync {
       .premultiply(new Matrix4().makeRotationZ(-bearingInRadians))
 
     if (transform.elevation) {
-      cameraWorldMatrix.elements[14] =
-        transform.cameraToCenterDistance * Math.cos(pitchInRadians)
+      cameraWorldMatrix.elements[14]
+        = transform.cameraToCenterDistance * Math.cos(pitchInRadians)
     }
 
     this._camera.matrixWorld.copy(cameraWorldMatrix)
@@ -75,6 +94,7 @@ class CameraSync {
     // Handle scaling and translation of objects in the map in the world's matrix transform, not the camera
     const zoomPow = transform.scale * this._worldSizeRatio
     const scale = new Matrix4().makeScale(zoomPow, zoomPow, zoomPow)
+    // todo map.transform.x||y always undefined
     let x = transform.x
     let y = transform.y
     if (!x || !y) {
@@ -82,7 +102,7 @@ class CameraSync {
       const lat = Util.clamp(
         center.lat,
         -MAX_VALID_LATITUDE,
-        MAX_VALID_LATITUDE
+        MAX_VALID_LATITUDE,
       )
       x = Util.mercatorXFromLng(center.lng) * transform.worldSize
       y = Util.mercatorYFromLat(lat) * transform.worldSize
