@@ -1,8 +1,9 @@
 /**
  * @author Caven Chen
  */
-import { EventDispatcher, Vector3 } from 'three'
+
 import { SceneTransform } from '@dvt3d/maplibre-three-plugin'
+import { EventDispatcher, Vector3 } from 'three'
 import { Util } from '../utils/index.js'
 
 class Overlay {
@@ -102,8 +103,8 @@ class Overlay {
    */
   fire(type, params = {}) {
     this._event.dispatchEvent({
-      type: type,
-      params: params,
+      type,
+      params,
     })
     return this
   }

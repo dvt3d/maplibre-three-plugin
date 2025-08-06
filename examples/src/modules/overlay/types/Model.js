@@ -1,9 +1,9 @@
+import { Creator, SceneTransform } from '@dvt3d/maplibre-three-plugin'
 /**
  * @author Caven Chen
  */
 import { Box3, Vector3 } from 'three'
 import { ModelLoaderUtil } from '../../utils/index.js'
-import { Creator, SceneTransform } from '@dvt3d/maplibre-three-plugin'
 import Overlay from '../Overlay.js'
 
 const _box = new Box3()
@@ -13,7 +13,7 @@ class Model extends Overlay {
     this._content = content
     this._position = options.position
     this._delegate = Creator.createRTCGroup(
-      SceneTransform.vector3ToLngLat(this._position)
+      SceneTransform.vector3ToLngLat(this._position),
     )
     this._delegate.name = 'model-root'
     this._delegate.add(this._content)
@@ -33,7 +33,8 @@ class Model extends Overlay {
     }
     this._castShadow = castShadow
     this._content.traverse((obj) => {
-      if (obj.isMesh) obj.castShadow = this._castShadow
+      if (obj.isMesh)
+        obj.castShadow = this._castShadow
     })
   }
 
@@ -53,8 +54,8 @@ class Model extends Overlay {
     if (!options.position) {
       throw 'position is required'
     }
-    let gltf = await ModelLoaderUtil.loadGLTF(options.url)
-    let model = new Model(gltf.scene, options)
+    const gltf = await ModelLoaderUtil.loadGLTF(options.url)
+    const model = new Model(gltf.scene, options)
     model.castShadow = options.castShadow
     return model
   }
@@ -65,7 +66,7 @@ class Model extends Overlay {
    * @returns {Promise<void>}
    */
   static async fromB3dmAsync(options) {
-    return
+
   }
 }
 

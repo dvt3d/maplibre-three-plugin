@@ -1,9 +1,9 @@
 /**
  * @author Caven Chen
  */
-import { ShaderMaterial, Color } from 'three'
-import point_vs from '../../shaders/point_vs.glsl.js'
+import { Color, ShaderMaterial } from 'three'
 import point_fs from '../../shaders/point_fs.glsl.js'
+import point_vs from '../../shaders/point_vs.glsl.js'
 
 class PointMaterial extends ShaderMaterial {
   constructor(options = {}) {
