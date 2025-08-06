@@ -1,2 +1,3 @@
-import { Creator, MapScene, SceneTransform, Sun } from './modules';
-export { Creator, MapScene, SceneTransform, Sun };
+import { MapScene, SceneTransform, Creator, Sun } from './modules'
+
+export { MapScene, SceneTransform, Creator, Sun }

@@ -1,11 +1,11 @@
-import { LoadingManager } from 'three'
 import {
   DRACOLoader,
-  FBXLoader,
-  GLTFLoader,
   KTX2Loader,
+  GLTFLoader,
+  FBXLoader,
   OBJLoader,
-} from 'three/examples/jsm/Addons.js'
+} from 'three/addons'
+import { LoadingManager } from 'three'
 
 const loadingManager = new LoadingManager()
 
@@ -70,7 +70,7 @@ class ModelLoaderUtil {
         () => {},
         () => {
           reject()
-        },
+        }
       )
     })
   }
@@ -91,7 +91,7 @@ class ModelLoaderUtil {
         },
         () => {
           reject()
-        },
+        }
       )
     })
   }
@@ -111,7 +111,7 @@ class ModelLoaderUtil {
         () => {},
         () => {
           reject()
-        },
+        }
       )
     })
   }
@@ -143,7 +143,7 @@ class ModelLoaderUtil {
         () => {},
         () => {
           reject()
-        },
+        }
       )
     })
   }

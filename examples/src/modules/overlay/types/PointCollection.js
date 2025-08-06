@@ -2,11 +2,11 @@
  * @author Caven Chen
  */
 
-import { SceneTransform } from '@dvt3d/maplibre-three-plugin'
-import { Float32BufferAttribute, Group, Points } from 'three'
-import PointMaterial from '../../material/types/PointMaterial.js'
-import { Util } from '../../utils/index.js'
+import { Group, Points, Float32BufferAttribute } from 'three'
 import Overlay from '../Overlay.js'
+import { SceneTransform } from '@dvt3d/maplibre-three-plugin'
+import { Util } from '../../utils/index.js'
+import PointMaterial from '../../material/types/PointMaterial.js'
 
 class PointCollection extends Overlay {
   constructor(positions) {
@@ -25,10 +25,10 @@ class PointCollection extends Overlay {
       'position',
       new Float32BufferAttribute(
         this._positions
-          .map(position => position.clone().sub(this._positions[0]).toArray())
+          .map((position) => position.clone().sub(this._positions[0]).toArray())
           .flat(),
-        3,
-      ),
+        3
+      )
     )
     this._object3d.geometry.needsUpdate = true
     this._object3d.material = new PointMaterial()
@@ -50,10 +50,10 @@ class PointCollection extends Overlay {
       'position',
       new Float32BufferAttribute(
         this._positions
-          .map(position => position.clone().sub(this._positions[0]).toArray())
+          .map((position) => position.clone().sub(this._positions[0]).toArray())
           .flat(),
-        3,
-      ),
+        3
+      )
     )
     this._object3d.geometry.needsUpdate = true
   }

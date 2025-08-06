@@ -15,7 +15,7 @@ class MaterialCache {
   static createMaterial(options) {
     let key = ''
     if (options.type === 'billboard') {
-      key = `${options.type}-${options.image}`
+      key = options.type + '-' + options.image
       if (!cache[key]) {
         cache[key] = new BillboardMaterial(options)
       }

@@ -1,9 +1,8 @@
 /**
  * @author Caven Chen
  */
-
-import { loadSpz } from '@spz-loader/core'
 import { Group, Points, PointsMaterial } from 'three'
+import { loadSpz } from '@spz-loader/core'
 
 class GLTFSpzGaussianSplattingExtension {
   constructor(parser) {
@@ -31,23 +30,22 @@ class GLTFSpzGaussianSplattingExtension {
     return Promise.all(pending).then((results) => {
       const geometries = results[0]
       const bufferViews = results[1]
-      const group = new Group()
+      let group = new Group()
       for (let i = 0; i < geometries.length; i++) {
         const geometry = geometries[i]
         const bufferView = bufferViews[i]
-        geometry.getAttribute('position').array = bufferView.positions
+        geometry.getAttribute('position').array = bufferView['positions']
         const points = new Points(
           geometry,
           new PointsMaterial({
-            color: 0xFF0000,
-          }),
+            color: 0xff0000,
+          })
         )
         group.add(points)
       }
       return group
     })
   }
-
   /**
    *
    * @param primitives
@@ -63,7 +61,7 @@ class GLTFSpzGaussianSplattingExtension {
         pendingBufferViews.push(
           parser
             .getDependency('bufferView', extensions[this.name].bufferView)
-            .then(bufferView => loadSpz(bufferView)),
+            .then((bufferView) => loadSpz(bufferView))
         )
       }
     }

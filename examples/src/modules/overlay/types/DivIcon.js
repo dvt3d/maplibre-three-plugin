@@ -2,9 +2,9 @@
  * @author Caven Chen
  */
 
-import { CSS3DSprite } from 'three/examples/jsm/Addons.js'
-import { Util } from '../../utils/index.js'
+import { CSS3DSprite } from 'three/addons'
 import Overlay from '../Overlay.js'
+import { Util } from '../../utils/index.js'
 
 class DivIcon extends Overlay {
   constructor(position, content) {
@@ -22,8 +22,7 @@ class DivIcon extends Overlay {
 
     if (typeof content === 'string') {
       this._wrapper.innerHTML = content
-    }
-    else if (content instanceof Element) {
+    } else if (content instanceof Element) {
       while (this._wrapper.hasChildNodes()) {
         this._wrapper.removeChild(this._wrapper.firstChild)
       }

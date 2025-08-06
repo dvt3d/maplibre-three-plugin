@@ -22,7 +22,7 @@ yarn add @dvt3d/maplibre-three-plugin
 
 import maplibregl from 'maplibre-gl'
 import * as THREE from 'three'
-import { GLTFLoader } from 'three/examples/jsm/Addons.js'
+import { GLTFLoader } from 'three/addons'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
 
 const map = new maplibregl.Map({
@@ -52,11 +52,11 @@ glTFLoader.load('./assets/34M_17/34M_17.gltf', (gltf) => {
 ```
 
 ## Examples
- |                            ![pic](./images/index.png)                            |                           ![pic](./images/point.png)                           |                             ![pic](./images/point-collection.png)                              |                          ![pic](./images/billboard.png)                          |
+ |                           ![pic](./examples/index.png)                           |                           ![pic](./examples/point.png)                           |                             ![pic](./examples/point-collection.png)                              |                          ![pic](./examples/billboard.png)                          |
  |:--------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------:|
- |    [model](https://dvt3d.github.io/maplibre-three-plugin/html/index.html)    |    [point](https://dvt3d.github.io/maplibre-three-plugin/html/point.html)    | [point-collection](https://dvt3d.github.io/maplibre-three-plugin/html/point-collection.html) | [billboard](https://dvt3d.github.io/maplibre-three-plugin/html/billboard.html) |
- |                         ![pic](./images/div-icon.png)                          |                         ![pic](./images/3d-tiles.png)                          |                               ![pic](./images/3d-tiles-osgb.png)                               |                          ![pic](./images/sun-light.png)                          |
- | [div-icon](https://dvt3d.github.io/maplibre-three-plugin/html/div-icon.html) | [3d-tiles](https://dvt3d.github.io/maplibre-three-plugin/html/3d-tiles.html) |    [3d-tiles-osgb](https://dvt3d.github.io/maplibre-three-plugin/html/3d-tiles-osgb.html)    | [sun-light](https://dvt3d.github.io/maplibre-three-plugin/html/sun-light.html) |
+ |    [model](https://dvt3d.github.io/maplibre-three-plugin/examples/index.html)    |    [point](https://dvt3d.github.io/maplibre-three-plugin/examples/point.html)    | [point-collection](https://dvt3d.github.io/maplibre-three-plugin/examples/point-collection.html) | [billboard](https://dvt3d.github.io/maplibre-three-plugin/examples/billboard.html) |
+ |                         ![pic](./examples/div-icon.png)                          |                         ![pic](./examples/3d-tiles.png)                          |                               ![pic](./examples/3d-tiles-osgb.png)                               |                          ![pic](./examples/sun-light.png)                          |
+ | [div-icon](https://dvt3d.github.io/maplibre-three-plugin/examples/div-icon.html) | [3d-tiles](https://dvt3d.github.io/maplibre-three-plugin/examples/3d-tiles.html) |    [3d-tiles-osgb](https://dvt3d.github.io/maplibre-three-plugin/examples/3d-tiles-osgb.html)    | [sun-light](https://dvt3d.github.io/maplibre-three-plugin/examples/sun-light.html) |
 
 
 ## Docs

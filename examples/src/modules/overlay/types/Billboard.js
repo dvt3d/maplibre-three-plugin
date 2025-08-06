@@ -3,9 +3,9 @@
  */
 
 import { Group, Sprite } from 'three'
-import { MaterialCache } from '../../material/index.js'
-import { Util } from '../../utils/index.js'
 import Overlay from '../Overlay.js'
+import { Util } from '../../utils/index.js'
+import { MaterialCache } from '../../material/index.js'
 
 class Billboard extends Overlay {
   constructor(position, image) {
@@ -24,7 +24,7 @@ class Billboard extends Overlay {
       MaterialCache.createMaterial({
         type: 'billboard',
         image: this._image,
-      }),
+      })
     )
     this._object3d.position.copy(this._position)
     this._delegate.add(this._object3d)

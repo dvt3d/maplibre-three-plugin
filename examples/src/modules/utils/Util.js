@@ -3,8 +3,8 @@
  * @Date: 2019-12-31 17:58:01
  */
 
-const CHARS
-  = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('')
+const CHARS =
+  '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz'.split('')
 
 /**
  *  Some of the code borrows from leaflet
@@ -17,7 +17,7 @@ class Util {
    * @returns {string}
    */
   static uuid(prefix = 'D') {
-    const uuid = []
+    let uuid = []
     uuid[8] = uuid[13] = uuid[18] = uuid[23] = '-'
     uuid[14] = '4'
     let r
@@ -27,11 +27,11 @@ class Util {
         uuid[i] = CHARS[i === 19 ? (r & 0x3) | 0x8 : r]
       }
     }
-    return `${prefix}-${uuid.join('')}`
+    return prefix + '-' + uuid.join('')
   }
 
   /**
-   
+
    * Merges the properties of the `src` object (or multiple objects) into `dest` object and returns the latter.
    * @param dest
    * @param sources
@@ -67,7 +67,7 @@ class Util {
     if (!obj.hasOwnProperty('options')) {
       obj.options = obj.options ? Object.create(obj.options) : {}
     }
-    for (const i in options) {
+    for (let i in options) {
       obj.options[i] = options[i]
     }
     return obj.options
@@ -81,7 +81,7 @@ class Util {
    * @returns {number}
    */
   static formatNum(num, digits) {
-    const pow = 10 ** (digits === undefined ? 6 : digits)
+    let pow = Math.pow(10, digits === undefined ? 6 : digits)
     return Math.round(num * pow) / pow
   }
 
@@ -113,10 +113,10 @@ class Util {
    */
   static checkPosition(position) {
     return (
-      position
-      && position.hasOwnProperty('_lng')
-      && position.hasOwnProperty('_lat')
-      && position.hasOwnProperty('_alt')
+      position &&
+      position.hasOwnProperty('_lng') &&
+      position.hasOwnProperty('_lat') &&
+      position.hasOwnProperty('_alt')
     )
   }
 
@@ -160,11 +160,11 @@ class Util {
    * @returns {Blob}
    */
   static dataURLtoBlob(dataUrl) {
-    const arr = dataUrl.split(',')
-    const mime = arr[0].match(/:(.*?);/)[1]
-    const bStr = atob(arr[1])
+    let arr = dataUrl.split(',')
+    let mime = arr[0].match(/:(.*?);/)[1]
+    let bStr = atob(arr[1])
     let len = bStr.length
-    const u8Arr = new Uint8Array(len)
+    let u8Arr = new Uint8Array(len)
     while (len--) {
       u8Arr[len] = bStr.charCodeAt(len)
     }

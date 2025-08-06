@@ -15,5 +15,3 @@ package-lock.json
 .DS_Store
 .history
 */config.js
-dist
-examples-dist
