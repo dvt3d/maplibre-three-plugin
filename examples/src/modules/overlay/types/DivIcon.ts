@@ -3,7 +3,7 @@
  */
 
 import type { Vector3 } from 'three'
-import { CSS3DSprite } from 'three/examples/jsm/Addons.js'
+import { CSS3DSprite } from 'three-stdlib'
 import { Util } from '../../utils'
 import Overlay from '../Overlay'
 

@@ -1,6 +1,6 @@
 import maplibregl from 'maplibre-gl'
 import * as THREE from 'three'
-import { CSS3DRenderer } from 'three/examples/jsm/Addons.js'
+import { CSS3DRenderer } from 'three-stdlib'
 import * as MTP from '../../src'
 import config from './config'
 import { DivIcon } from './modules'

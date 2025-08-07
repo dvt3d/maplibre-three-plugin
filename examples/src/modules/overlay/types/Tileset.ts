@@ -2,7 +2,7 @@
  * @author Caven Chen
  */
 
-import type { DRACOLoader, KTX2Loader } from 'three/examples/jsm/Addons.js'
+import type { DRACOLoader, KTX2Loader } from 'three-stdlib'
 import type { IFrameState } from '../../../../../src'
 import { TilesRenderer } from '3d-tiles-renderer'
 import {

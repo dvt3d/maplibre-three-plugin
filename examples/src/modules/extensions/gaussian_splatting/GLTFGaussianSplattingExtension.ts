@@ -2,7 +2,7 @@
  * @author Caven Chen
  */
 
-import type { GLTFLoaderPlugin, GLTFParser } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import type { GLTFLoaderPlugin, GLTFParser } from 'three-stdlib'
 
 class GLTFGaussianSplattingExtension implements GLTFLoaderPlugin {
   private readonly parser: GLTFParser

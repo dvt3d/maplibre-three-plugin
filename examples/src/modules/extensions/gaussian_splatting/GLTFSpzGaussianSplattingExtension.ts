@@ -2,7 +2,7 @@
  * @author Caven Chen
  */
 
-import type { GLTFLoaderPlugin, GLTFParser } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import type { GLTFLoaderPlugin, GLTFParser } from 'three-stdlib'
 
 import { loadSpz } from '@spz-loader/core'
 import { Group, Points, PointsMaterial } from 'three'

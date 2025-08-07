@@ -3,17 +3,16 @@
  * using Three.js loaders with proper configuration
  */
 import type { Group, WebGLRenderer } from 'three'
-import type { GLTF } from 'three/examples/jsm/Addons.js'
+import type { GLTF } from 'three-stdlib'
 import type { WebGPURenderer } from 'three/webgpu'
 import { LoadingManager } from 'three'
 import {
   DRACOLoader,
   FBXLoader,
-
   GLTFLoader,
   KTX2Loader,
   OBJLoader,
-} from 'three/examples/jsm/Addons.js'
+} from 'three-stdlib'
 
 const loadingManager = new LoadingManager()
 
@@ -77,7 +76,7 @@ class ModelLoaderUtil {
    */
   static setKtx2loader(options: SetKtx2loaderOptions): typeof ModelLoaderUtil {
     options.path && ktx2loader.setTranscoderPath(options.path)
-    options.renderer && ktx2loader.detectSupport(options.renderer)
+    options.renderer && ktx2loader.detectSupport(options.renderer as WebGLRenderer)
     return this
   }
 
