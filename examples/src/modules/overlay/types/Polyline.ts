@@ -1,5 +1,5 @@
 import type { Vector3 } from 'three'
-import Overlay from '../Overlay.js'
+import Overlay from '../Overlay'
 
 class Polyline extends Overlay {
   constructor(positions: Vector3[]) {

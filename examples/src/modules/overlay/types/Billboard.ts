@@ -4,9 +4,9 @@
 
 import type { Vector3 } from 'three'
 import { Group, Sprite } from 'three'
-import { MaterialCache } from '../../material/index.js'
-import { Util } from '../../utils/index.js'
-import Overlay from '../Overlay.js'
+import { MaterialCache } from '../../material'
+import { Util } from '../../utils'
+import Overlay from '../Overlay'
 
 class Billboard extends Overlay {
   private readonly _image: string

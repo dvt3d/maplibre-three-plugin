@@ -1,8 +1,8 @@
-import * as MTP from '@dvt3d/maplibre-three-plugin'
+import * as MTP from '../../src'
 import maplibregl from 'maplibre-gl'
 import * as THREE from 'three'
 import { CSS3DRenderer } from 'three/examples/jsm/Addons.js'
-import config from './config.js'
+import config from './config'
 import { DivIcon } from './modules'
 import 'maplibre-gl/dist/maplibre-gl.css'
 

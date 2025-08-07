@@ -1,9 +1,11 @@
-import type { Group, Object3D } from 'three'
-import { Creator, SceneTransform } from '@dvt3d/maplibre-three-plugin'
 /**
  * @author Caven Chen
  */
+
+import type { Group, Object3D } from 'three'
 import { Box3, Vector3 } from 'three'
+
+import { Creator, SceneTransform } from '../../../../../src'
 import { ModelLoaderUtil } from '../../utils'
 import Overlay from '../Overlay'
 

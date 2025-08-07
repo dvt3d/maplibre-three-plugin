@@ -33,9 +33,6 @@ importers:
       3d-tiles-renderer:
         specifier: ^0.4.13
         version: 0.4.13(three@0.179.1)
-      '@dvt3d/maplibre-three-plugin':
-        specifier: workspace:*
-        version: link:..
       '@spz-loader/core':
         specifier: ^0.3.0
         version: 0.3.0

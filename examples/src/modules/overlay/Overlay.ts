@@ -3,8 +3,8 @@
  */
 
 import type { EventDispatcher, Object3D } from 'three'
-import { SceneTransform } from '@dvt3d/maplibre-three-plugin'
 import { Vector3 } from 'three'
+import { SceneTransform } from '../../../../src'
 import { Util } from '../utils'
 
 class Overlay {

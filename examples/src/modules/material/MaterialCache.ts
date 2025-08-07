@@ -2,7 +2,7 @@
  * @author Caven Chen
  */
 
-import BillboardMaterial from './types/BillboardMaterial.js'
+import BillboardMaterial from './types/BillboardMaterial'
 
 const cache: Record<string, any> = {}
 

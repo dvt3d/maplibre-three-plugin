@@ -4,9 +4,9 @@
 
 import type { BufferGeometry, Material, Object3DEventMap, Vector3 } from 'three'
 import { Float32BufferAttribute, Group, Points } from 'three'
-import { PointMaterial } from '../../material/index.js'
-import { Util } from '../../utils/index.js'
-import Overlay from '../Overlay.js'
+import { PointMaterial } from '../../material'
+import { Util } from '../../utils'
+import Overlay from '../Overlay'
 
 class Point extends Overlay {
   private _object3d: Points<BufferGeometry, Material | Material[], Object3DEventMap>

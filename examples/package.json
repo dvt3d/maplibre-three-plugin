@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "3d-tiles-renderer": "^0.4.13",
-    "@dvt3d/maplibre-three-plugin": "workspace:*",
     "@spz-loader/core": "^0.3.0",
     "maplibre-gl": "^5.6.1",
     "three": "^0.179.1"

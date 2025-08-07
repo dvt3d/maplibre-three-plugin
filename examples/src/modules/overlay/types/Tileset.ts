@@ -2,8 +2,8 @@
  * @author Caven Chen
  */
 
-import type { IFrameState } from '@dvt3d/maplibre-three-plugin'
 import type { DRACOLoader, KTX2Loader } from 'three/examples/jsm/Addons.js'
+import type { IFrameState } from '../../../../../src'
 import { TilesRenderer } from '3d-tiles-renderer'
 import {
   CesiumIonAuthPlugin,
@@ -13,13 +13,13 @@ import {
   UnloadTilesPlugin,
   UpdateOnChangePlugin,
 } from '3d-tiles-renderer/plugins'
-import { SceneTransform } from '@dvt3d/maplibre-three-plugin'
 import { Box3, Group, Matrix4, Sphere, Vector3 } from 'three'
+import { SceneTransform } from '../../../../../src'
 import {
   GLTFGaussianSplattingExtension,
   GLTFSpzGaussianSplattingExtension,
-} from '../../extensions/index.js'
-import { Util } from '../../utils/index.js'
+} from '../../extensions'
+import { Util } from '../../utils'
 import Overlay from '../Overlay'
 
 const _box = new Box3()

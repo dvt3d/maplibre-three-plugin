@@ -1,7 +1,7 @@
-import * as MTP from '@dvt3d/maplibre-three-plugin'
+import * as MTP from '../../src'
 import maplibregl from 'maplibre-gl'
 import * as THREE from 'three'
-import config from './config.js'
+import config from './config'
 import { Model } from './modules'
 import 'maplibre-gl/dist/maplibre-gl.css'
 

@@ -4,8 +4,8 @@
 
 import type { Vector3 } from 'three'
 import { CSS3DSprite } from 'three/examples/jsm/Addons.js'
-import { Util } from '../../utils/index.js'
-import Overlay from '../Overlay.js'
+import { Util } from '../../utils'
+import Overlay from '../Overlay'
 
 class DivIcon extends Overlay {
   private readonly _wrapper: HTMLElement

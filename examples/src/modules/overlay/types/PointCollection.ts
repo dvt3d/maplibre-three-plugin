@@ -3,12 +3,12 @@
  */
 
 import type { BufferGeometry, Material, Object3DEventMap, Vector3 } from 'three'
-import { SceneTransform } from '@dvt3d/maplibre-three-plugin'
 import { Float32BufferAttribute, Group, Points } from 'three'
+import { SceneTransform } from '../../../../../src'
 
 import { PointMaterial } from '../../material'
-import { Util } from '../../utils/index.js'
-import Overlay from '../Overlay.js'
+import { Util } from '../../utils'
+import Overlay from '../Overlay'
 
 class PointCollection extends Overlay {
   private _positions: Array<Vector3>
