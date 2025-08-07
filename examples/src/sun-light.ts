@@ -20,6 +20,8 @@ const map = new maplibregl.Map({
 const mapScene = new MTP.MapScene(map)
 
 const sun = new MTP.Sun()
+// eslint-disable-next-line ts/ban-ts-comment
+// @ts-expect-error
 mapScene.addLight(sun)
 
 mapScene
@@ -34,5 +36,7 @@ Model.fromGltfAsync({
   url: '/maplibre-three-plugin/assets/34M_17/34M_17.gltf',
   position: MTP.SceneTransform.lngLatToVector3(148.9819, -35.39847),
 }).then((model) => {
+  // eslint-disable-next-line ts/ban-ts-comment
+  // @ts-expect-error
   mapScene.addObject(model)
 })

@@ -2,18 +2,23 @@
  * @author Caven Chen
  */
 
+import type { Vector3 } from 'three'
 import { Group, Sprite } from 'three'
 import { MaterialCache } from '../../material/index.js'
 import { Util } from '../../utils/index.js'
 import Overlay from '../Overlay.js'
 
 class Billboard extends Overlay {
-  constructor(position, image) {
+  private readonly _image: string
+  private readonly _object3d: Sprite
+  constructor(position: Vector3, image: string) {
     super()
     if (!position) {
+      // eslint-disable-next-line no-throw-literal
       throw 'position is required'
     }
     if (!image) {
+      // eslint-disable-next-line no-throw-literal
       throw 'image is required'
     }
     this._position = position
@@ -36,7 +41,7 @@ class Billboard extends Overlay {
    * @param style
    * @returns {Billboard}
    */
-  setStyle(style) {
+  setStyle(style: Record<string, any>) {
     if (!style || Object.keys(style).length === 0) {
       return this
     }

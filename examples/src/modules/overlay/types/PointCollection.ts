@@ -2,15 +2,20 @@
  * @author Caven Chen
  */
 
+import type { BufferGeometry, Material, Object3DEventMap, Vector3 } from 'three'
 import { SceneTransform } from '@dvt3d/maplibre-three-plugin'
 import { Float32BufferAttribute, Group, Points } from 'three'
-import PointMaterial from '../../material/types/PointMaterial.js'
+
+import { PointMaterial } from '../../material'
 import { Util } from '../../utils/index.js'
 import Overlay from '../Overlay.js'
 
 class PointCollection extends Overlay {
-  constructor(positions) {
+  private _positions: Array<Vector3>
+  private readonly _object3d: Points<BufferGeometry, Material | Material[], Object3DEventMap>
+  constructor(positions: Array<Vector3>) {
     if (!positions || !positions.length) {
+      // eslint-disable-next-line no-throw-literal
       throw 'positions length must be greater than 0'
     }
     super()
@@ -30,6 +35,8 @@ class PointCollection extends Overlay {
         3,
       ),
     )
+    // eslint-disable-next-line ts/ban-ts-comment
+    // @ts-expect-error
     this._object3d.geometry.needsUpdate = true
     this._object3d.material = new PointMaterial()
     this._delegate.add(this._object3d)
@@ -42,6 +49,7 @@ class PointCollection extends Overlay {
    */
   set positions(positions) {
     if (!positions || !positions.length) {
+      // eslint-disable-next-line no-throw-literal
       throw 'positions length must be greater than 0'
     }
     this._positions = positions
@@ -55,6 +63,8 @@ class PointCollection extends Overlay {
         3,
       ),
     )
+    // eslint-disable-next-line ts/ban-ts-comment
+    // @ts-expect-error
     this._object3d.geometry.needsUpdate = true
   }
 
@@ -75,10 +85,12 @@ class PointCollection extends Overlay {
    * @param style
    * @returns {PointCollection}
    */
-  setStyle(style) {
+  setStyle(style: Record<string, any>) {
     Util.merge(this._style, style)
     if (this._object3d.material) {
       Util.merge(this._object3d.material, this._style)
+      // eslint-disable-next-line ts/ban-ts-comment
+      // @ts-expect-error
       this._object3d.material.needsUpdate = true
     }
     return this

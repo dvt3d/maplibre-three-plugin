@@ -1,14 +1,24 @@
+import type { Group, Object3D } from 'three'
 import { Creator, SceneTransform } from '@dvt3d/maplibre-three-plugin'
 /**
  * @author Caven Chen
  */
 import { Box3, Vector3 } from 'three'
-import { ModelLoaderUtil } from '../../utils/index.js'
-import Overlay from '../Overlay.js'
+import { ModelLoaderUtil } from '../../utils'
+import Overlay from '../Overlay'
+
+interface ModelOptions {
+  url: string
+  position: Vector3
+  castShadow?: boolean
+}
 
 const _box = new Box3()
 class Model extends Overlay {
-  constructor(content, options) {
+  private readonly _content: Group
+  private readonly _size: Vector3
+  private _castShadow: boolean
+  constructor(content: Group, options: ModelOptions) {
     super()
     this._content = content
     this._position = options.position
@@ -32,7 +42,9 @@ class Model extends Overlay {
       return
     }
     this._castShadow = castShadow
-    this._content.traverse((obj) => {
+    this._content.traverse((obj: Object3D) => {
+      // eslint-disable-next-line ts/ban-ts-comment
+      // @ts-expect-error
       if (obj.isMesh)
         obj.castShadow = this._castShadow
     })
@@ -47,25 +59,27 @@ class Model extends Overlay {
    * @param options
    * @returns {Promise<Model>}
    */
-  static async fromGltfAsync(options = {}) {
+  static async fromGltfAsync(options: ModelOptions) {
     if (!options.url) {
+      // eslint-disable-next-line no-throw-literal
       throw 'url is required'
     }
     if (!options.position) {
+      // eslint-disable-next-line no-throw-literal
       throw 'position is required'
     }
     const gltf = await ModelLoaderUtil.loadGLTF(options.url)
     const model = new Model(gltf.scene, options)
-    model.castShadow = options.castShadow
+    model.castShadow = !!options.castShadow
     return model
   }
 
   /**
    *
-   * @param options
    * @returns {Promise<void>}
+   * @param _options
    */
-  static async fromB3dmAsync(options) {
+  static async fromB3dmAsync(_options: ModelOptions) {
 
   }
 }

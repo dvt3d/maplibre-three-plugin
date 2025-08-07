@@ -22,6 +22,8 @@ const sun = new MTP.Sun()
 sun.currentTime = '2025/7/12 8:00:00'
 sun.castShadow = true
 sun.setShadow()
+// eslint-disable-next-line ts/ban-ts-comment
+// @ts-expect-error
 mapScene.addLight(sun)
 
 ModelLoaderUtil.setDracoLoader({
@@ -48,13 +50,17 @@ tileset.on('loaded', () => {
     1000,
   )
   mapScene.world.add(shadowGround)
+  // eslint-disable-next-line ts/ban-ts-comment
+  // @ts-expect-error
   mapScene.addObject(tileset)
+  // eslint-disable-next-line ts/ban-ts-comment
+  // @ts-expect-error
   mapScene.flyTo(tileset)
 })
 
-tileset.on('load-model', (e) => {
+tileset.on('load-model', (e: any) => {
   const model = e.scene
-  model.traverse((obj) => {
+  model.traverse((obj: any) => {
     if (obj.isMesh) {
       obj.castShadow = true
     }

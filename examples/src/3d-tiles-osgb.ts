@@ -39,8 +39,12 @@ tileset.autoDisableRendererCulling = true
 tileset.errorTarget = 6
 
 tileset.on('loaded', () => {
+  // eslint-disable-next-line ts/ban-ts-comment
+  // @ts-expect-error
   mapScene.addObject(tileset)
   tileset.setHeight(-420)
+  // eslint-disable-next-line ts/ban-ts-comment
+  // @ts-expect-error
   mapScene.flyTo(tileset)
 })
 

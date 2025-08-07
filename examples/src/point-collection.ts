@@ -17,7 +17,7 @@ const map = new maplibregl.Map({
 
 const mapScene = new MTP.MapScene(map)
 
-function generatePosition(num) {
+function generatePosition(num: number) {
   const list = []
   for (let i = 0; i < num; i++) {
     const lng = 120.38105869 + Math.random() * 0.5
@@ -35,5 +35,9 @@ const pointCollection = new PointCollection(
   ),
 )
 
+// eslint-disable-next-line ts/ban-ts-comment
+// @ts-expect-error
 mapScene.addObject(pointCollection)
+// eslint-disable-next-line ts/ban-ts-comment
+// @ts-expect-error
 mapScene.flyTo(pointCollection)

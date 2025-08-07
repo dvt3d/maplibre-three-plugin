@@ -1,7 +1,7 @@
 import * as MTP from '@dvt3d/maplibre-three-plugin'
 import maplibregl from 'maplibre-gl'
 import * as THREE from 'three'
-import config from './config.js'
+import config from './config'
 import { ModelLoaderUtil, Tileset } from './modules'
 import 'maplibre-gl/dist/maplibre-gl.css'
 
@@ -39,7 +39,11 @@ tileset.autoDisableRendererCulling = true
 tileset.errorTarget = 6
 
 tileset.on('loaded', () => {
+  // eslint-disable-next-line ts/ban-ts-comment
+  // @ts-expect-error
   mapScene.addObject(tileset)
+  // eslint-disable-next-line ts/ban-ts-comment
+  // @ts-expect-error
   mapScene.flyTo(tileset)
 })
 

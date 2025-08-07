@@ -2,21 +2,23 @@
  * @author Caven Chen
  */
 
+import type { Vector3 } from 'three'
 import { CSS3DSprite } from 'three/examples/jsm/Addons.js'
 import { Util } from '../../utils/index.js'
 import Overlay from '../Overlay.js'
 
 class DivIcon extends Overlay {
-  constructor(position, content) {
+  private readonly _wrapper: HTMLElement
+  constructor(position: Vector3, content: string | Element) {
     if (!position) {
+      // eslint-disable-next-line no-throw-literal
       throw 'position is required'
     }
     if (!content) {
+      // eslint-disable-next-line no-throw-literal
       throw 'content is required'
     }
     super()
-    this._position = position
-    this._content = content
     this._wrapper = document.createElement('div')
     this._wrapper.className = 'div-icon'
 
@@ -25,7 +27,8 @@ class DivIcon extends Overlay {
     }
     else if (content instanceof Element) {
       while (this._wrapper.hasChildNodes()) {
-        this._wrapper.removeChild(this._wrapper.firstChild)
+        if (this._wrapper.firstChild)
+          this._wrapper.removeChild(this._wrapper.firstChild)
       }
       this._wrapper.appendChild(content)
     }
@@ -39,7 +42,7 @@ class DivIcon extends Overlay {
    * @param style
    * @returns {DivIcon}
    */
-  setStyle(style) {
+  setStyle(style: Record<string, any>) {
     if (!style || Object.keys(style).length === 0) {
       return this
     }

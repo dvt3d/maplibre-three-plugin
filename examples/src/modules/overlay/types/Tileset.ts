@@ -2,8 +2,8 @@
  * @author Caven Chen
  */
 
+import type { IFrameState } from '@dvt3d/maplibre-three-plugin'
 import type { DRACOLoader, KTX2Loader } from 'three/examples/jsm/Addons.js'
-import type { IFrameState } from '../../../../../src/modules/scene/MapScene'
 import { TilesRenderer } from '3d-tiles-renderer'
 import {
   CesiumIonAuthPlugin,
@@ -24,23 +24,6 @@ import Overlay from '../Overlay'
 
 const _box = new Box3()
 const _sphere = new Sphere()
-
-const DEF_OPTS = {
-  fetchOptions: {
-    mode: 'cors',
-  },
-  lruCache: {
-    maxBytesSize: Infinity,
-    minSize: 0,
-    maxSize: Infinity,
-  },
-  useDebug: false,
-  useUnload: false,
-  useFade: false,
-  useUpdate: false,
-  ionAccessToken: null,
-  ionAssetId: null,
-}
 interface TilesetOptions {
   dracoLoader?: DRACOLoader | null
   ktxLoader?: KTX2Loader | null
@@ -58,14 +41,31 @@ interface TilesetOptions {
     maxSize: number
   }
 }
-class Tileset extends Overlay<Group> {
+const DEF_OPTS = {
+  fetchOptions: {
+    mode: 'cors',
+  },
+  lruCache: {
+    maxBytesSize: Infinity,
+    minSize: 0,
+    maxSize: Infinity,
+  },
+  useDebug: false,
+  useUnload: false,
+  useFade: false,
+  useUpdate: false,
+  ionAccessToken: null,
+  ionAssetId: null,
+}
+
+class Tileset extends Overlay {
   private readonly _url: string
   private readonly _renderer: TilesRenderer
-  private _options: TilesetOptions
+  private _options: Partial<TilesetOptions>
   private _isLoaded: boolean
   public _delegate: Group
   private readonly _size: Vector3
-  constructor(url: string, options: TilesetOptions) {
+  constructor(url: string, options: Partial<TilesetOptions> = {}) {
     if (!url) {
       // eslint-disable-next-line no-throw-literal
       throw 'url is required'
@@ -121,7 +121,6 @@ class Tileset extends Overlay<Group> {
 
     this._size = new Vector3()
     this._event = this._renderer
-
     this._type = 'Tileset'
     this.on('load-tile-set', this._onTilesLoaded.bind(this))
   }
@@ -225,7 +224,7 @@ class Tileset extends Overlay<Group> {
 
   /**
    *
-   * @param scene
+   * @param frameState
    */
   update(frameState: IFrameState) {
     this._renderer.setCamera(frameState.camera)
@@ -241,7 +240,7 @@ class Tileset extends Overlay<Group> {
    * @param height
    * @returns {Tileset}
    */
-  setHeight(height) {
+  setHeight(height: number) {
     const positionDegrees = this.positionDegrees
     this._position = SceneTransform.lngLatToVector3(
       positionDegrees[0],
@@ -257,7 +256,7 @@ class Tileset extends Overlay<Group> {
    * @param rotation
    * @returns {Tileset}
    */
-  setRotation(rotation) {
+  setRotation(rotation: [number, number, number]) {
     if (rotation[0]) {
       this._delegate.rotateX(rotation[0])
     }

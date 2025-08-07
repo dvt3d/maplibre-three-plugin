@@ -13,7 +13,7 @@ interface PointMaterialOptions {
   color?: Color
 }
 class PointMaterial extends ShaderMaterial {
-  constructor(options: PointMaterialOptions) {
+  constructor(options: Partial<PointMaterialOptions> = {}) {
     super({
       vertexShader: point_vs,
       fragmentShader: point_fs,

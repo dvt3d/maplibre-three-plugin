@@ -27,9 +27,13 @@ const tileset = new Tileset(url)
 tileset.errorTarget = 0.1
 
 tileset.on('loaded', () => {
+  // eslint-disable-next-line ts/ban-ts-comment
+  // @ts-expect-error
   mapScene.addObject(tileset)
   tileset.setRotation([Math.PI / 2, 0, 0])
   tileset.setHeight(20)
+  // eslint-disable-next-line ts/ban-ts-comment
+  // @ts-expect-error
   mapScene.flyTo(tileset)
 })
 

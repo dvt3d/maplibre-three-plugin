@@ -1,5 +1,6 @@
 import * as MTP from '@dvt3d/maplibre-three-plugin'
 import maplibregl from 'maplibre-gl'
+import * as THREE from 'three'
 import config from './config.js'
 import { Model } from './modules'
 import 'maplibre-gl/dist/maplibre-gl.css'
@@ -18,22 +19,25 @@ const map = new maplibregl.Map({
 
 // init three scene
 const mapScene = new MTP.MapScene(map)
+
 mapScene.renderer.shadowMap.enabled = true
 
-// init sun
-const sun = new MTP.Sun()
-sun.currentTime = '2025/7/12 12:00:00'
-sun.castShadow = true
-sun.setShadow()
-mapScene.addLight(sun)
+mapScene.addLight(new THREE.AmbientLight())
 
-mapScene
-  .on('preRender', (e) => {
-    sun.update(e.frameState)
-  })
-  .on('postRender', () => {
-    map.triggerRepaint()
-  })
+const dirLight = new THREE.DirectionalLight(0xFFFFFF, 1)
+dirLight.castShadow = true
+dirLight.shadow.radius = 2
+dirLight.shadow.mapSize.width = 8192
+dirLight.shadow.mapSize.height = 8192
+dirLight.shadow.camera.top = dirLight.shadow.camera.right = 1000
+dirLight.shadow.camera.bottom = dirLight.shadow.camera.left = -1000
+dirLight.shadow.camera.near = 1
+dirLight.shadow.camera.far = 1e8
+dirLight.shadow.camera.visible = true
+dirLight.position.set(30, 100, 100)
+dirLight.updateMatrixWorld()
+
+mapScene.addLight(dirLight)
 
 const shadowGround = MTP.Creator.createShadowGround([148.9819, -35.39847])
 mapScene.addObject(shadowGround)
@@ -43,5 +47,7 @@ Model.fromGltfAsync({
   position: MTP.SceneTransform.lngLatToVector3(148.9819, -35.39847),
   castShadow: true,
 }).then((model) => {
+  // eslint-disable-next-line ts/ban-ts-comment
+  // @ts-expect-error
   mapScene.addObject(model)
 })

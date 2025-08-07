@@ -1,8 +1,10 @@
+import type { Vector3 } from 'three'
 import Overlay from '../Overlay.js'
 
 class Polyline extends Overlay {
-  constructor(positions) {
+  constructor(positions: Vector3[]) {
     if (!positions || !positions.length) {
+      // eslint-disable-next-line no-throw-literal
       throw 'positions length must be greater than 1'
     }
     super()

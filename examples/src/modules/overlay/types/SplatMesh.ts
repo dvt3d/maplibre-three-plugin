@@ -1,5 +1,6 @@
 class SplatMesh {
-  constructor(splatData) {
+  private _splatData: unknown
+  constructor(splatData: unknown) {
     this._splatData = splatData
   }
 

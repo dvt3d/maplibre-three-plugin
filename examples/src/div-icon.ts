@@ -21,7 +21,7 @@ mapScene.addLight(new THREE.AmbientLight())
 
 const element = document.createElement('div')
 element.className = 'div-icon-container'
-document.getElementById('map').appendChild(element)
+document.getElementById('map')!.appendChild(element)
 
 const domRenderer = new CSS3DRenderer({
   element,
@@ -35,7 +35,7 @@ mapScene.on('preRender', (e) => {
   domRenderer.render(e.frameState.scene, e.frameState.camera)
 })
 
-function generatePosition(num) {
+function generatePosition(num: number) {
   const list = []
   for (let i = 0; i < num; i++) {
     const lng = 120.38105869 + Math.random() * 0.5
@@ -53,6 +53,8 @@ positions.forEach((position) => {
     MTP.SceneTransform.lngLatToVector3(position[0], position[1]),
     '数字视界科技',
   )
+  // eslint-disable-next-line ts/ban-ts-comment
+  // @ts-expect-error
   mapScene.addObject(divIcon)
 })
 

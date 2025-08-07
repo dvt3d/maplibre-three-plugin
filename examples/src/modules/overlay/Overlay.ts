@@ -2,24 +2,24 @@
  * @author Caven Chen
  */
 
+import type { EventDispatcher, Object3D } from 'three'
 import { SceneTransform } from '@dvt3d/maplibre-three-plugin'
-import { EventDispatcher, Vector3 } from 'three'
+import { Vector3 } from 'three'
 import { Util } from '../utils'
 
-class Overlay<D> {
+class Overlay {
   private _id: string
-  protected _delegate!: D
-  private _style: {}
+  protected _delegate!: Object3D
+  protected _style: Record<string, any>
   private _show: boolean
   protected _position: Vector3
-  protected _event: EventDispatcher
+  protected _event!: EventDispatcher
   protected _type: string
   constructor() {
     this._id = Util.uuid()
     this._style = {}
     this._show = true
     this._position = new Vector3()
-    this._event = new EventDispatcher()
     this._type = 'overlay'
   }
 
@@ -74,7 +74,7 @@ class Overlay<D> {
    * @param style
    * @returns {Overlay}
    */
-  setStyle(style) {
+  setStyle(style: Record<string, any>) {
     this._style = style
     return this
   }
@@ -85,8 +85,8 @@ class Overlay<D> {
    * @param callback
    * @returns {Overlay}
    */
-  on(type, callback) {
-    this._event.addEventListener(type, callback)
+  on<T>(type: string, callback: (v: T) => void) {
+    this._event.addEventListener(type as never, callback)
     return this
   }
 
@@ -96,8 +96,8 @@ class Overlay<D> {
    * @param callback
    * @returns {Overlay}
    */
-  off(type, callback) {
-    this._event.removeEventListener(type, callback)
+  off<T>(type: string, callback: (v: T) => void) {
+    this._event.removeEventListener(type as never, callback)
     return this
   }
 
@@ -107,11 +107,11 @@ class Overlay<D> {
    * @param params
    * @returns {Overlay}
    */
-  fire(type, params = {}) {
+  fire(type: string, params: any = {}) {
     this._event.dispatchEvent({
       type,
       params,
-    })
+    } as never)
     return this
   }
 }
