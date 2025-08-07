@@ -5,8 +5,15 @@ import { SpriteMaterial, TextureLoader } from 'three'
 
 const _textureLoader = new TextureLoader()
 
+interface BillboardMaterialOptions {
+  image: string
+  depthWrite?: boolean
+  depthTest?: boolean
+}
+
 class BillboardMaterial extends SpriteMaterial {
-  constructor(options = {}) {
+  private _image: string
+  constructor(options: BillboardMaterialOptions) {
     super({
       depthWrite: !!options.depthWrite,
       depthTest: !!options.depthTest,

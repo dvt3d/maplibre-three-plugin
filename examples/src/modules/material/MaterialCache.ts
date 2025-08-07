@@ -4,7 +4,12 @@
 
 import BillboardMaterial from './types/BillboardMaterial.js'
 
-const cache = {}
+const cache: Record<string, any> = {}
+
+interface CacheMaterialOptions {
+  type: string
+  image: string
+}
 
 class MaterialCache {
   /**
@@ -12,7 +17,7 @@ class MaterialCache {
    * @param options
    * @returns {*}
    */
-  static createMaterial(options) {
+  static createMaterial(options: CacheMaterialOptions) {
     let key = ''
     if (options.type === 'billboard') {
       key = `${options.type}-${options.image}`

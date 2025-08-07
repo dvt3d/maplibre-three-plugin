@@ -2,11 +2,18 @@
  * @author Caven Chen
  */
 import { Color, ShaderMaterial } from 'three'
-import point_fs from '../../shaders/point_fs.glsl.js'
-import point_vs from '../../shaders/point_vs.glsl.js'
+import point_fs from '../../shaders/point_fs.glsl'
+import point_vs from '../../shaders/point_vs.glsl'
 
+interface PointMaterialOptions {
+  image: string
+  depthWrite?: boolean
+  depthTest?: boolean
+  transparent?: boolean
+  color?: Color
+}
 class PointMaterial extends ShaderMaterial {
-  constructor(options = {}) {
+  constructor(options: PointMaterialOptions) {
     super({
       vertexShader: point_vs,
       fragmentShader: point_fs,
@@ -53,7 +60,7 @@ class PointMaterial extends ShaderMaterial {
   }
 
   set outlineColor(outlineColor) {
-    this.uniforms.outlineColo.copy(outlineColor)
+    this.uniforms.outlineColor.value.copy(outlineColor)
   }
 
   get outlineColor() {

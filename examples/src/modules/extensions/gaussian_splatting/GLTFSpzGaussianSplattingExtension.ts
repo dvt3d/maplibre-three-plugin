@@ -2,11 +2,15 @@
  * @author Caven Chen
  */
 
+import type { GLTFLoaderPlugin, GLTFParser } from 'three/examples/jsm/loaders/GLTFLoader.js'
+
 import { loadSpz } from '@spz-loader/core'
 import { Group, Points, PointsMaterial } from 'three'
 
-class GLTFSpzGaussianSplattingExtension {
-  constructor(parser) {
+class GLTFSpzGaussianSplattingExtension implements GLTFLoaderPlugin {
+  private readonly parser: GLTFParser
+  public readonly name: string
+  constructor(parser: GLTFParser) {
     this.parser = parser
     this.name = 'KHR_spz_gaussian_splats_compression'
   }
@@ -16,7 +20,7 @@ class GLTFSpzGaussianSplattingExtension {
    * @param meshIndex
    * @returns {Promise<Awaited<unknown>[]>}
    */
-  loadMesh(meshIndex) {
+  loadMesh(meshIndex: number) {
     const parser = this.parser
     const json = parser.json
     const extensionsUsed = json.extensionsUsed
@@ -35,8 +39,12 @@ class GLTFSpzGaussianSplattingExtension {
       for (let i = 0; i < geometries.length; i++) {
         const geometry = geometries[i]
         const bufferView = bufferViews[i]
+        // eslint-disable-next-line ts/ban-ts-comment
+        // @ts-expect-error
         geometry.getAttribute('position').array = bufferView.positions
         const points = new Points(
+          // eslint-disable-next-line ts/ban-ts-comment
+          // @ts-expect-error
           geometry,
           new PointsMaterial({
             color: 0xFF0000,
@@ -53,7 +61,7 @@ class GLTFSpzGaussianSplattingExtension {
    * @param primitives
    * @returns {*[]}
    */
-  loadBufferViews(primitives) {
+  loadBufferViews(primitives: Array<{ [key: string]: any }>) {
     const parser = this.parser
     const pendingBufferViews = []
     for (let i = 0; i < primitives.length; i++) {

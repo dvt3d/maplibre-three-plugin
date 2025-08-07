@@ -2,8 +2,12 @@
  * @author Caven Chen
  */
 
-class GLTFGaussianSplattingExtension {
-  constructor(parser) {
+import type { GLTFLoaderPlugin, GLTFParser } from 'three/examples/jsm/loaders/GLTFLoader.js'
+
+class GLTFGaussianSplattingExtension implements GLTFLoaderPlugin {
+  private readonly parser: GLTFParser
+  public name: string
+  constructor(parser: GLTFParser) {
     this.parser = parser
     this.name = 'KHR_gaussian_splatting'
   }
@@ -13,7 +17,7 @@ class GLTFGaussianSplattingExtension {
    * @param meshIndex
    * @returns {Promise<Awaited<unknown>[]>}
    */
-  loadMesh(meshIndex) {
+  loadMesh(meshIndex: number) {
     const parser = this.parser
     const json = parser.json
     const extensionsUsed = json.extensionsUsed
@@ -24,7 +28,7 @@ class GLTFGaussianSplattingExtension {
     const primitives = meshDef.primitives
     const pending = []
     pending.push(parser.loadGeometries(primitives))
-    return Promise.all(pending).then((results) => {})
+    return Promise.all(pending).then(_results => meshDef)
   }
 }
 

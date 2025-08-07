@@ -4,12 +4,18 @@
 
 import { SceneTransform } from '@dvt3d/maplibre-three-plugin'
 import { EventDispatcher, Vector3 } from 'three'
-import { Util } from '../utils/index.js'
+import { Util } from '../utils'
 
-class Overlay {
+class Overlay<D> {
+  private _id: string
+  protected _delegate!: D
+  private _style: {}
+  private _show: boolean
+  protected _position: Vector3
+  protected _event: EventDispatcher
+  protected _type: string
   constructor() {
     this._id = Util.uuid()
-    this._delegate = undefined
     this._style = {}
     this._show = true
     this._position = new Vector3()

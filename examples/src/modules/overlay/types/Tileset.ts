@@ -2,6 +2,8 @@
  * @author Caven Chen
  */
 
+import type { DRACOLoader, KTX2Loader } from 'three/examples/jsm/Addons.js'
+import type { IFrameState } from '../../../../../src/modules/scene/MapScene'
 import { TilesRenderer } from '3d-tiles-renderer'
 import {
   CesiumIonAuthPlugin,
@@ -18,7 +20,7 @@ import {
   GLTFSpzGaussianSplattingExtension,
 } from '../../extensions/index.js'
 import { Util } from '../../utils/index.js'
-import Overlay from '../Overlay.js'
+import Overlay from '../Overlay'
 
 const _box = new Box3()
 const _sphere = new Sphere()
@@ -39,10 +41,33 @@ const DEF_OPTS = {
   ionAccessToken: null,
   ionAssetId: null,
 }
-
-class Tileset extends Overlay {
-  constructor(url, options = {}) {
+interface TilesetOptions {
+  dracoLoader?: DRACOLoader | null
+  ktxLoader?: KTX2Loader | null
+  cesiumIon?: {
+    token?: string
+  }
+  useDebug?: boolean
+  useUnload?: boolean
+  useUpdate?: boolean
+  useFade?: boolean
+  fetchOptions?: any
+  lruCache?: {
+    maxBytesSize: number
+    minSize: number
+    maxSize: number
+  }
+}
+class Tileset extends Overlay<Group> {
+  private readonly _url: string
+  private readonly _renderer: TilesRenderer
+  private _options: TilesetOptions
+  private _isLoaded: boolean
+  public _delegate: Group
+  private readonly _size: Vector3
+  constructor(url: string, options: TilesetOptions) {
     if (!url) {
+      // eslint-disable-next-line no-throw-literal
       throw 'url is required'
     }
     super()
@@ -64,7 +89,7 @@ class Tileset extends Overlay {
       this._renderer.registerPlugin(
         new CesiumIonAuthPlugin({
           apiToken: options.cesiumIon.token,
-          assetId: this.url,
+          assetId: this._url,
         }),
       )
     }
@@ -135,10 +160,10 @@ class Tileset extends Overlay {
 
   /**
    *
-   * @param e
    * @private
+   * @param _e
    */
-  _onTilesLoaded(e) {
+  _onTilesLoaded(_e: unknown) {
     if (!this._isLoaded) {
       this._isLoaded = true
       const center = new Vector3()
@@ -202,7 +227,7 @@ class Tileset extends Overlay {
    *
    * @param scene
    */
-  update(frameState) {
+  update(frameState: IFrameState) {
     this._renderer.setCamera(frameState.camera)
     this._renderer.setResolutionFromRenderer(
       frameState.camera,
