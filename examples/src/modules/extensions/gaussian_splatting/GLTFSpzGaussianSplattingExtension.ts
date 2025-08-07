@@ -18,7 +18,7 @@ class GLTFSpzGaussianSplattingExtension implements GLTFLoaderPlugin {
   /**
    *
    * @param meshIndex
-   * @returns {Promise<Awaited<unknown>[]>}
+   * @returns {Promise<Awaited<unknown>[]>} Awaited<unknown>[]
    */
   loadMesh(meshIndex: number) {
     const parser = this.parser
@@ -59,7 +59,7 @@ class GLTFSpzGaussianSplattingExtension implements GLTFLoaderPlugin {
   /**
    *
    * @param primitives
-   * @returns {*[]}
+   * @returns {*[]} ArrayLike
    */
   loadBufferViews(primitives: Array<{ [key: string]: any }>) {
     const parser = this.parser

@@ -1,7 +1,7 @@
-import * as MTP from '../../src'
 import maplibregl from 'maplibre-gl'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/examples/jsm/Addons.js'
+import * as MTP from '../../src'
 import config from './config'
 import 'maplibre-gl/dist/maplibre-gl.css'
 

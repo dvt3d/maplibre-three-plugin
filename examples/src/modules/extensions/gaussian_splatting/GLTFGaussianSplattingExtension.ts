@@ -15,7 +15,7 @@ class GLTFGaussianSplattingExtension implements GLTFLoaderPlugin {
   /**
    *
    * @param meshIndex
-   * @returns {Promise<Awaited<unknown>[]>}
+   * @returns {Promise<Awaited<unknown>[]>} Awaited<unknown>[]
    */
   loadMesh(meshIndex: number) {
     const parser = this.parser

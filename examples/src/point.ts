@@ -1,6 +1,6 @@
-import * as MTP from '../../src'
 import maplibregl from 'maplibre-gl'
 import * as THREE from 'three'
+import * as MTP from '../../src'
 import config from './config'
 import { Point } from './modules'
 import 'maplibre-gl/dist/maplibre-gl.css'

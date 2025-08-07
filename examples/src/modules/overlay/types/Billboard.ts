@@ -39,9 +39,9 @@ class Billboard extends Overlay {
   /**
    *
    * @param style
-   * @returns {Billboard}
+   * @returns {Billboard} Billboard
    */
-  setStyle(style: Record<string, any>) {
+  setStyle(style: Record<string, any>): Billboard {
     if (!style || Object.keys(style).length === 0) {
       return this
     }

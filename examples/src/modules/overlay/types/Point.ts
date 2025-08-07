@@ -34,9 +34,9 @@ class Point extends Overlay {
   /**
    *
    * @param style
-   * @returns {Point}
+   * @returns {Point} Point
    */
-  setStyle(style: Record<string, any>) {
+  setStyle(style: Record<string, any>): Point {
     Util.merge(this._style, style)
     if (this._object3d.material) {
       // todo: point undefined

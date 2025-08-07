@@ -238,9 +238,9 @@ class Tileset extends Overlay {
   /**
    *
    * @param height
-   * @returns {Tileset}
+   * @returns {Tileset} Tileset
    */
-  setHeight(height: number) {
+  setHeight(height: number): Tileset {
     const positionDegrees = this.positionDegrees
     this._position = SceneTransform.lngLatToVector3(
       positionDegrees[0],
@@ -254,9 +254,9 @@ class Tileset extends Overlay {
   /**
    *
    * @param rotation
-   * @returns {Tileset}
+   * @returns {Tileset} Tileset
    */
-  setRotation(rotation: [number, number, number]) {
+  setRotation(rotation: [number, number, number]): Tileset {
     if (rotation[0]) {
       this._delegate.rotateX(rotation[0])
     }

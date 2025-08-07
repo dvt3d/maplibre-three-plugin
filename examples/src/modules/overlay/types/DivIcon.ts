@@ -40,9 +40,9 @@ class DivIcon extends Overlay {
   /**
    *
    * @param style
-   * @returns {DivIcon}
+   * @returns {DivIcon} DivIcon
    */
-  setStyle(style: Record<string, any>) {
+  setStyle(style: Record<string, any>): DivIcon {
     if (!style || Object.keys(style).length === 0) {
       return this
     }

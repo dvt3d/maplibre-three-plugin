@@ -62,7 +62,7 @@ class Overlay {
 
   /**
    *
-   * @returns {Overlay}
+   * @returns {Overlay} Overlay
    */
   updateMatrixWorld() {
     this._delegate.updateMatrixWorld()
@@ -72,9 +72,8 @@ class Overlay {
   /**
    *
    * @param style
-   * @returns {Overlay}
    */
-  setStyle(style: Record<string, any>) {
+  setStyle(style: Record<string, any>): any {
     this._style = style
     return this
   }
@@ -83,7 +82,7 @@ class Overlay {
    *
    * @param type
    * @param callback
-   * @returns {Overlay}
+   * @returns {Overlay} Overlay
    */
   on<T>(type: string, callback: (v: T) => void) {
     this._event.addEventListener(type as never, callback)
@@ -94,7 +93,7 @@ class Overlay {
    *
    * @param type
    * @param callback
-   * @returns {Overlay}
+   * @returns {Overlay} Overlay
    */
   off<T>(type: string, callback: (v: T) => void) {
     this._event.removeEventListener(type as never, callback)
@@ -105,7 +104,7 @@ class Overlay {
    *
    * @param type
    * @param params
-   * @returns {Overlay}
+   * @returns {Overlay} Overlay
    */
   fire(type: string, params: any = {}) {
     this._event.dispatchEvent({

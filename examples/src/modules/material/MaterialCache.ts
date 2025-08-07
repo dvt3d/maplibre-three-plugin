@@ -15,7 +15,7 @@ class MaterialCache {
   /**
    *
    * @param options
-   * @returns {*}
+   * @returns {*} cache material
    */
   static createMaterial(options: CacheMaterialOptions) {
     let key = ''

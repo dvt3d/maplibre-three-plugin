@@ -59,9 +59,9 @@ class Model extends Overlay {
   /**
    *
    * @param options
-   * @returns {Promise<Model>}
+   * @returns {Promise<Model>} Model
    */
-  static async fromGltfAsync(options: ModelOptions) {
+  static async fromGltfAsync(options: ModelOptions): Promise<Model> {
     if (!options.url) {
       // eslint-disable-next-line no-throw-literal
       throw 'url is required'
