@@ -158,28 +158,34 @@ var CameraSync = class {
       0
     );
     this._worldSizeRatio = TILE_SIZE / WORLD_SIZE;
-    this._map.on("move", this.syncCamera.bind(this));
-    this._map.on("resize", this.syncCamera.bind(this));
+    this._map.on("move", () => {
+      this.syncCamera(false);
+    });
+    this._map.on("resize", () => {
+      this.syncCamera(true);
+    });
   }
   /**
    *
    */
-  syncCamera() {
+  syncCamera(updateProjectionMatrix) {
     const transform = this._map.transform;
-    this._camera.aspect = transform.width / transform.height;
-    const centerOffset = transform.centerOffset || new Vector3();
-    const fovInRadians = transform.fov * DEG2RAD;
     const pitchInRadians = transform.pitch * DEG2RAD;
     const bearingInRadians = transform.bearing * DEG2RAD;
-    projectionMatrix.elements = Util_default.makePerspectiveMatrix(
-      fovInRadians,
-      this._camera.aspect,
-      transform.height / 50,
-      transform.farZ
-    );
-    this._camera.projectionMatrix = projectionMatrix;
-    this._camera.projectionMatrix.elements[8] = -centerOffset.x * 2 / transform.width;
-    this._camera.projectionMatrix.elements[9] = centerOffset.y * 2 / transform.height;
+    if (updateProjectionMatrix) {
+      const fovInRadians = transform.fov * DEG2RAD;
+      const centerOffset = transform.centerOffset || new Vector3();
+      this._camera.aspect = transform.width / transform.height;
+      projectionMatrix.elements = Util_default.makePerspectiveMatrix(
+        fovInRadians,
+        this._camera.aspect,
+        transform.height / 50,
+        transform.farZ
+      );
+      this._camera.projectionMatrix = projectionMatrix;
+      this._camera.projectionMatrix.elements[8] = -centerOffset.x * 2 / transform.width;
+      this._camera.projectionMatrix.elements[9] = centerOffset.y * 2 / transform.height;
+    }
     cameraTranslateZ.makeTranslation(0, 0, transform.cameraToCenterDistance);
     const cameraWorldMatrix = new Matrix4().premultiply(cameraTranslateZ).premultiply(new Matrix4().makeRotationX(pitchInRadians)).premultiply(new Matrix4().makeRotationZ(-bearingInRadians));
     if (transform.elevation) {
@@ -228,10 +234,14 @@ var ThreeLayer = class {
     return "3d";
   }
   onAdd(map, gl) {
-    this._cameraSync.syncCamera();
+    this._cameraSync.syncCamera(true);
   }
   render() {
     this._mapScene.render();
+  }
+  onRemove() {
+    this._cameraSync = null;
+    this._mapScene = null;
   }
 };
 var ThreeLayer_default = ThreeLayer;
@@ -352,7 +362,7 @@ var MapScene = class {
     this._world.position.set(WORLD_SIZE / 2, WORLD_SIZE / 2, 0);
     this._world.matrixAutoUpdate = false;
     this._scene.add(this._world);
-    this._map.on("style.load", this._onStyleLoad.bind(this));
+    this._map.on("render", this._onMapRender.bind(this));
     this._event = new EventDispatcher();
   }
   get map() {
@@ -380,8 +390,10 @@ var MapScene = class {
    *
    * @private
    */
-  _onStyleLoad() {
-    this._map.addLayer(new ThreeLayer_default("map_scene_layer", this));
+  _onMapRender() {
+    if (!this._map.getLayer("map_scene_layer")) {
+      this._map.addLayer(new ThreeLayer_default("map_scene_layer", this));
+    }
   }
   /**
    *
@@ -398,12 +410,12 @@ var MapScene = class {
         renderer: this._renderer
       };
       this._event.dispatchEvent({
-        type: "preRest",
+        type: "preReset",
         frameState
       });
       this.renderer.resetState();
       this._event.dispatchEvent({
-        type: "postRest",
+        type: "postReset",
         frameState
       });
       this._event.dispatchEvent({

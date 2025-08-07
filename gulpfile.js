@@ -34,7 +34,7 @@ async function buildModules(options) {
     await esbuild.build({
       ...buildConfig,
       format: 'iife',
-      globalName: '',
+      globalName: 'MTP',
       minify: options.minify,
       plugins: [
         GlobalsPlugin({
