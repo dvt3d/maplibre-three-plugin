@@ -1,7 +1,31 @@
 import { Group, DirectionalLight, HemisphereLight, Color } from 'three'
 import SunCalc from '../utils/SunCalc'
+import type { IFrameState } from '../scene/MapScene'
 
+interface ShadowOptions {
+  /** Blur radius for shadow edges */
+  radius: number
+  /** Width and height of the shadow map */
+  mapSize: [number, number]
+  /** Top and right boundaries of the shadow camera frustum */
+  topRight: number
+  /** Bottom and left boundaries of the shadow camera frustum */
+  bottomLeft: number
+  /** Near clipping plane of the shadow camera */
+  near: number
+  /** Far clipping plane of the shadow camera */
+  far: number
+}
+
+/**
+ *
+ */
 class Sun {
+  private readonly _delegate: Group
+  private readonly _sunLight: DirectionalLight
+  private readonly _hemiLight: HemisphereLight
+  private _currentTime: string | number | Date
+
   constructor() {
     this._delegate = new Group()
     this._delegate.name = 'Sun'
@@ -16,7 +40,7 @@ class Sun {
     this._hemiLight.position.set(0, 0, 50)
     this._delegate.add(this._sunLight)
     this._delegate.add(this._hemiLight)
-    this._currentTime = null
+    this._currentTime = new Date().getTime()
   }
 
   get delegate() {
@@ -52,7 +76,7 @@ class Sun {
    * @param shadow
    * @returns {Sun}
    */
-  setShadow(shadow = {}) {
+  setShadow(shadow: Partial<ShadowOptions> = {}): Sun {
     this._sunLight.shadow.radius = shadow.radius || 2
     this._sunLight.shadow.mapSize.width = shadow.mapSize
       ? shadow.mapSize[0]
@@ -74,7 +98,7 @@ class Sun {
    *
    * @param frameState
    */
-  update(frameState) {
+  update(frameState: IFrameState): void {
     const WORLD_SIZE = 512 * 2000
     const date = new Date(this._currentTime || new Date().getTime())
     const center = frameState.center

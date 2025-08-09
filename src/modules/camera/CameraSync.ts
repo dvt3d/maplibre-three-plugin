@@ -2,15 +2,22 @@
  * @Author: Caven Chen
  */
 import { DEG2RAD, TILE_SIZE, WORLD_SIZE } from '../constants'
-import Util from '../utils/Util'
-import { Matrix4, Vector3 } from 'three'
+import Util from '../utils/Util.js'
+import { type Group, Matrix4, type PerspectiveCamera, Vector3 } from 'three'
+import type { IMap } from '../scene/MapScene'
 
 const projectionMatrix = new Matrix4()
 const cameraTranslateZ = new Matrix4()
 const MAX_VALID_LATITUDE = 85.051129
 
 class CameraSync {
-  constructor(map, world, camera) {
+  private _map: IMap
+  private _world: Group
+  private _camera: PerspectiveCamera
+  private _translateCenter: Matrix4
+  private readonly _worldSizeRatio: number
+
+  constructor(map: IMap, world: Group, camera: PerspectiveCamera) {
     this._map = map
     this._world = world
     this._camera = camera
@@ -31,7 +38,7 @@ class CameraSync {
   /**
    *
    */
-  syncCamera(updateProjectionMatrix) {
+  syncCamera(updateProjectionMatrix: boolean) {
     const transform = this._map.transform
 
     const pitchInRadians = transform.pitch * DEG2RAD
@@ -43,6 +50,7 @@ class CameraSync {
       this._camera.aspect = transform.width / transform.height
 
       // set camera projection matrix
+      // @ts-ignore
       projectionMatrix.elements = Util.makePerspectiveMatrix(
         fovInRadians,
         this._camera.aspect,

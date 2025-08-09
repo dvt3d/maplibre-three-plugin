@@ -8,50 +8,50 @@
 import fse from 'fs-extra'
 import path from 'path'
 import gulp from 'gulp'
-import esbuild from 'esbuild'
+import tsup from 'tsup'
 import GlobalsPlugin from 'esbuild-plugin-globals'
 import shell from 'shelljs'
 import chalk from 'chalk'
 
 const buildConfig = {
-  entryPoints: ['src/index.js'],
-  bundle: true,
-  color: true,
-  legalComments: `inline`,
-  logLimit: 0,
-  target: `es2019`,
+  entryPoints: ['src/index.ts'],
+  dts: true,
+  target: `es2022`,
   minify: false,
   sourcemap: false,
-  write: true,
-  logLevel: 'info',
-  plugins: [],
   external: ['three'],
+  splitting: false,
 }
 
 async function buildModules(options) {
   // Build IIFE
   if (options.iife) {
-    await esbuild.build({
+    await tsup.build({
       ...buildConfig,
       format: 'iife',
-      globalName: '',
+      globalName: 'MTP',
       minify: options.minify,
-      plugins: [
+      esbuildPlugins: [
         GlobalsPlugin({
           three: 'THREE',
         }),
       ],
-      outfile: path.join('dist', 'mtp.min.js'),
+      esbuildOptions: (options, context) => {
+        delete options.outdir
+        options.outfile = path.join('dist', 'mtp.min.js')
+      },
     })
   }
   // Build Node
   if (options.node) {
-    await esbuild.build({
+    await tsup.build({
       ...buildConfig,
       format: 'esm',
-      platform: 'node',
       minify: options.minify,
-      outfile: path.join('dist', 'index.js'),
+      esbuildOptions: (options, context) => {
+        delete options.outdir
+        options.outfile = path.join('dist', 'index.js')
+      },
     })
   }
 }

@@ -7,6 +7,7 @@ import {
   Box3,
   Vector3,
 } from 'three'
+import type { Light, Object3D, Object3DEventMap } from 'three'
 import ThreeLayer from '../layer/ThreeLayer'
 import { WORLD_SIZE } from '../constants'
 import Util from '../utils/Util'
@@ -20,8 +21,97 @@ const DEF_OPTS = {
   preserveDrawingBuffer: false,
 }
 
-class MapScene {
-  constructor(map, options = {}) {
+export interface IMap {
+  transform: any
+  on(type: string, listener: () => any): any
+  getCanvas(): HTMLCanvasElement
+  getLayer(id: string): any
+  addLayer(options: any): any
+  getCenter(): { lng: number; lat: number }
+  once(type: string, completed: any): void
+  flyTo(param: {
+    center: any[]
+    zoom: number
+    bearing: number
+    pitch: number
+    duration: number
+  }): void
+}
+
+/**
+ * Configuration options for initializing a MapScene
+ */
+interface IMapSceneOptions {
+  /** Existing Three.js Scene instance (optional) */
+  scene: null | Scene
+  /** Existing Three.js PerspectiveCamera instance (optional) */
+  camera: null | PerspectiveCamera
+  /** Existing Three.js WebGLRenderer instance (optional) */
+  renderer: null | WebGLRenderer
+  /** Custom render loop function (optional) */
+  renderLoop: null | ((mapScene: MapScene) => void)
+  /** Whether to preserve the drawing buffer (optional) */
+  preserveDrawingBuffer: boolean
+}
+
+/**
+ * Event types and their payloads for MapScene events
+ */
+interface IMapSceneEvent {
+  /** Dispatched after resetting the renderer state */
+  postReset: { frameState: IFrameState }
+  /** Dispatched before rendering the scene */
+  preRender: { frameState: IFrameState }
+  /** Dispatched before resetting the renderer state */
+  preReset: { frameState: IFrameState }
+  /** Dispatched after rendering the scene */
+  postRender: { frameState: IFrameState }
+}
+
+/**
+ * Frame state information passed to event listeners
+ */
+export interface IFrameState {
+  /** Current map center coordinates */
+  center: { lng: number; lat: number }
+  /** Three.js Scene instance */
+  scene: Scene
+  /** Three.js PerspectiveCamera instance */
+  camera: PerspectiveCamera
+  /** Three.js WebGLRenderer instance */
+  renderer: WebGLRenderer
+}
+
+/**
+ * Extended Three.js Light interface with optional delegate
+ */
+interface ILight extends Light {
+  /** Optional delegate light source */
+  delegate?: Light
+}
+
+/**
+ * Extended Three.js Object3D interface with optional delegate and size
+ */
+interface IObject3D<T extends Object3DEventMap = Object3DEventMap, D = Object3D>
+  extends Object3D<T> {
+  /** Optional delegate object */
+  delegate?: D
+  /** Optional size vector */
+  size?: Vector3
+}
+
+export class MapScene {
+  private readonly _map: IMap
+  private _options: IMapSceneOptions
+  private readonly _canvas: HTMLCanvasElement
+  private readonly _scene: Scene
+  private readonly _camera: PerspectiveCamera
+  private readonly _renderer: WebGLRenderer
+  private readonly _lights: Group
+  private readonly _world: Group
+  private _event: EventDispatcher<IMapSceneEvent>
+  constructor(map: IMap, options: Partial<IMapSceneOptions> = {}) {
     if (!map) {
       throw 'missing  map'
     }
@@ -48,7 +138,7 @@ class MapScene {
         antialias: true,
         preserveDrawingBuffer: this._options.preserveDrawingBuffer,
         canvas: this._canvas,
-        context: this._canvas.getContext('webgl2'),
+        context: this._canvas.getContext('webgl2')!,
       })
     this._renderer.setPixelRatio(window.devicePixelRatio)
     this._renderer.setSize(this._canvas.clientWidth, this._canvas.clientHeight)
@@ -115,7 +205,7 @@ class MapScene {
    *
    * @returns {MapScene}
    */
-  render() {
+  render(): MapScene {
     if (this._options.renderLoop) {
       this._options.renderLoop(this)
     } else {
@@ -152,7 +242,7 @@ class MapScene {
    * @param light
    * @returns {MapScene}
    */
-  addLight(light) {
+  addLight(light: ILight): MapScene {
     this._lights.add(light.delegate || light)
     return this
   }
@@ -161,7 +251,7 @@ class MapScene {
    *
    * @param light
    */
-  removeLight(light) {
+  removeLight(light: ILight) {
     this._lights.remove(light.delegate || light)
     return this
   }
@@ -171,7 +261,7 @@ class MapScene {
    * @param object
    * @returns {MapScene}
    */
-  addObject(object) {
+  addObject(object: IObject3D): MapScene {
     this._world.add(object.delegate || object)
     return this
   }
@@ -181,17 +271,23 @@ class MapScene {
    * @param object
    * @returns {MapScene}
    */
-  removeObject(object) {
+  removeObject(object: IObject3D): MapScene {
     this._world.remove(object)
     object.traverse((child) => {
+      // @ts-ignore
       if (child.geometry) child.geometry.dispose()
+      // @ts-ignore
       if (child.material) {
+        // @ts-ignore
         if (Array.isArray(child.material)) {
+          // @ts-ignore
           child.material.forEach((m) => m.dispose())
         } else {
+          // @ts-ignore
           child.material.dispose()
         }
       }
+      // @ts-ignore
       if (child.texture) child.texture.dispose()
     })
     return this
@@ -201,7 +297,7 @@ class MapScene {
    *
    * @returns {{position: *[], heading: *, pitch}}
    */
-  getViewPosition() {
+  getViewPosition(): { position: number[]; heading: number; pitch: number } {
     const transform = this._map.transform
     const center = transform.center
     return {
@@ -227,7 +323,15 @@ class MapScene {
    * @param duration
    * @returns {MapScene}
    */
-  flyTo(target, completed = null, duration = 3) {
+  flyTo(
+    target: {
+      position: { x: number; y: number; z: number }
+      size?: any
+      delegate?: any
+    },
+    duration?: number,
+    completed?: () => void
+  ): MapScene {
     if (target && target.position) {
       if (completed) {
         this._map.once('moveend', completed)
@@ -242,10 +346,11 @@ class MapScene {
         SceneTransform.vector3ToLngLat(target.position),
         size
       )
+      // @ts-ignore
       this._map.flyTo({
         center: viewInfo.center,
         zoom: viewInfo.zoom,
-        duration: duration * 1000,
+        duration: (duration || 3) * 1000,
       })
     }
     return this
@@ -257,15 +362,27 @@ class MapScene {
    * @param completed
    * @returns {MapScene}
    */
-  zoomTo(target, completed) {
-    return this.flyTo(target, completed, 0)
+  zoomTo(
+    target: {
+      position: { x: number; y: number; z: number }
+      size?: any
+      delegate?: any
+    },
+    completed?: () => void
+  ): MapScene {
+    return this.flyTo(target, 0, completed)
   }
 
   /**
    *
    * @returns {MapScene}
    */
-  flyToPosition(position, hpr = [0, 0, 0], completed = null, duration = 3) {
+  flyToPosition(
+    position: number[],
+    hpr: number[] = [0, 0, 0],
+    completed?: () => void,
+    duration: number = 3
+  ): MapScene {
     if (completed) {
       this._map.once('moveend', completed)
     }
@@ -288,7 +405,11 @@ class MapScene {
    *
    * @returns {MapScene}
    */
-  zoomToPosition(position, hpr = [0, 0, 0], completed = null, duration = 3) {
+  zoomToPosition(
+    position: any,
+    hpr = [0, 0, 0],
+    completed?: () => void
+  ): MapScene {
     return this.flyToPosition(position, hpr, completed, 0)
   }
 
@@ -298,7 +419,11 @@ class MapScene {
    * @param callback
    * @returns {MapScene}
    */
-  on(type, callback) {
+  on(
+    type: string,
+    callback: (event: { frameState: IFrameState }) => void
+  ): MapScene {
+    // @ts-ignore
     this._event.addEventListener(type, callback)
     return this
   }
@@ -309,10 +434,9 @@ class MapScene {
    * @param callback
    * @returns {MapScene}
    */
-  off(type, callback) {
+  off(type: string, callback: () => void): MapScene {
+    // @ts-ignore
     this._event.removeEventListener(type, callback)
     return this
   }
 }
-
-export default MapScene

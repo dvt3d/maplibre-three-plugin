@@ -2,7 +2,7 @@
  * @Author: Caven Chen
  */
 import { Group, Mesh, PlaneGeometry, ShadowMaterial } from 'three'
-import SceneTransform from '../transform/SceneTransform'
+import SceneTransform from '../transform/SceneTransform.js'
 
 class Creator {
   /**
@@ -11,7 +11,11 @@ class Creator {
    * @param rotation
    * @param scale
    */
-  static createRTCGroup(center, rotation, scale) {
+  static createRTCGroup(
+    center: number | number[],
+    rotation: number[],
+    scale: number[]
+  ): Group {
     const group = new Group()
     group.name = 'rtc'
     group.position.copy(SceneTransform.lngLatToVector3(center))
@@ -31,8 +35,6 @@ class Creator {
       let lat_scale = 1
       if (Array.isArray(center)) {
         lat_scale = SceneTransform.projectedUnitsPerMeter(center[1])
-      } else if (typeof center === 'string') {
-        lat_scale = SceneTransform.projectedUnitsPerMeter(center.split(',')[1])
       }
       group.scale.set(lat_scale, lat_scale, lat_scale)
     }
@@ -45,15 +47,17 @@ class Creator {
    * @param rotation
    * @param scale
    */
-  static createMercatorRTCGroup(center, rotation, scale) {
+  static createMercatorRTCGroup(
+    center: number | number[],
+    rotation: number[],
+    scale: number[]
+  ): Group {
     const group = this.createRTCGroup(center, rotation, scale)
     if (!scale) {
       let lat_scale = 1
       let mercator_scale = SceneTransform.projectedMercatorUnitsPerMeter()
       if (Array.isArray(center)) {
         lat_scale = SceneTransform.projectedUnitsPerMeter(center[1])
-      } else if (typeof center === 'string') {
-        lat_scale = SceneTransform.projectedUnitsPerMeter(center.split(',')[1])
       }
       group.scale.set(mercator_scale, mercator_scale, lat_scale)
     }
@@ -67,8 +71,12 @@ class Creator {
    * @param height
    * @returns {Mesh}
    */
-  static createShadowGround(center, width = 100, height = 100) {
-    const geo = new PlaneGeometry(width, height)
+  static createShadowGround(
+    center: number | number[],
+    width?: number,
+    height?: number
+  ): Mesh {
+    const geo = new PlaneGeometry(width || 100, height || 100)
     const mat = new ShadowMaterial({
       opacity: 0.5,
       transparent: true,

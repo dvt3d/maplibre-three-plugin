@@ -12,8 +12,8 @@ class SceneTransform {
    *
    * @returns {number}
    */
-  static projectedMercatorUnitsPerMeter() {
-    return Math.abs(WORLD_SIZE / EARTH_CIRCUMFERENCE)
+  static projectedMercatorUnitsPerMeter(): number {
+    return this.projectedUnitsPerMeter(0)
   }
 
   /**
@@ -21,7 +21,7 @@ class SceneTransform {
    * @param lat
    * @returns {number}
    */
-  static projectedUnitsPerMeter(lat) {
+  static projectedUnitsPerMeter(lat: number): number {
     return Math.abs(WORLD_SIZE / Math.cos(DEG2RAD * lat) / EARTH_CIRCUMFERENCE)
   }
 
@@ -32,8 +32,12 @@ class SceneTransform {
    * @param alt
    * @returns {Vector3}
    */
-  static lngLatToVector3(lng, lat, alt = 0) {
-    let v = [0, 0, 0]
+  static lngLatToVector3(
+    lng: number | number[],
+    lat?: number,
+    alt?: number
+  ): Vector3 {
+    let v: number[] = [0, 0, 0]
     if (Array.isArray(lng)) {
       v = [
         -EARTH_RADIUS * DEG2RAD * lng[0] * PROJECTION_WORLD_SIZE,
@@ -50,13 +54,13 @@ class SceneTransform {
       v = [
         -EARTH_RADIUS * DEG2RAD * lng * PROJECTION_WORLD_SIZE,
         -EARTH_RADIUS *
-          Math.log(Math.tan(Math.PI * 0.25 + 0.5 * DEG2RAD * lat)) *
+          Math.log(Math.tan(Math.PI * 0.25 + 0.5 * DEG2RAD * (lat || 0))) *
           PROJECTION_WORLD_SIZE,
       ]
       if (!alt) {
         v.push(0)
       } else {
-        v.push(alt * this.projectedUnitsPerMeter(lat))
+        v.push(alt * this.projectedUnitsPerMeter(lat || 0))
       }
     }
     return new Vector3(v[0], v[1], v[2])
@@ -65,9 +69,9 @@ class SceneTransform {
   /**
    *
    * @param v
-   * @returns {{lng: number, alt: number, lat: number}}
+   * @returns {number[]}
    */
-  static vector3ToLngLat(v) {
+  static vector3ToLngLat(v: { x: number; y: number; z: number }): number[] {
     let result = [0, 0, 0]
     if (v) {
       result[0] = -v.x / (EARTH_RADIUS * DEG2RAD * PROJECTION_WORLD_SIZE)
