@@ -2,7 +2,7 @@
  * @Author: Caven Chen
  */
 import { Group, Mesh, PlaneGeometry, ShadowMaterial } from 'three'
-import SceneTransform from '../transform/SceneTransform.js'
+import SceneTransform from '../transform/SceneTransform'
 
 class Creator {
   /**
