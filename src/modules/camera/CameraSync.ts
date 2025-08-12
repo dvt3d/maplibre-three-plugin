@@ -2,7 +2,7 @@
  * @Author: Caven Chen
  */
 import { DEG2RAD, TILE_SIZE, WORLD_SIZE } from '../constants'
-import Util from '../utils/Util.js'
+import Util from '../utils/Util'
 import { type Group, Matrix4, type PerspectiveCamera, Vector3 } from 'three'
 import type { IMap } from '../scene/MapScene'
 
