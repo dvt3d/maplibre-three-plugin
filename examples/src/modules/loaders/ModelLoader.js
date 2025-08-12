@@ -18,7 +18,11 @@ const objLoader = new OBJLoader(loadingManager)
 gltfLoader.setDRACOLoader(dracoLoader)
 gltfLoader.setKTX2Loader(ktx2loader)
 
-class ModelLoaderUtil {
+class ModelLoader {
+  /**
+   *
+   * @returns {LoadingManager}
+   */
   static getLoadingManager() {
     return loadingManager
   }
@@ -160,4 +164,4 @@ class ModelLoaderUtil {
   }
 }
 
-export default ModelLoaderUtil
+export default ModelLoader

@@ -2,7 +2,7 @@
  * @author Caven Chen
  */
 import { Box3, Vector3 } from 'three'
-import { ModelLoaderUtil } from '../../utils/index.js'
+import { ModelLoader } from '../../loaders/index.js'
 import { Creator, SceneTransform } from '@dvt3d/maplibre-three-plugin'
 import Overlay from '../Overlay.js'
 
@@ -53,7 +53,7 @@ class Model extends Overlay {
     if (!options.position) {
       throw 'position is required'
     }
-    let gltf = await ModelLoaderUtil.loadGLTF(options.url)
+    let gltf = await ModelLoader.loadGLTF(options.url)
     let model = new Model(gltf.scene, options)
     model.castShadow = options.castShadow
     return model

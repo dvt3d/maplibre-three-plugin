@@ -2,7 +2,7 @@ import maplibregl from 'maplibre-gl'
 import * as THREE from 'three'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
 import config from './config.js'
-import { ModelLoaderUtil, Tileset } from './src/index.js'
+import { ModelLoader, Tileset } from './src/index.js'
 
 const map = new maplibregl.Map({
   container: 'map',
@@ -18,11 +18,11 @@ const mapScene = new MTP.MapScene(map)
 
 mapScene.addLight(new THREE.AmbientLight())
 
-ModelLoaderUtil.setDracoLoader({
+ModelLoader.setDracoLoader({
   path: 'https://cdn.jsdelivr.net/npm/three/examples/jsm/libs/draco/',
 })
 
-ModelLoaderUtil.setKtx2loader({
+ModelLoader.setKtx2loader({
   path: 'https://cdn.jsdelivr.net/npm/three/examples/jsm/libs/basis/',
   renderer: mapScene.renderer,
 })
@@ -30,8 +30,8 @@ ModelLoaderUtil.setKtx2loader({
 let url = '//resource.dvgis.cn/data/3dtiles/dayanta/tileset.json'
 
 let tileset = new Tileset(url, {
-  dracoLoader: ModelLoaderUtil.getDracoLoader(),
-  ktxLoader: ModelLoaderUtil.getKtx2loader(),
+  dracoLoader: ModelLoader.getDracoLoader(),
+  ktxLoader: ModelLoader.getKtx2loader(),
 })
 
 tileset.autoDisableRendererCulling = true
