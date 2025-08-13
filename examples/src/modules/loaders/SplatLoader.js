@@ -14,8 +14,12 @@ const worker = new Worker(
   )
 )
 
+const canvas = document.createElement('canvas')
+const gl = canvas.getContext('webgl2') || canvas.getContext('webgl')
+const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE)
+
 class SplatMesh extends THREE.Mesh {
-  constructor(numVertexes, maxTextureSize) {
+  constructor(numVertexes) {
     super()
     this._numVertexes = numVertexes
     this._maxTextureSize = maxTextureSize
