@@ -24,21 +24,11 @@ vec2 unpackInt16(in uint value) {
 
 void main () {
   ivec2 texSize = textureSize(centerAndScaleTexture, 0);
-  
-  
   ivec2 texPos = ivec2(splatIndex%uint(texSize.x), splatIndex/uint(texSize.x));
-  
-  
-
   vec4 centerAndScaleData = texelFetch(centerAndScaleTexture, texPos, 0);
 
   vec4 center = vec4(centerAndScaleData.xyz, 1);
-  
-  
-  
   vec4 camspace = gsModelViewMatrix * center;
-  
-  
   vec4 pos2d = gsProjectionMatrix * camspace;
 
   float bounds = 1.2 * pos2d.w;
@@ -49,32 +39,20 @@ void main () {
   }
 
   uvec4 covAndColorData = texelFetch(covAndColorTexture, texPos, 0);
-  
-  
-  
-      
   vec2 cov3D_M11_M12 = unpackInt16(covAndColorData.x) * centerAndScaleData.w;
-  
-  
   vec2 cov3D_M13_M22 = unpackInt16(covAndColorData.y) * centerAndScaleData.w;
-  
-  
   vec2 cov3D_M23_M33 = unpackInt16(covAndColorData.z) * centerAndScaleData.w;
-  
-  
   mat3 Vrk = mat3(
     cov3D_M11_M12.x, cov3D_M11_M12.y, cov3D_M13_M22.x,
     cov3D_M11_M12.y, cov3D_M13_M22.y, cov3D_M23_M33.x,
     cov3D_M13_M22.x, cov3D_M23_M33.x, cov3D_M23_M33.y
   );
 
-
   mat3 J = mat3(
     focal / camspace.z, 0., -(focal * camspace.x) / (camspace.z * camspace.z), 
     0., -focal / camspace.z, (focal * camspace.y) / (camspace.z * camspace.z), 
     0., 0., 0.
   );
-  
 
   mat3 W = transpose(mat3(gsModelViewMatrix));
   mat3 T = W * J;
@@ -102,6 +80,7 @@ void main () {
     float(colorUint >> uint(24)) / 255.0
   );
   vPosition = position.xy;
+
   gl_Position = vec4(
     vCenter 
       + position.x * v2 / viewport * 2.0 
