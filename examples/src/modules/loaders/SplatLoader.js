@@ -90,7 +90,6 @@ const rowLength = 3 * 4 + 3 * 4 + 4 + 4
 const SplatLoader = {
   initGL: async function (numVertexes) {
     this.object.frustumCulled = false
-
     let gl = this.renderer.getContext()
     let mexTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE)
     this.maxVertexes = mexTextureSize * mexTextureSize
@@ -299,13 +298,45 @@ const SplatLoader = {
     this.isSortting = false
   },
 
-  load: function (src, object, renderer, camera) {
+  load: function (url, object, renderer, camera) {
     this.camera = camera
     this.object = object
     this.renderer = renderer
     this.loadedVertexCount = 0
+    fetch(url).then(async (res) => {
+      worker.postMessage({ method: 'clear' })
+      const reader = res.body.getReader()
+      const totalBytes = parseInt(res.headers.get('Content-Length') || 0)
+      if (totalBytes) {
+        let numVertexes = Math.floor(totalBytes / rowLength)
+        await this.initGL(numVertexes)
+      }
+      const chunks = []
+      let receivedLength = 0
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
 
-    fetch(src).then(async (res) => {
+        chunks.push(value)
+        receivedLength += value.length
+      }
+      const buffer = new Uint8Array(receivedLength)
+      let offset = 0
+      for (const chunk of chunks) {
+        buffer.set(chunk, offset)
+        offset += chunk.length
+      }
+      this.pushDataBuffer(buffer.buffer, Math.floor(receivedLength / rowLength))
+    })
+  },
+
+  loadStream: function (url, object, renderer, camera) {
+    this.camera = camera
+    this.object = object
+    this.renderer = renderer
+    this.loadedVertexCount = 0
+    fetch(url).then(async (res) => {
       worker.postMessage({ method: 'clear' })
       const reader = res.body.getReader()
       const totalBytes = parseInt(res.headers.get('Content-Length') || 0)
