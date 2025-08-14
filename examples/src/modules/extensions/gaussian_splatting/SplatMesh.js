@@ -1,48 +1,61 @@
-import {
-  Mesh,
-  DataTexture,
-  RGBAFormat,
-  FloatType,
-  RGBAIntegerFormat,
-  UnsignedIntType,
-  Vector4,
-  Vector2,
-  InstancedBufferAttribute,
-  DynamicDrawUsage,
-  Quaternion,
-  Vector3,
-  Matrix4,
-  BufferGeometry,
-  BufferAttribute,
-  InstancedBufferGeometry,
-  ShaderMaterial,
-  CustomBlending,
-  OneFactor,
-} from 'three'
+import * as THREE from 'three'
+import { BufferAttribute, BufferGeometry } from 'three'
+import { Util } from '../../utils/index.js'
 import gaussian_splatting_vs_glsl from '../../shaders/gaussian_splatting_vs_glsl.js'
 import gaussian_splatting_fs_glsl from '../../shaders/gaussian_splatting_fs_glsl.js'
+import { doSplatSort } from '../../workers/SplatSortWorker.js'
 
-const RowLength = 3 * 4 + 3 * 4 + 4 + 4
-
-class SplatMesh extends Mesh {
+class SplatMesh extends THREE.Mesh {
   constructor(numVertexes) {
     super()
     this._numVertexes = numVertexes
-    this._maxVertexes = 0
-    this._textureWidth = 0
-    this._textureHight = 0
-    this._centerAndScaleData = null
-    this._centerAndScaleTexture = null
-    this._rotationAndColorData = null
-    this._rotationAndColorTexture = null
 
-    this._splatIndexAttribute = null
-    this._splatData = null
+    const maxTextureSize = Util.getMaxTextureSize()
 
-    this.frustumCulled = false
-    this._isDataChanged = false
-    this._splatData = null
-    this._positions = null
+    this._maxVertexes = maxTextureSize * maxTextureSize
+
+    if (this._numVertexes > this._maxVertexes) {
+      console.warn(
+        'numVertexes limited to ',
+        this._maxVertexes,
+        this._numVertexes
+      )
+      this._numVertexes = this._maxVertexes
+    }
+
+    this._textureWidth = maxTextureSize
+
+    this._textureHeight =
+      Math.floor((this._numVertexes - 1) / maxTextureSize) + 1
+
+    this._centerAndScaleData = new Float32Array(
+      this._textureWidth * this._textureHeight * 4
+    )
+
+    this._centerAndScaleTexture = new THREE.DataTexture(
+      this._centerAndScaleData,
+      this._textureWidth,
+      this._textureHeight,
+      THREE.RGBAFormat,
+      THREE.FloatType
+    )
+
+    this._rotationAndColorData = new Uint32Array(
+      this._textureWidth * this._textureHeight * 4
+    )
+
+    this._rotationAndColorTexture = new THREE.DataTexture(
+      this._rotationAndColorData,
+      this._textureWidth,
+      this._textureHeight,
+      THREE.RGBAIntegerFormat,
+      THREE.UnsignedIntType
+    )
+    this._rotationAndColorTexture.internalFormat = 'RGBA32UI'
+
+    this._loadedVertexCount = 0
+
+    this._isSortting = false
 
     const baseGeometry = new BufferGeometry()
     const positions = new BufferAttribute(
@@ -53,175 +66,42 @@ class SplatMesh extends Mesh {
       3
     )
     baseGeometry.setAttribute('position', positions)
-    this.geometry = new InstancedBufferGeometry().copy(baseGeometry)
+    this.geometry = new THREE.InstancedBufferGeometry().copy(baseGeometry)
     this.geometry.instanceCount = 1
-    this.material = new ShaderMaterial({
+
+    let splatIndexArray = new Uint32Array(
+      this._textureWidth * this._textureHeight
+    )
+    const splatIndexes = new THREE.InstancedBufferAttribute(
+      splatIndexArray,
+      1,
+      false
+    )
+    splatIndexes.setUsage(THREE.DynamicDrawUsage)
+
+    this.geometry.setAttribute('splatIndex', splatIndexes)
+
+    this.material = new THREE.ShaderMaterial({
       uniforms: {
-        u_viewport: { value: new Float32Array([1980, 1080]) }, // Dummy. will be overwritten
-        u_focal: { value: 1000.0 },
+        viewport: { value: new Float32Array([1980, 1080]) }, // Dummy. will be overwritten
+        focal: { value: 1000.0 }, // Dummy. will be overwritten
+        centerAndScaleTexture: { value: this._centerAndScaleTexture },
+        covAndColorTexture: { value: this._rotationAndColorTexture },
+        gsProjectionMatrix: { value: null },
+        gsModelViewMatrix: { value: null },
       },
       vertexShader: gaussian_splatting_vs_glsl,
       fragmentShader: gaussian_splatting_fs_glsl,
-      blending: CustomBlending,
-      blendSrcAlpha: OneFactor,
+      blending: THREE.CustomBlending,
+      blendSrcAlpha: THREE.OneFactor,
       depthTest: true,
       depthWrite: false,
       transparent: true,
     })
-  }
+    this.material.onBeforeRender = this._onMaterialBeforeRender.bind(this)
+    this.frustumCulled = false
 
-  /**
-   *
-   * @param gl
-   */
-  _createSplatTexture(gl) {
-    if (this._textureWidth || this._textureHight) {
-      return
-    }
-    const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE)
-    this._maxVertexes = maxTextureSize * maxTextureSize
-    if (this._numVertexes > this._maxVertexes) {
-      console.warn(
-        'numVertexes limited to ',
-        this._maxVertexes,
-        this._numVertexes
-      )
-      this._numVertexes = this._maxVertexes
-    }
-    // 计算纹理大小
-    this._textureWidth = maxTextureSize
-    this._textureHight =
-      Math.floor((this._numVertexes - 1) / maxTextureSize) + 1
-
-    this._centerAndScaleData = new Float32Array(
-      this._textureWidth * this._textureHight * 4
-    )
-    this._centerAndScaleTexture = new DataTexture(
-      this._centerAndScaleData,
-      this._textureWidth,
-      this._textureHight,
-      RGBAFormat,
-      FloatType
-    )
-    this._centerAndScaleTexture.needsUpdate = true
-
-    this._rotationAndColorData = new Uint32Array(
-      this._textureWidth * this._textureHight * 4
-    )
-    this._rotationAndColorTexture = new DataTexture(
-      this._rotationAndColorData,
-      this._textureWidth,
-      this._textureHight,
-      RGBAIntegerFormat,
-      UnsignedIntType
-    )
-    this._rotationAndColorTexture.internalFormat = 'RGBA32UI'
-    this._rotationAndColorTexture.needsUpdate = true
-  }
-
-  /**
-   *
-   * @param data
-   * @private
-   */
-  _setDataToTexture() {
-    if (
-      !this._centerAndScaleData ||
-      !this._rotationAndColorData ||
-      !this._isDataChanged
-    ) {
-      return
-    }
-    let buffer = this._splatData.buffer
-    let u_buffer = new Uint8Array(buffer)
-    let f_buffer = new Float32Array(buffer)
-    this._positions = new Float32Array(this._numVertexes * 4)
-
-    let rotationAndColorData_int16 = new Int16Array(
-      this._rotationAndColorData.buffer
-    )
-    let rotationAndColorData_uint8 = new Uint8Array(
-      this._rotationAndColorData.buffer
-    )
-
-    let vertexCount = Math.floor(buffer.size / RowLength)
-    if (vertexCount) {
-      for (let i = 0; i < vertexCount; i++) {
-        let center = new Vector3(
-          f_buffer[8 * i + 0],
-          f_buffer[8 * i + 1],
-          -f_buffer[8 * i + 2]
-        )
-        let scale = new Vector3(
-          f_buffer[8 * i + 3],
-          f_buffer[8 * i + 4],
-          f_buffer[8 * i + 5]
-        )
-
-        let quaternion = new Quaternion(
-          (u_buffer[32 * i + 28 + 1] - 128) / 128.0,
-          (u_buffer[32 * i + 28 + 2] - 128) / 128.0,
-          -(u_buffer[32 * i + 28 + 3] - 128) / 128.0,
-          (u_buffer[32 * i + 28 + 0] - 128) / 128.0
-        )
-
-        // construct the covariance matrix
-        let mtx = new Matrix4()
-        mtx.makeRotationFromQuaternion(quaternion)
-        mtx.transpose()
-        mtx.scale(scale)
-        let mtx_t = mtx.clone()
-        mtx.transpose()
-        mtx.premultiply(mtx_t)
-        mtx.setPosition(center)
-
-        //upper triangular index of covariance matrix
-        let cov_indexes = [0, 1, 2, 5, 6, 10]
-
-        let max_value = 0.0
-
-        for (let j = 0; j < cov_indexes.length; j++) {
-          if (Math.abs(mtx.elements[cov_indexes[j]]) > max_value) {
-            max_value = Math.abs(mtx.elements[cov_indexes[j]])
-          }
-        }
-        // Center and Scale
-        this._centerAndScaleData[i * 4 + 0] = center.x
-        this._centerAndScaleData[i * 4 + 1] = center.y
-        this._centerAndScaleData[i * 4 + 2] = center.z
-        this._centerAndScaleData[i * 4 + 3] = max_value / 32767.0
-
-        // Rotation
-        for (let j = 0; j < cov_indexes.length; j++) {
-          rotationAndColorData_int16[i * 8 + j] = parseInt(
-            (mtx.elements[cov_indexes[j]] * 32767.0) / max_value + ''
-          )
-        }
-        // RGBA
-        rotationAndColorData_uint8[(i * 4 + 3) * 4 + 0] =
-          u_buffer[32 * i + 24 + 0]
-        rotationAndColorData_uint8[(i * 4 + 3) * 4 + 1] =
-          u_buffer[32 * i + 24 + 1]
-        rotationAndColorData_uint8[(i * 4 + 3) * 4 + 2] =
-          u_buffer[32 * i + 24 + 2]
-        rotationAndColorData_uint8[(i * 4 + 3) * 4 + 3] =
-          u_buffer[32 * i + 24 + 3]
-
-        this._centerAndScaleTexture.image.data.set(this._centerAndScaleData)
-        this._centerAndScaleTexture.needsUpdate = true
-
-        this._rotationAndColorTexture.image.data.set(this._rotationAndColorData)
-        this._rotationAndColorTexture.needsUpdate = true
-
-        this._positions[i * 4 + 0] = mtx.elements[12]
-        this._positions[i * 4 + 1] = mtx.elements[13]
-        this._positions[i * 4 + 2] = mtx.elements[14]
-        this._positions[i * 4 + 3] =
-          (Math.max(scale.x, scale.y, scale.z) * u_buffer[32 * i + 24 + 3]) /
-          255.0
-      }
-    }
-    this._isDataChanged = false
+    this._positions = new Float32Array(0)
   }
 
   /**
@@ -231,7 +111,6 @@ class SplatMesh extends Mesh {
    * @private
    */
   _getProjectionMatrix(camera) {
-    //y flip
     let mtx = camera.projectionMatrix.clone()
     mtx.elements[4] *= -1
     mtx.elements[5] *= -1
@@ -248,16 +127,13 @@ class SplatMesh extends Mesh {
    */
   _getModelViewMatrix(camera) {
     const viewMatrix = camera.matrixWorld.clone()
-    //y flip
     viewMatrix.elements[1] *= -1.0
     viewMatrix.elements[4] *= -1.0
     viewMatrix.elements[6] *= -1.0
     viewMatrix.elements[9] *= -1.0
     viewMatrix.elements[13] *= -1.0
-
     const mtx = this.matrixWorld.clone()
     mtx.invert()
-    //y flip
     mtx.elements[1] *= -1.0
     mtx.elements[4] *= -1.0
     mtx.elements[6] *= -1.0
@@ -268,26 +144,136 @@ class SplatMesh extends Mesh {
     return mtx
   }
 
-  _sortSplatIndex(modelViewMatrix) {}
-
   /**
    *
-   * @param gl
+   * @param buffer
+   * @param vertexCount
+   * @private
    */
-  _createSplatIndexAttribute() {
-    if (this._splatIndexAttribute) {
-      return this
+  _pushDataToTexture(buffer, vertexCount) {
+    if (this._loadedVertexCount + vertexCount > this._maxVertexes) {
+      console.log('vertexCount limited to ', this._maxVertexes, vertexCount)
+      vertexCount = this._maxVertexes - this._loadedVertexCount
     }
-    let splatIndexArray = new Uint32Array(
-      this._textureWidth * this._textureHight
+    if (vertexCount <= 0) {
+      return
+    }
+    let u_buffer = new Uint8Array(buffer)
+    let f_buffer = new Float32Array(buffer)
+    let new_positions = new Float32Array(vertexCount * 4)
+
+    const rotationAndColorData_uint8 = new Uint8Array(
+      this._rotationAndColorData.buffer
     )
-    this._splatIndexAttribute = new InstancedBufferAttribute(
-      splatIndexArray,
-      1,
-      false
+
+    const rotationAndColorData_int16 = new Int16Array(
+      this._rotationAndColorData.buffer
     )
-    this._splatIndexAttribute.setUsage(DynamicDrawUsage)
-    this.geometry.setAttribute('splatIndex', this._splatIndexAttribute)
+
+    for (let i = 0; i < vertexCount; i++) {
+      let quaternion = new THREE.Quaternion(
+        (u_buffer[32 * i + 28 + 1] - 128) / 128.0,
+        (u_buffer[32 * i + 28 + 2] - 128) / 128.0,
+        -(u_buffer[32 * i + 28 + 3] - 128) / 128.0,
+        (u_buffer[32 * i + 28 + 0] - 128) / 128.0
+      )
+      let center = new THREE.Vector3(
+        f_buffer[8 * i + 0],
+        f_buffer[8 * i + 1],
+        -f_buffer[8 * i + 2]
+      )
+      let scale = new THREE.Vector3(
+        f_buffer[8 * i + 3 + 0],
+        f_buffer[8 * i + 3 + 1],
+        f_buffer[8 * i + 3 + 2]
+      )
+
+      let mtx = new THREE.Matrix4()
+      mtx.makeRotationFromQuaternion(quaternion)
+      mtx.transpose()
+      mtx.scale(scale)
+      let mtx_t = mtx.clone()
+      mtx.transpose()
+      mtx.premultiply(mtx_t)
+      mtx.setPosition(center)
+
+      let cov_indexes = [0, 1, 2, 5, 6, 10]
+      let max_value = 0.0
+      for (let j = 0; j < cov_indexes.length; j++) {
+        if (Math.abs(mtx.elements[cov_indexes[j]]) > max_value) {
+          max_value = Math.abs(mtx.elements[cov_indexes[j]])
+        }
+      }
+
+      let destOffset = this._loadedVertexCount * 4 + i * 4
+      this._centerAndScaleData[destOffset + 0] = center.x
+      this._centerAndScaleData[destOffset + 1] = center.y
+      this._centerAndScaleData[destOffset + 2] = center.z
+      this._centerAndScaleData[destOffset + 3] = max_value / 32767.0
+
+      destOffset = this._loadedVertexCount * 8 + i * 4 * 2
+
+      for (let j = 0; j < cov_indexes.length; j++) {
+        rotationAndColorData_int16[destOffset + j] = parseInt(
+          (mtx.elements[cov_indexes[j]] * 32767.0) / max_value
+        )
+      }
+
+      // RGBA
+      destOffset = this._loadedVertexCount * 16 + (i * 4 + 3) * 4
+
+      rotationAndColorData_uint8[destOffset + 0] = u_buffer[32 * i + 24 + 0]
+      rotationAndColorData_uint8[destOffset + 1] = u_buffer[32 * i + 24 + 1]
+      rotationAndColorData_uint8[destOffset + 2] = u_buffer[32 * i + 24 + 2]
+      rotationAndColorData_uint8[destOffset + 3] = u_buffer[32 * i + 24 + 3]
+
+      // Store scale and transparent to remove splat in sorting process
+      new_positions[i * 4 + 0] = mtx.elements[12]
+      new_positions[i * 4 + 1] = mtx.elements[13]
+      new_positions[i * 4 + 2] = mtx.elements[14]
+      new_positions[i * 4 + 3] =
+        (Math.max(scale.x, scale.y, scale.z) * u_buffer[32 * i + 24 + 3]) /
+        255.0
+    }
+
+    while (vertexCount > 0) {
+      const xOffset = this._loadedVertexCount % this._textureWidth
+      const yOffset = Math.floor(this._loadedVertexCount / this._textureWidth)
+
+      // 每次填充的最大宽度
+      const maxWidth = this._textureWidth - xOffset
+      // 这一行能放多少个顶点
+      const width = Math.min(vertexCount, maxWidth)
+      // 如果剩余顶点超过一行，就填满一行，否则只填剩余顶点
+      const height = Math.ceil(width / this._textureWidth) || 1
+
+      const pixelsToWrite = width * height
+
+      const dstOffset = (yOffset * this._textureWidth + xOffset) * 4
+      const srcOffset = this._loadedVertexCount * 4
+      const copyLength = pixelsToWrite * 4
+
+      this._centerAndScaleTexture.image.data.set(
+        this._centerAndScaleData.subarray(srcOffset, srcOffset + copyLength),
+        dstOffset
+      )
+
+      this._rotationAndColorTexture.image.data.set(
+        this._rotationAndColorData.subarray(srcOffset, srcOffset + copyLength),
+        dstOffset
+      )
+
+      this._loadedVertexCount += pixelsToWrite
+      vertexCount -= pixelsToWrite
+    }
+
+    this._centerAndScaleTexture.needsUpdate = true
+    this._rotationAndColorTexture.needsUpdate = true
+
+    let temp = new Float32Array(this._positions.length + new_positions.length)
+    temp.set(this._positions)
+    temp.set(new_positions, this._positions.length)
+    this._positions = temp
   }
 
   /**
@@ -298,45 +284,65 @@ class SplatMesh extends Mesh {
    * @param geometry
    * @param object
    * @param group
+   * @private
    */
-  _materialOnBeforeRender(renderer, scene, camera, geometry, object, group) {
-    this._createSplatTexture(renderer.getContext()) //only exec one time
-    this._setDataToTexture() ///only exec when the data changed
-    this._createSplatIndexAttribute() //only exec one time
+  _onMaterialBeforeRender(renderer, scene, camera, geometry, object, group) {
     let modelViewMatrix = this._getModelViewMatrix(camera)
-    this._sortSplatIndex(modelViewMatrix) //only exec when the camera changed
-    let projectionMatrix = this._getProjectionMatrix(camera)
-    let material = object.material
-    if (material) {
-      material.uniforms['u_projectionMatrix'].value = projectionMatrix
-      material.uniforms['u_modelViewMatrix'].value = modelViewMatrix
-      let viewport = new Vector4()
-      renderer.getCurrentViewport(viewport)
-      material.uniforms['u_focal'].value =
-        (viewport.w / 2.0) * Math.abs(projectionMatrix.elements[5])
-      material.uniforms['u_viewport'].value = new Vector2(
-        viewport.z,
-        viewport.w
-      )
-    }
+
+    ;(async () => {
+      let camera_mtx = modelViewMatrix.elements
+      let view = new Float32Array([
+        camera_mtx[2],
+        camera_mtx[6],
+        camera_mtx[10],
+        camera_mtx[14],
+      ])
+      let sortedIndexes = await doSplatSort(this._positions.buffer, view.buffer)
+      let indexes = new Uint32Array(sortedIndexes)
+      this.geometry.attributes.splatIndex.set(indexes)
+      this.geometry.attributes.splatIndex.needsUpdate = true
+      this.geometry.instanceCount = indexes.length
+    })()
+
+    const material = object.material
+    const projectionMatrix = this._getProjectionMatrix(camera)
+    material.uniforms.gsProjectionMatrix.value = projectionMatrix
+    material.uniforms.gsModelViewMatrix.value = modelViewMatrix
+
+    let viewport = new THREE.Vector4()
+    renderer.getCurrentViewport(viewport)
+    const focal = (viewport.w / 2.0) * Math.abs(projectionMatrix.elements[5])
+    material.uniforms.viewport.value[0] = viewport.z
+    material.uniforms.viewport.value[1] = viewport.w
+    material.uniforms.focal.value = focal
   }
+
   /**
    *
-   * @param splatData
+   * @param buffer
+   * @param vertexCount
+   * @returns {SplatMesh}
    */
-  setSplatData(splatData) {
-    this._splatData = splatData
+  setDataFromBuffer(buffer, vertexCount) {
+    this._loadedVertexCount = 0
+    this._pushDataToTexture(buffer, vertexCount)
     return this
   }
 
   /**
    *
-   * @param splatData
+   * @param buffer
+   * @param vertexCount
+   * @returns {SplatMesh}
    */
-  appendSplatData(splatData) {
-    // this._splatData = splatData
-    return this
+  appendDataFromBuffer(buffer, vertexCount) {
+    this._pushDataToTexture(buffer, vertexCount)
   }
+
+  /**
+   *
+   */
+  setDataFromSpz() {}
 }
 
 export default SplatMesh
