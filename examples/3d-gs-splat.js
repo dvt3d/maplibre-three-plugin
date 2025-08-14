@@ -26,18 +26,18 @@ rtc.position.copy(
   MTP.SceneTransform.lngLatToVector3(120.71508193750839, 31.270782107613073)
 )
 
-rtc.rotateX(-Math.PI / 2)
+rtc.rotateX(Math.PI / 2)
 
 rtc.rotateY(-Math.PI / 2)
 
 mapScene.addObject(rtc)
 
-SplatLoader.load('./assets/yqjt.splat', rtc, mapScene.renderer, mapScene.camera)
+const splatLoader = new SplatLoader()
 
-mapScene
-  .on('preRender', (e) => {
-    SplatLoader.tick()
-  })
-  .on('postRender', () => {
-    map.triggerRepaint()
-  })
+splatLoader.loadStream('./assets/yqjt.splat', (mesh) => {
+  rtc.add(mesh)
+})
+
+mapScene.on('postRender', () => {
+  map.triggerRepaint()
+})

@@ -47,7 +47,7 @@ function splatSort(positionsBuffer, viewBuffer, threshold) {
 export function doSplatSort(
   positionsBuffer,
   viewBuffer,
-  threshold = -0.000001
+  threshold = -0.000002
 ) {
   return workerPool.run(splatSort, [positionsBuffer, viewBuffer, threshold], {
     transfer: [viewBuffer],

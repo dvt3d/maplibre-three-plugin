@@ -1,5 +1,5 @@
 class WorkerPool {
-  constructor(size = 4, { workerType = 'module' } = {}) {
+  constructor(size = 4, workerType = 'module') {
     this.size = Math.max(1, size | 0)
     this.workerType = workerType
     this._taskId = 0
@@ -73,7 +73,6 @@ class WorkerPool {
         err.stack = msg.error?.stack || err.stack
         task.reject(err)
       }
-
       this._idle.push(worker)
       this._pump()
     }
@@ -83,12 +82,13 @@ class WorkerPool {
       worker.removeEventListener('message', onMessage)
       worker.removeEventListener('error', onError)
       if (task.timer) clearTimeout(task.timer)
-
       this._respawn(worker)
       task.reject(err instanceof Error ? err : new Error(String(err)))
       this._pump()
     }
+
     this._pending.set(id, { worker, onMessage, onError })
+
     worker.addEventListener('message', onMessage)
     worker.addEventListener('error', onError)
 
@@ -130,9 +130,9 @@ class WorkerPool {
    * @private
    */
   _spawn() {
-    const w = new Worker(this._blobURL, { type: this.workerType })
-    this._idle.push(w)
-    return w
+    const worker = new Worker(this._blobURL, { type: this.workerType })
+    this._idle.push(worker)
+    return worker
   }
 
   /**
@@ -146,10 +146,10 @@ class WorkerPool {
     } catch (e) {
       console.error(e)
     }
-    const idx = this._workers.indexOf(badWorker)
-    if (idx !== -1) this._workers.splice(idx, 1)
-    const nw = this._spawn()
-    this._workers.push(nw)
+    const index = this._workers.indexOf(badWorker)
+    if (index !== -1) this._workers.splice(index, 1)
+    const new_worker = this._spawn()
+    this._workers.push(new_worker)
   }
 
   /**

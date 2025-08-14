@@ -55,8 +55,6 @@ class SplatMesh extends THREE.Mesh {
 
     this._loadedVertexCount = 0
 
-    this._isSortting = false
-
     const baseGeometry = new BufferGeometry()
     const positions = new BufferAttribute(
       new Float32Array([
@@ -102,6 +100,19 @@ class SplatMesh extends THREE.Mesh {
     this.frustumCulled = false
 
     this._positions = new Float32Array(0)
+    this.threshold = -0.00001
+
+    this._isSortting = false
+
+    this._bounds = null
+  }
+
+  get isSplatMesh() {
+    return true
+  }
+
+  get bounds() {
+    return this._bounds
   }
 
   /**
@@ -289,20 +300,26 @@ class SplatMesh extends THREE.Mesh {
   _onMaterialBeforeRender(renderer, scene, camera, geometry, object, group) {
     let modelViewMatrix = this._getModelViewMatrix(camera)
 
-    ;(async () => {
-      let camera_mtx = modelViewMatrix.elements
+    let camera_mtx = modelViewMatrix.elements
+
+    if (!this._isSortting) {
+      this._isSortting = true
       let view = new Float32Array([
         camera_mtx[2],
         camera_mtx[6],
         camera_mtx[10],
         camera_mtx[14],
       ])
-      let sortedIndexes = await doSplatSort(this._positions.buffer, view.buffer)
-      let indexes = new Uint32Array(sortedIndexes)
-      this.geometry.attributes.splatIndex.set(indexes)
-      this.geometry.attributes.splatIndex.needsUpdate = true
-      this.geometry.instanceCount = indexes.length
-    })()
+      doSplatSort(this._positions.buffer, view.buffer, this.threshold).then(
+        (sortedIndexes) => {
+          let indexes = new Uint32Array(sortedIndexes)
+          this.geometry.attributes.splatIndex.set(indexes)
+          this.geometry.attributes.splatIndex.needsUpdate = true
+          this.geometry.instanceCount = indexes.length
+          this._isSortting = false
+        }
+      )
+    }
 
     const material = object.material
     const projectionMatrix = this._getProjectionMatrix(camera)
@@ -317,6 +334,26 @@ class SplatMesh extends THREE.Mesh {
     material.uniforms.focal.value = focal
   }
 
+  /**
+   *
+   */
+  computeBounds() {
+    if (this._positions.length / 4 >= this._numVertexes && this._bounds) {
+      return
+    }
+    let bounds = new THREE.Box3()
+    for (let i = 0; i < this._positions.length; i += 4) {
+      bounds.expandByPoint(
+        new THREE.Vector3(
+          this._positions[i + 0],
+          this._positions[i + 1],
+          this._positions[i + 2]
+        )
+      )
+    }
+    console.log(2)
+    this._bounds = bounds
+  }
   /**
    *
    * @param buffer
