@@ -127,7 +127,7 @@ export class MapScene {
       new PerspectiveCamera(
         this._map.transform.fov,
         this._map.transform.width / this._map.transform.height,
-        0.1,
+        0.001,
         1e21
       )
     this._camera.matrixAutoUpdate = false

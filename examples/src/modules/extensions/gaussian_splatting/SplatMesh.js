@@ -105,6 +105,8 @@ class SplatMesh extends THREE.Mesh {
     this._isSortting = false
 
     this._bounds = null
+
+    this._latestmodelViewMatrix = new THREE.Matrix4()
   }
 
   get isSplatMesh() {
@@ -118,7 +120,7 @@ class SplatMesh extends THREE.Mesh {
   /**
    *
    * @param camera
-   * @returns {Matrix4}
+   * @returns {THREE.Matrix4}
    * @private
    */
   _getProjectionMatrix(camera) {
@@ -143,6 +145,7 @@ class SplatMesh extends THREE.Mesh {
     viewMatrix.elements[6] *= -1.0
     viewMatrix.elements[9] *= -1.0
     viewMatrix.elements[13] *= -1.0
+
     const mtx = this.matrixWorld.clone()
     mtx.invert()
     mtx.elements[1] *= -1.0
@@ -226,7 +229,7 @@ class SplatMesh extends THREE.Mesh {
 
       for (let j = 0; j < cov_indexes.length; j++) {
         rotationAndColorData_int16[destOffset + j] = parseInt(
-          (mtx.elements[cov_indexes[j]] * 32767.0) / max_value
+          (mtx.elements[cov_indexes[j]] * 32767.0) / max_value + ''
         )
       }
 
@@ -299,11 +302,14 @@ class SplatMesh extends THREE.Mesh {
    */
   _onMaterialBeforeRender(renderer, scene, camera, geometry, object, group) {
     let modelViewMatrix = this._getModelViewMatrix(camera)
-
     let camera_mtx = modelViewMatrix.elements
-
-    if (!this._isSortting) {
+    let shouldSort =
+      !this._isSortting &&
+      (this._positions.length / 4 < this._numVertexes ||
+        !modelViewMatrix.equals(this._latestmodelViewMatrix))
+    if (shouldSort) {
       this._isSortting = true
+      this._latestmodelViewMatrix = modelViewMatrix
       let view = new Float32Array([
         camera_mtx[2],
         camera_mtx[6],
@@ -351,7 +357,6 @@ class SplatMesh extends THREE.Mesh {
         )
       )
     }
-    console.log(2)
     this._bounds = bounds
   }
   /**

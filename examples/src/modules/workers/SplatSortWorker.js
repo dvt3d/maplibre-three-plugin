@@ -1,5 +1,4 @@
 import WorkerPool from './WorkerPool.js'
-
 const workerPool = new WorkerPool(1)
 
 function splatSort(positionsBuffer, viewBuffer, threshold) {
@@ -44,11 +43,7 @@ function splatSort(positionsBuffer, viewBuffer, threshold) {
   return depthIndex
 }
 
-export function doSplatSort(
-  positionsBuffer,
-  viewBuffer,
-  threshold = -0.000002
-) {
+export function doSplatSort(positionsBuffer, viewBuffer, threshold = -0.0001) {
   return workerPool.run(splatSort, [positionsBuffer, viewBuffer, threshold], {
     transfer: [viewBuffer],
   })
