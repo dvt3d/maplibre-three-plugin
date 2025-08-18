@@ -5,7 +5,12 @@ const rowLength = 3 * 4 + 3 * 4 + 4 + 4
 class SplatLoader {
   constructor() {}
 
-  load(url, onDone) {
+  /**
+   *
+   * @param url
+   * @param onDone
+   */
+  loadData(url, onDone) {
     fetch(url).then(async (res) => {
       const reader = res.body.getReader()
       const chunks = []
@@ -24,14 +29,8 @@ class SplatLoader {
         offset += chunk.length
       }
       const vertexCount = Math.floor(receivedLength / rowLength)
-      const mesh = new SplatMesh(vertexCount)
-      mesh.setDataFromBuffer(
-        buffer.buffer,
-        Math.floor(receivedLength / rowLength)
-      )
-      onDone && onDone(mesh)
+      onDone(buffer.buffer, vertexCount)
     })
-    return this
   }
 
   /**
@@ -40,13 +39,12 @@ class SplatLoader {
    * @param onDone
    * @returns {SplatLoader}
    */
-  loadStream(url, onDone) {
+  loadDataStream(url, onDone, onPrecess) {
     fetch(url).then(async (res) => {
       const reader = res.body.getReader()
       const totalBytes = parseInt(res.headers.get('Content-Length') || 0)
       const vertexCount = Math.floor(totalBytes / rowLength)
-      const mesh = new SplatMesh(vertexCount)
-      onDone && onDone(mesh)
+      onDone && onDone(vertexCount)
       let leftover = new Uint8Array(0) // 存残余字节
       // eslint-disable-next-line no-constant-condition
       while (true) {
@@ -62,7 +60,7 @@ class SplatLoader {
           if (vertexCount) {
             const vertexBytes = vertexCount * rowLength
             const vertexData = buffer.subarray(0, vertexBytes) // 保证处理的数据为 N * rowLength
-            mesh.appendDataFromBuffer(vertexData.buffer, vertexCount)
+            onPrecess && onPrecess(vertexData.buffer, vertexCount)
           }
           // 更新leftover，存储多出来的数字节，字节长度可能不足 rowLength，需要存储下来，用于下一次计算
           leftover = buffer.subarray(
@@ -76,10 +74,48 @@ class SplatLoader {
       if (leftover.length) {
         const vertexCount = Math.floor(leftover.length / rowLength)
         if (vertexCount) {
-          mesh.appendDataFromBuffer(leftover.buffer, vertexCount)
+          onPrecess && onPrecess(leftover.buffer, vertexCount)
         }
       }
     })
+    return this
+  }
+
+  /**
+   *
+   * @param url
+   * @param onDone
+   * @returns {SplatLoader}
+   */
+  load(url, onDone) {
+    this.loadData(url, (buffer, vertexCount) => {
+      const mesh = new SplatMesh(vertexCount)
+      mesh.setDataFromBuffer(buffer, vertexCount)
+      onDone && onDone(mesh)
+    })
+    return this
+  }
+
+  /**
+   *
+   * @param url
+   * @param onDone
+   * @returns {SplatLoader}
+   */
+  loadStream(url, onDone) {
+    let mesh = null
+    this.loadDataStream(
+      url,
+      (vertexCount) => {
+        mesh = new SplatMesh(vertexCount)
+        onDone && onDone(mesh)
+      },
+      (buffer, vertexCount) => {
+        if (mesh) {
+          mesh.appendDataFromBuffer(buffer, vertexCount)
+        }
+      }
+    )
     return this
   }
 }
