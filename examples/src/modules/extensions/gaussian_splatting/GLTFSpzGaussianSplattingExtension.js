@@ -31,11 +31,11 @@ class GLTFSpzGaussianSplattingExtension {
     pending.push(parser.loadGeometries(primitives))
     pending.push(this.loadBufferViews(primitives))
     return Promise.all(pending).then((results) => {
-      const bufferViews = results[1]
       let group = new Group()
-      const splatData = bufferViews[0]
-      let mesh = new SplatMesh(splatData.numPoints)
-      mesh.setDataFromSpz(splatData)
+      const bufferViews = results[1]
+      const attribute = bufferViews[0]
+      let mesh = new SplatMesh(attribute.numPoints)
+      mesh.setDataFromAttribute(attribute)
       group.add(mesh)
       return group
     })

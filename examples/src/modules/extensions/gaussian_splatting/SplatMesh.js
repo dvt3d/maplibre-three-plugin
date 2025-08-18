@@ -169,7 +169,7 @@ class SplatMesh extends THREE.Mesh {
    * @returns {Uint8Array<ArrayBuffer>}
    * @private
    */
-  _getBytesFromSplatAttribute(
+  _getBytesFromAttribute(
     numPoints,
     positions,
     scales,
@@ -451,17 +451,17 @@ class SplatMesh extends THREE.Mesh {
    *
    * @param spzData
    */
-  setDataFromSpz(spz) {
-    const bytes = this._getBytesFromSplatAttribute(
-      spz.numPoints,
-      spz.positions,
-      spz.scales,
-      spz.colors,
-      spz.alphas,
-      spz.rotations
+  setDataFromAttribute(attribute) {
+    const bytes = this._getBytesFromAttribute(
+      attribute.numPoints,
+      attribute.positions,
+      attribute.scales,
+      attribute.colors,
+      attribute.alphas,
+      attribute.rotations
     )
     this._loadedVertexCount = 0
-    this._pushDataToTexture(bytes.buffer, spz.numPoints)
+    this._pushDataToTexture(bytes.buffer, attribute.numPoints)
     return this
   }
 }
