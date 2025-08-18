@@ -105,8 +105,6 @@ class SplatMesh extends THREE.Mesh {
     this._isSortting = false
 
     this._bounds = null
-
-    this._latestmodelViewMatrix = new THREE.Matrix4()
   }
 
   get isSplatMesh() {
@@ -172,8 +170,10 @@ class SplatMesh extends THREE.Mesh {
     if (vertexCount <= 0) {
       return
     }
+
     let u_buffer = new Uint8Array(buffer)
     let f_buffer = new Float32Array(buffer)
+
     let new_positions = new Float32Array(vertexCount * 4)
 
     const rotationAndColorData_uint8 = new Uint8Array(
@@ -290,6 +290,8 @@ class SplatMesh extends THREE.Mesh {
     this._positions = temp
   }
 
+  onBeforeRender(renderer, scene, camera, geometry, material, group) {}
+
   /**
    *
    * @param renderer
@@ -303,13 +305,8 @@ class SplatMesh extends THREE.Mesh {
   _onMaterialBeforeRender(renderer, scene, camera, geometry, object, group) {
     let modelViewMatrix = this._getModelViewMatrix(camera)
     let camera_mtx = modelViewMatrix.elements
-    let shouldSort =
-      !this._isSortting &&
-      (this._positions.length / 4 < this._numVertexes ||
-        !modelViewMatrix.equals(this._latestmodelViewMatrix))
-    if (shouldSort) {
+    if (!this._isSortting) {
       this._isSortting = true
-      this._latestmodelViewMatrix = modelViewMatrix
       let view = new Float32Array([
         camera_mtx[2],
         camera_mtx[6],
@@ -352,7 +349,7 @@ class SplatMesh extends THREE.Mesh {
       bounds.expandByPoint(
         new THREE.Vector3(
           this._positions[i + 0],
-          this._positions[i + 1],
+          -this._positions[i + 1],
           this._positions[i + 2]
         )
       )
