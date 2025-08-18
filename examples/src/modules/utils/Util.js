@@ -189,6 +189,17 @@ class Util {
     const gl = canvas.getContext('webgl2') || canvas.getContext('webgl')
     return gl.getParameter(gl.MAX_TEXTURE_SIZE)
   }
+
+  /**
+   *
+   * @param n
+   * @param min
+   * @param max
+   * @returns {number}
+   */
+  static clamp(n, min, max) {
+    return Math.min(max, Math.max(min, n))
+  }
 }
 
 export default Util

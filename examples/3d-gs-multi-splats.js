@@ -31,7 +31,6 @@ rtc.position.copy(
 )
 
 rtc.rotateX(Math.PI / 2)
-
 rtc.rotateY(-Math.PI / 2)
 
 mapScene.addObject(rtc)
@@ -49,19 +48,20 @@ splatLoader.loadStream('./assets/2.splat', (mesh) => {
   rtc.add(mesh)
 })
 
+const center = new THREE.Vector3()
+
 mapScene
   .on('preRender', (e) => {
     const scene = e.frameState.scene
+    const cameraMatrix = e.frameState.camera.matrixWorldInverse
     scene.traverse((child) => {
       if (child.isSplatMesh) {
-        child.updateMatrixWorld()
-        const center = new THREE.Vector3()
         child.computeBounds()
         child.bounds.getCenter(center)
         center.applyMatrix4(child.matrixWorld)
-        const cameraMatrix = e.frameState.camera.matrixWorldInverse
         center.applyMatrix4(cameraMatrix)
-        child.renderOrder = -center.length()
+        let depth = -center.z
+        child.renderOrder = 1e5 - depth
       }
     })
   })

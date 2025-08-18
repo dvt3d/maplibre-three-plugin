@@ -5,6 +5,8 @@ import gaussian_splatting_vs_glsl from '../../shaders/gaussian_splatting_vs_glsl
 import gaussian_splatting_fs_glsl from '../../shaders/gaussian_splatting_fs_glsl.js'
 import { doSplatSort } from '../../workers/SplatSortWorker.js'
 
+const rowLength = 3 * 4 + 3 * 4 + 4 + 4
+
 class SplatMesh extends THREE.Mesh {
   constructor(numVertexes) {
     super()
@@ -158,6 +160,71 @@ class SplatMesh extends THREE.Mesh {
 
   /**
    *
+   * @param numPoints
+   * @param positions
+   * @param scales
+   * @param colors
+   * @param alphas
+   * @param rotations
+   * @returns {Uint8Array<ArrayBuffer>}
+   * @private
+   */
+  _getBytesFromSplatAttribute(
+    numPoints,
+    positions,
+    scales,
+    colors,
+    alphas,
+    rotations
+  ) {
+    const buffer = new ArrayBuffer(numPoints * rowLength)
+
+    const bytes = new Uint8Array(buffer)
+
+    const dataView = new DataView(buffer)
+
+    const hasAlphaInColors = colors.length === numPoints * 4
+
+    const colorByte = (v) =>
+      Util.clamp(v <= 1 ? Math.round(v * 255) : Math.round(v), 0, 255)
+
+    const quatByte = (v) => {
+      const u = Util.clamp(v, -1, 1) * 128 + 128
+      return Util.clamp(Math.round(u), 0, 255)
+    }
+
+    for (let i = 0; i < numPoints; i++) {
+      const offset = i * rowLength
+
+      //set positions
+      dataView.setFloat32(offset + 0, positions[3 * i + 0], true)
+      dataView.setFloat32(offset + 4, positions[3 * i + 1], true)
+      dataView.setFloat32(offset + 8, positions[3 * i + 2], true)
+      //set scales
+
+      dataView.setFloat32(offset + 12, scales[3 * i + 0], true)
+      dataView.setFloat32(offset + 16, scales[3 * i + 1], true)
+      dataView.setFloat32(offset + 20, scales[3 * i + 2], true)
+
+      // set colors
+      const colorOffset = hasAlphaInColors ? 4 * i : 3 * i
+      bytes[offset + 24] = colorByte(colors[colorOffset + 0])
+      bytes[offset + 25] = colorByte(colors[colorOffset + 1])
+      bytes[offset + 26] = colorByte(colors[colorOffset + 2])
+      bytes[offset + 27] = colorByte(
+        hasAlphaInColors ? colors[4 * i + 3] : alphas[i]
+      )
+      // set rotations
+      bytes[offset + 28] = quatByte(rotations[4 * i + 3])
+      bytes[offset + 29] = quatByte(rotations[4 * i + 0])
+      bytes[offset + 30] = quatByte(rotations[4 * i + 1])
+      bytes[offset + 31] = quatByte(rotations[4 * i + 2])
+    }
+    return bytes
+  }
+
+  /**
+   *
    * @param buffer
    * @param vertexCount
    * @private
@@ -170,7 +237,6 @@ class SplatMesh extends THREE.Mesh {
     if (vertexCount <= 0) {
       return
     }
-
     let u_buffer = new Uint8Array(buffer)
     let f_buffer = new Float32Array(buffer)
 
@@ -191,11 +257,13 @@ class SplatMesh extends THREE.Mesh {
         -(u_buffer[32 * i + 28 + 3] - 128) / 128.0,
         (u_buffer[32 * i + 28 + 0] - 128) / 128.0
       )
+
       let center = new THREE.Vector3(
         f_buffer[8 * i + 0],
         f_buffer[8 * i + 1],
         -f_buffer[8 * i + 2]
       )
+
       let scale = new THREE.Vector3(
         f_buffer[8 * i + 3 + 0],
         f_buffer[8 * i + 3 + 1],
@@ -376,12 +444,26 @@ class SplatMesh extends THREE.Mesh {
    */
   appendDataFromBuffer(buffer, vertexCount) {
     this._pushDataToTexture(buffer, vertexCount)
+    return this
   }
 
   /**
    *
+   * @param spzData
    */
-  setDataFromSpz() {}
+  setDataFromSpz(spz) {
+    const bytes = this._getBytesFromSplatAttribute(
+      spz.numPoints,
+      spz.positions,
+      spz.scales,
+      spz.colors,
+      spz.alphas,
+      spz.rotations
+    )
+    this._loadedVertexCount = 0
+    this._pushDataToTexture(bytes.buffer, spz.numPoints)
+    return this
+  }
 }
 
 export default SplatMesh

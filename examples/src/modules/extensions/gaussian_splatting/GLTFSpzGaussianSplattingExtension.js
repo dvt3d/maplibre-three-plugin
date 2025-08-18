@@ -1,8 +1,11 @@
 /**
  * @author Caven Chen
  */
-import { Group, Points, PointsMaterial } from 'three'
+import { Group } from 'three'
 import { loadSpz } from '@spz-loader/core'
+import SplatMesh from './SplatMesh.js'
+
+const rowLength = 3 * 4 + 3 * 4 + 4 + 4
 
 class GLTFSpzGaussianSplattingExtension {
   constructor(parser) {
@@ -28,21 +31,12 @@ class GLTFSpzGaussianSplattingExtension {
     pending.push(parser.loadGeometries(primitives))
     pending.push(this.loadBufferViews(primitives))
     return Promise.all(pending).then((results) => {
-      const geometries = results[0]
       const bufferViews = results[1]
       let group = new Group()
-      for (let i = 0; i < geometries.length; i++) {
-        const geometry = geometries[i]
-        const bufferView = bufferViews[i]
-        geometry.getAttribute('position').array = bufferView['positions']
-        const points = new Points(
-          geometry,
-          new PointsMaterial({
-            color: 0xff0000,
-          })
-        )
-        group.add(points)
-      }
+      const splatData = bufferViews[0]
+      let mesh = new SplatMesh(splatData.numPoints)
+      mesh.setDataFromSpz(splatData)
+      group.add(mesh)
       return group
     })
   }

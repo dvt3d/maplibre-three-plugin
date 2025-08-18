@@ -12,6 +12,7 @@ const map = new maplibregl.Map({
   maxPitch: 85,
   pitch: 60,
   canvasContextAttributes: { antialias: true },
+  maxZoom: 30,
 })
 
 const mapScene = new MTP.MapScene(map)
@@ -22,7 +23,7 @@ let url = '//resource.dvgis.cn/data/3dtiles/jiaotang-spz/tileset.json'
 
 let tileset = new Tileset(url)
 
-// tileset.autoDisableRendererCulling = true
+tileset.autoDisableRendererCulling = true
 tileset.errorTarget = 0.1
 
 tileset.on('loaded', () => {
