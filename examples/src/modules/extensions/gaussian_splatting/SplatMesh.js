@@ -4,12 +4,23 @@ import { Util } from '../../utils/index.js'
 import gaussian_splatting_vs_glsl from '../../shaders/gaussian_splatting_vs_glsl.js'
 import gaussian_splatting_fs_glsl from '../../shaders/gaussian_splatting_fs_glsl.js'
 import { doSplatSort } from '../../workers/SplatSortWorker.js'
+import TaskProcessor from '../../workers/TaskProcessor.js'
+
+import init, * as wasm from '../../../wasm/splats/wasm_spalts.js'
 
 const cov_indexes = [0, 1, 2, 5, 6, 10]
-
 const _center = new THREE.Vector3()
 const _scale = new THREE.Vector3()
 const _quaternion = new THREE.Quaternion()
+
+const workerUrl = new URL('../../workers/WasmWorker.js', import.meta.url).href
+
+const wasmJsModuleUrl = new URL(
+  '../../../wasm/splats/wasm_spalts.js',
+  import.meta.url
+).href
+
+const taskProcessor = new TaskProcessor(workerUrl)
 
 class SplatMesh extends THREE.Mesh {
   constructor(numVertexes) {
@@ -242,9 +253,8 @@ class SplatMesh extends THREE.Mesh {
    * @param vertexCount
    * @private
    */
-  _updateDataFromBuffer(buffer, vertexCount) {
+  async _updateDataFromBuffer(buffer, vertexCount) {
     if (this._loadedVertexCount + vertexCount > this._maxVertexes) {
-      console.log('vertexCount limited to ', this._maxVertexes, vertexCount)
       vertexCount = this._maxVertexes - this._loadedVertexCount
     }
     if (vertexCount <= 0) {
@@ -252,67 +262,39 @@ class SplatMesh extends THREE.Mesh {
     }
     let u_buffer = new Uint8Array(buffer)
     let f_buffer = new Float32Array(buffer)
-    let new_positions = new Float32Array(vertexCount * 4)
+    const out_center_scale = new Float32Array(vertexCount * 4)
+    const out_rotation_color = new Uint32Array(vertexCount * 4)
+    const out_positions = new Float32Array(vertexCount * 4)
+    // wasm.process_splats_from_buffer(
+    //   u_buffer,
+    //   f_buffer,
+    //   vertexCount,
+    //   out_center_scale,
+    //   out_rotation_color,
+    //   out_positions
+    // )
+    await taskProcessor.scheduleTask({
+      call: 'process_splats_from_buffer',
+      args: [
+        u_buffer,
+        f_buffer,
+        vertexCount,
+        out_center_scale,
+        out_rotation_color,
+        out_positions,
+      ],
+    })
+    console.log(out_positions)
 
-    const rotationAndColorData_uint8 = new Uint8Array(
-      this._rotationAndColorData.buffer
-    )
-    const rotationAndColorData_int16 = new Int16Array(
-      this._rotationAndColorData.buffer
-    )
-
-    for (let i = 0; i < vertexCount; i++) {
-      _center.set(
-        f_buffer[8 * i + 0],
-        f_buffer[8 * i + 1],
-        -f_buffer[8 * i + 2]
-      )
-      _scale.set(
-        f_buffer[8 * i + 3 + 0],
-        f_buffer[8 * i + 3 + 1],
-        f_buffer[8 * i + 3 + 2]
-      )
-      _quaternion.set(
-        (u_buffer[32 * i + 28 + 1] - 128) / 128.0,
-        (u_buffer[32 * i + 28 + 2] - 128) / 128.0,
-        -(u_buffer[32 * i + 28 + 3] - 128) / 128.0,
-        (u_buffer[32 * i + 28 + 0] - 128) / 128.0
-      )
-      let mtx = new THREE.Matrix4()
-      let max_value = this._updateCenterAndScaleData(
-        i,
-        mtx,
-        _center,
-        _scale,
-        _quaternion
-      )
-      let destOffset = this._loadedVertexCount * 8 + i * 4 * 2
-
-      for (let j = 0; j < cov_indexes.length; j++) {
-        rotationAndColorData_int16[destOffset + j] = parseInt(
-          (mtx.elements[cov_indexes[j]] * 32767.0) / max_value
-        )
-      }
-      // RGBA
-      destOffset = this._loadedVertexCount * 16 + (i * 4 + 3) * 4
-      rotationAndColorData_uint8[destOffset + 0] = u_buffer[32 * i + 24 + 0]
-      rotationAndColorData_uint8[destOffset + 1] = u_buffer[32 * i + 24 + 1]
-      rotationAndColorData_uint8[destOffset + 2] = u_buffer[32 * i + 24 + 2]
-      rotationAndColorData_uint8[destOffset + 3] = u_buffer[32 * i + 24 + 3]
-
-      // Store scale and transparent to remove splat in sorting process
-      new_positions[i * 4 + 0] = mtx.elements[12]
-      new_positions[i * 4 + 1] = mtx.elements[13]
-      new_positions[i * 4 + 2] = mtx.elements[14]
-      new_positions[i * 4 + 3] =
-        (Math.max(_scale.x, _scale.y, _scale.z) * u_buffer[32 * i + 24 + 3]) /
-        255.0
-    }
-
-    let temp = new Float32Array(this._positions.length + new_positions.length)
-    temp.set(this._positions)
-    temp.set(new_positions, this._positions.length)
-    this._positions = temp
+    // this._centerAndScaleData.set(out_center_scale, this._loadedVertexCount * 4)
+    // this._rotationAndColorData.set(
+    //   out_rotation_color,
+    //   this._loadedVertexCount * 4
+    // )
+    // let temp = new Float32Array(this._positions.length + out_positions.length)
+    // temp.set(this._positions)
+    // temp.set(out_positions, this._positions.length)
+    // this._positions = temp
   }
 
   /**
@@ -485,9 +467,12 @@ class SplatMesh extends THREE.Mesh {
    * @param vertexCount
    * @returns {SplatMesh}
    */
-  setDataFromBuffer(buffer, vertexCount) {
+  async setDataFromBuffer(buffer, vertexCount) {
+    await taskProcessor.initWasm({
+      modulePath: wasmJsModuleUrl,
+    })
     this._loadedVertexCount = 0
-    this._updateDataFromBuffer(buffer, vertexCount)
+    await this._updateDataFromBuffer(buffer, vertexCount)
     this._updateTexture(vertexCount)
     return this
   }
@@ -498,8 +483,12 @@ class SplatMesh extends THREE.Mesh {
    * @param vertexCount
    * @returns {SplatMesh}
    */
-  appendDataFromBuffer(buffer, vertexCount) {
-    this._updateDataFromBuffer(buffer, vertexCount)
+  async appendDataFromBuffer(buffer, vertexCount) {
+    // await init()
+    await taskProcessor.initWasm({
+      modulePath: wasmJsModuleUrl,
+    })
+    await this._updateDataFromBuffer(buffer, vertexCount)
     this._updateTexture(vertexCount)
     return this
   }

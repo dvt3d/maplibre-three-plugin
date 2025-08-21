@@ -35,6 +35,7 @@ mapScene.addObject(rtc)
 const splatLoader = new SplatLoader()
 
 splatLoader.loadStream('./assets/yqjt.splat', (mesh) => {
+  mesh.threshold = -0.0000001
   rtc.add(mesh)
 })
 
