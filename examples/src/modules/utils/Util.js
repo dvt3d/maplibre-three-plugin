@@ -184,11 +184,7 @@ class Util {
    *
    * @returns {any}
    */
-  static getMaxTextureSize() {
-    const canvas = document.createElement('canvas')
-    const gl = canvas.getContext('webgl2') || canvas.getContext('webgl')
-    return gl.getParameter(gl.MAX_TEXTURE_SIZE)
-  }
+  static getMaxTextureSize() {}
 
   /**
    *

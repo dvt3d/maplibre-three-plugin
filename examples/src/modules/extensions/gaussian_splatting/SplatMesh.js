@@ -1,109 +1,45 @@
 import * as THREE from 'three'
 import { BufferAttribute, BufferGeometry } from 'three'
-import { Util } from '../../utils/index.js'
 import gaussian_splatting_vs_glsl from '../../shaders/gaussian_splatting_vs_glsl.js'
 import gaussian_splatting_fs_glsl from '../../shaders/gaussian_splatting_fs_glsl.js'
-import { doSplatSort } from '../../workers/SplatSortWorker.js'
-import TaskProcessor from '../../workers/TaskProcessor.js'
+import WasmTaskProcessor from '../../task/WasmTaskProcessor.js'
+import SortScheduler from './SortScheduler.js'
 
-import init, * as wasm from '../../../wasm/splats/wasm_spalts.js'
+const wasmTaskProcessor = new WasmTaskProcessor(
+  new URL('../../../wasm/splats/wasm_spalts.js', import.meta.url).href
+)
+await wasmTaskProcessor.init()
+const canvas = document.createElement('canvas')
+const gl = canvas.getContext('webgl2') || canvas.getContext('webgl')
+const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE)
+const maxVertexes = maxTextureSize * maxTextureSize
 
-const cov_indexes = [0, 1, 2, 5, 6, 10]
-const _center = new THREE.Vector3()
-const _scale = new THREE.Vector3()
-const _quaternion = new THREE.Quaternion()
-
-const workerUrl = new URL('../../workers/WasmWorker.js', import.meta.url).href
-
-const wasmJsModuleUrl = new URL(
-  '../../../wasm/splats/wasm_spalts.js',
-  import.meta.url
-).href
-
-const taskProcessor = new TaskProcessor(workerUrl)
+const sortScheduler = new SortScheduler()
+const baseGeometry = new BufferGeometry()
+const positions = new BufferAttribute(
+  new Float32Array([
+    -2.0, -2.0, 0.0, 2.0, 2.0, 0.0, -2.0, 2.0, 0.0, 2.0, -2.0, 0.0, 2.0, 2.0,
+    0.0, -2.0, -2.0, 0.0,
+  ]),
+  3
+)
+baseGeometry.setAttribute('position', positions)
 
 class SplatMesh extends THREE.Mesh {
-  constructor(numVertexes) {
+  constructor() {
     super()
-    this._numVertexes = numVertexes
-
-    const maxTextureSize = Util.getMaxTextureSize()
-
-    this._maxVertexes = maxTextureSize * maxTextureSize
-
-    if (this._numVertexes > this._maxVertexes) {
-      console.warn(
-        'numVertexes limited to ',
-        this._maxVertexes,
-        this._numVertexes
-      )
-      this._numVertexes = this._maxVertexes
-    }
-
-    this._textureWidth = maxTextureSize
-
-    this._textureHeight =
-      Math.floor((this._numVertexes - 1) / maxTextureSize) + 1
-
-    this._centerAndScaleData = new Float32Array(
-      this._textureWidth * this._textureHeight * 4
-    )
-
-    this._centerAndScaleTexture = new THREE.DataTexture(
-      this._centerAndScaleData,
-      this._textureWidth,
-      this._textureHeight,
-      THREE.RGBAFormat,
-      THREE.FloatType
-    )
-
-    this._rotationAndColorData = new Uint32Array(
-      this._textureWidth * this._textureHeight * 4
-    )
-
-    this._rotationAndColorTexture = new THREE.DataTexture(
-      this._rotationAndColorData,
-      this._textureWidth,
-      this._textureHeight,
-      THREE.RGBAIntegerFormat,
-      THREE.UnsignedIntType
-    )
-    this._rotationAndColorTexture.internalFormat = 'RGBA32UI'
-
+    this._vertexCount = 0
+    this._textureWidth = 2048
     this._loadedVertexCount = 0
-
     this._threshold = -0.00001
-
-    const baseGeometry = new BufferGeometry()
-    const positions = new BufferAttribute(
-      new Float32Array([
-        -2.0, -2.0, 0.0, 2.0, 2.0, 0.0, -2.0, 2.0, 0.0, 2.0, -2.0, 0.0, 2.0,
-        2.0, 0.0, -2.0, -2.0, 0.0,
-      ]),
-      3
-    )
-    baseGeometry.setAttribute('position', positions)
     this.geometry = new THREE.InstancedBufferGeometry().copy(baseGeometry)
     this.geometry.instanceCount = 1
-
-    let splatIndexArray = new Uint32Array(
-      this._textureWidth * this._textureHeight
-    )
-    const splatIndexes = new THREE.InstancedBufferAttribute(
-      splatIndexArray,
-      1,
-      false
-    )
-    splatIndexes.setUsage(THREE.DynamicDrawUsage)
-
-    this.geometry.setAttribute('splatIndex', splatIndexes)
-
     this.material = new THREE.ShaderMaterial({
       uniforms: {
         viewport: { value: new Float32Array([1980, 1080]) }, // Dummy. will be overwritten
         focal: { value: 1000.0 }, // Dummy. will be overwritten
-        centerAndScaleTexture: { value: this._centerAndScaleTexture },
-        covAndColorTexture: { value: this._rotationAndColorTexture },
+        centerAndScaleTexture: { value: null },
+        covAndColorTexture: { value: null },
         gsProjectionMatrix: { value: null },
         gsModelViewMatrix: { value: null },
       },
@@ -115,15 +51,9 @@ class SplatMesh extends THREE.Mesh {
       depthWrite: false,
       transparent: true,
     })
-
     this.material.onBeforeRender = this._onMaterialBeforeRender.bind(this)
-
     this.frustumCulled = false
-
     this._positions = new Float32Array(0)
-
-    this._isSortting = false
-
     this._bounds = null
   }
 
@@ -141,6 +71,71 @@ class SplatMesh extends THREE.Mesh {
 
   get bounds() {
     return this._bounds
+  }
+
+  set vertexCount(vertexCount) {
+    if (vertexCount === this._vertexCount) {
+      return
+    }
+
+    this._vertexCount = Math.min(vertexCount, maxVertexes)
+
+    this._textureHeight =
+      Math.floor((this._vertexCount - 1) / this._textureWidth) + 1
+
+    this._centerAndScaleData = new Float32Array(
+      this._textureWidth * this._textureHeight * 4
+    )
+
+    if (this._centerAndScaleTexture) {
+      this._centerAndScaleTexture.dispose()
+    }
+
+    this._centerAndScaleTexture = new THREE.DataTexture(
+      this._centerAndScaleData,
+      this._textureWidth,
+      this._textureHeight,
+      THREE.RGBAFormat,
+      THREE.FloatType
+    )
+
+    this._rotationAndColorData = new Uint32Array(
+      this._textureWidth * this._textureHeight * 4
+    )
+
+    if (this._rotationAndColorTexture) {
+      this._rotationAndColorTexture.dispose()
+    }
+
+    this._rotationAndColorTexture = new THREE.DataTexture(
+      this._rotationAndColorData,
+      this._textureWidth,
+      this._textureHeight,
+      THREE.RGBAIntegerFormat,
+      THREE.UnsignedIntType
+    )
+    this._rotationAndColorTexture.internalFormat = 'RGBA32UI'
+
+    const splatIndexArray = new Uint32Array(
+      this._textureWidth * this._textureHeight
+    )
+    const splatIndexes = new THREE.InstancedBufferAttribute(
+      splatIndexArray,
+      1,
+      false
+    )
+    splatIndexes.setUsage(THREE.DynamicDrawUsage)
+    this.geometry.setAttribute('splatIndex', splatIndexes)
+
+    this.material.uniforms.centerAndScaleTexture.value =
+      this._centerAndScaleTexture
+
+    this.material.uniforms.covAndColorTexture.value =
+      this._rotationAndColorTexture
+  }
+
+  get vertexCount() {
+    return this._vertexCount
   }
 
   /**
@@ -221,32 +216,6 @@ class SplatMesh extends THREE.Mesh {
     this._rotationAndColorTexture.needsUpdate = true
   }
 
-  _updateCenterAndScaleData(index, mtx, center, scale, quaternion) {
-    mtx.makeRotationFromQuaternion(quaternion)
-    mtx.transpose()
-    mtx.scale(scale)
-    let mtx_t = mtx.clone()
-    mtx.transpose()
-    mtx.premultiply(mtx_t)
-    mtx.setPosition(center)
-
-    let max_value = 0.0
-
-    for (let j = 0; j < cov_indexes.length; j++) {
-      if (Math.abs(mtx.elements[cov_indexes[j]]) > max_value) {
-        max_value = Math.abs(mtx.elements[cov_indexes[j]])
-      }
-    }
-
-    let destOffset = this._loadedVertexCount * 4 + index * 4
-    this._centerAndScaleData[destOffset + 0] = center.x
-    this._centerAndScaleData[destOffset + 1] = center.y
-    this._centerAndScaleData[destOffset + 2] = center.z
-    this._centerAndScaleData[destOffset + 3] = max_value / 32767.0
-
-    return max_value
-  }
-
   /**
    *
    * @param buffer
@@ -254,47 +223,62 @@ class SplatMesh extends THREE.Mesh {
    * @private
    */
   async _updateDataFromBuffer(buffer, vertexCount) {
-    if (this._loadedVertexCount + vertexCount > this._maxVertexes) {
-      vertexCount = this._maxVertexes - this._loadedVertexCount
+    if (this._loadedVertexCount + vertexCount > maxVertexes) {
+      vertexCount = maxVertexes - this._loadedVertexCount
     }
     if (vertexCount <= 0) {
       return
     }
-    let u_buffer = new Uint8Array(buffer)
-    let f_buffer = new Float32Array(buffer)
-    const out_center_scale = new Float32Array(vertexCount * 4)
-    const out_rotation_color = new Uint32Array(vertexCount * 4)
-    const out_positions = new Float32Array(vertexCount * 4)
-    // wasm.process_splats_from_buffer(
-    //   u_buffer,
-    //   f_buffer,
-    //   vertexCount,
-    //   out_center_scale,
-    //   out_rotation_color,
-    //   out_positions
-    // )
-    await taskProcessor.scheduleTask({
-      call: 'process_splats_from_buffer',
-      args: [
-        u_buffer,
-        f_buffer,
-        vertexCount,
-        out_center_scale,
-        out_rotation_color,
-        out_positions,
-      ],
-    })
-    console.log(out_positions)
+    const out_cs = new Float32Array(vertexCount * 4)
+    const out_rc = new Uint32Array(vertexCount * 4)
+    const out_position = new Float32Array(vertexCount * 4)
+    await wasmTaskProcessor.call(
+      'process_splats_from_buffer',
+      new Uint8Array(buffer),
+      new Float32Array(buffer),
+      vertexCount,
+      out_cs,
+      out_rc,
+      out_position
+    )
+    this._centerAndScaleData.set(out_cs, this._loadedVertexCount * 4)
+    this._rotationAndColorData.set(out_rc, this._loadedVertexCount * 4)
+    let temp = new Float32Array(this._positions.length + out_position.length)
+    temp.set(this._positions)
+    temp.set(out_position, this._positions.length)
+    this._positions = temp
+    sortScheduler.dirty = true
+  }
 
-    // this._centerAndScaleData.set(out_center_scale, this._loadedVertexCount * 4)
-    // this._rotationAndColorData.set(
-    //   out_rotation_color,
-    //   this._loadedVertexCount * 4
-    // )
-    // let temp = new Float32Array(this._positions.length + out_positions.length)
-    // temp.set(this._positions)
-    // temp.set(out_positions, this._positions.length)
-    // this._positions = temp
+  /**
+   *
+   * @param geometry
+   * @private
+   */
+  async _updateDataFromGeometry(geometry) {
+    let vertexCount = geometry.attributes.position.count
+    if (vertexCount > maxVertexes) {
+      vertexCount = maxVertexes
+    }
+    if (vertexCount <= 0) {
+      return
+    }
+    const out_cs = new Float32Array(vertexCount * 4)
+    const out_rc = new Uint32Array(vertexCount * 4)
+    this._positions = new Float32Array(vertexCount * 4)
+    await wasmTaskProcessor.call(
+      'process_splats_from_geometry',
+      geometry.attributes.position.array,
+      geometry.attributes._scale.array,
+      geometry.attributes._rotation.array,
+      geometry.attributes.color.array,
+      vertexCount,
+      out_cs,
+      out_rc,
+      this._positions
+    )
+    this._centerAndScaleData.set(out_cs)
+    this._rotationAndColorData.set(out_rc)
   }
 
   /**
@@ -309,93 +293,14 @@ class SplatMesh extends THREE.Mesh {
     const scales = spzData.scales
     const alphas = spzData.alphas
     const rotations = spzData.rotations
-    if (this._loadedVertexCount + vertexCount > this._maxVertexes) {
-      console.log('vertexCount limited to ', this._maxVertexes, vertexCount)
-      vertexCount = this._maxVertexes - this._loadedVertexCount
+    if (this._loadedVertexCount + vertexCount > maxVertexes) {
+      vertexCount = maxVertexes - this._loadedVertexCount
     }
+
     if (vertexCount <= 0) {
       return
     }
   }
-
-  /**
-   *
-   * @param geometry
-   * @private
-   */
-  _updateDataFromGeometry(geometry) {
-    let vertexCount = geometry.attributes.position.count
-    if (this._loadedVertexCount + vertexCount > this._maxVertexes) {
-      console.log('vertexCount limited to ', this._maxVertexes, vertexCount)
-      vertexCount = this._maxVertexes - this._loadedVertexCount
-    }
-    if (vertexCount <= 0) {
-      return
-    }
-    const positions = geometry.attributes.position.array
-    const scales = geometry.attributes._scale.array
-    const colors = geometry.attributes.color.array
-    const rotations = geometry.attributes._rotation.array
-    let new_positions = new Float32Array(vertexCount * 4)
-    const rotationAndColorData_uint8 = new Uint8Array(
-      this._rotationAndColorData.buffer
-    )
-    const rotationAndColorData_int16 = new Int16Array(
-      this._rotationAndColorData.buffer
-    )
-
-    for (let i = 0; i < vertexCount; i++) {
-      _center.set(
-        positions[3 * i + 0],
-        positions[3 * i + 1],
-        -positions[3 * i + 2]
-      )
-      _scale.set(scales[3 * i + 0], scales[3 * i + 1], scales[3 * i + 2])
-      _quaternion.set(
-        rotations[i * 4 + 1],
-        rotations[i * 4 + 2],
-        -rotations[i * 4 + 3],
-        rotations[i * 4 + 0]
-      )
-
-      let mtx = new THREE.Matrix4()
-      let max_value = this._updateCenterAndScaleData(
-        i,
-        mtx,
-        _center,
-        _scale,
-        _quaternion
-      )
-
-      let destOffset = this._loadedVertexCount * 8 + i * 4 * 2
-      for (let j = 0; j < cov_indexes.length; j++) {
-        rotationAndColorData_int16[destOffset + j] = parseInt(
-          (mtx.elements[cov_indexes[j]] * 32767.0) / max_value
-        )
-      }
-
-      // RGBA
-      destOffset = this._loadedVertexCount * 16 + (i * 4 + 3) * 4
-      rotationAndColorData_uint8[destOffset + 0] = colors[i * 4 + 0]
-      rotationAndColorData_uint8[destOffset + 1] = colors[i * 4 + 1]
-      rotationAndColorData_uint8[destOffset + 2] = colors[i * 4 + 2]
-      rotationAndColorData_uint8[destOffset + 3] = colors[i * 4 + 3]
-
-      // Store scale and transparent to remove splat in sorting process
-      new_positions[i * 4 + 0] = mtx.elements[12]
-      new_positions[i * 4 + 1] = mtx.elements[13]
-      new_positions[i * 4 + 2] = mtx.elements[14]
-      new_positions[i * 4 + 3] =
-        (Math.max(_scale.x, _scale.y, _scale.z) * colors[i * 4 + 3]) / 255.0
-    }
-
-    let temp = new Float32Array(this._positions.length + new_positions.length)
-    temp.set(this._positions)
-    temp.set(new_positions, this._positions.length)
-    this._positions = temp
-  }
-
-  onBeforeRender(renderer, scene, camera, geometry, material, group) {}
 
   /**
    *
@@ -410,30 +315,28 @@ class SplatMesh extends THREE.Mesh {
   _onMaterialBeforeRender(renderer, scene, camera, geometry, object, group) {
     let modelViewMatrix = this._getModelViewMatrix(camera)
     let camera_mtx = modelViewMatrix.elements
-    if (!this._isSortting) {
-      this._isSortting = true
+    sortScheduler.tick(modelViewMatrix, (parameters, transferableObjects) => {
       let view = new Float32Array([
         camera_mtx[2],
         camera_mtx[6],
         camera_mtx[10],
         camera_mtx[14],
       ])
-      doSplatSort(this._positions.buffer, view.buffer, this.threshold).then(
-        (sortedIndexes) => {
+      wasmTaskProcessor
+        .call('sort_splats', this._positions, view, this._threshold)
+        .then((sortedIndexes) => {
           let indexes = new Uint32Array(sortedIndexes)
           this.geometry.attributes.splatIndex.set(indexes)
           this.geometry.attributes.splatIndex.needsUpdate = true
           this.geometry.instanceCount = indexes.length
-          this._isSortting = false
-        }
-      )
-    }
+          sortScheduler.isSorting = false
+        })
+    })
 
     const material = object.material
     const projectionMatrix = this._getProjectionMatrix(camera)
     material.uniforms.gsProjectionMatrix.value = projectionMatrix
     material.uniforms.gsModelViewMatrix.value = modelViewMatrix
-
     let viewport = new THREE.Vector4()
     renderer.getCurrentViewport(viewport)
     const focal = (viewport.w / 2.0) * Math.abs(projectionMatrix.elements[5])
@@ -446,7 +349,7 @@ class SplatMesh extends THREE.Mesh {
    *
    */
   computeBounds() {
-    if (this._positions.length / 4 >= this._numVertexes && this._bounds) {
+    if (this._positions.length / 4 >= this._vertexCount && this._bounds) {
       return
     }
     let bounds = new THREE.Box3()
@@ -468,9 +371,6 @@ class SplatMesh extends THREE.Mesh {
    * @returns {SplatMesh}
    */
   async setDataFromBuffer(buffer, vertexCount) {
-    await taskProcessor.initWasm({
-      modulePath: wasmJsModuleUrl,
-    })
     this._loadedVertexCount = 0
     await this._updateDataFromBuffer(buffer, vertexCount)
     this._updateTexture(vertexCount)
@@ -484,10 +384,6 @@ class SplatMesh extends THREE.Mesh {
    * @returns {SplatMesh}
    */
   async appendDataFromBuffer(buffer, vertexCount) {
-    // await init()
-    await taskProcessor.initWasm({
-      modulePath: wasmJsModuleUrl,
-    })
     await this._updateDataFromBuffer(buffer, vertexCount)
     this._updateTexture(vertexCount)
     return this
@@ -498,7 +394,7 @@ class SplatMesh extends THREE.Mesh {
    * @param spzData
    * @returns {SplatMesh}
    */
-  setDataFromSpz(spzData) {
+  async setDataFromSpz(spzData) {
     this._loadedVertexCount = 0
     return this
   }
@@ -508,11 +404,10 @@ class SplatMesh extends THREE.Mesh {
    * @param geometry
    * @returns {SplatMesh}
    */
-  setDataFromGeometry(geometry) {
+  async setDataFromGeometry(geometry) {
     this._loadedVertexCount = 0
-    const vertexCount = geometry.attributes.position.count
-    this._updateDataFromGeometry(geometry)
-    this._updateTexture(vertexCount)
+    await this._updateDataFromGeometry(geometry)
+    this._updateTexture(geometry.attributes.position.count)
     return this
   }
 }

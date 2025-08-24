@@ -88,9 +88,10 @@ class SplatLoader {
    * @returns {SplatLoader}
    */
   load(url, onDone) {
-    this.loadData(url, (buffer, vertexCount) => {
-      const mesh = new SplatMesh(vertexCount)
-      mesh.setDataFromBuffer(buffer, vertexCount)
+    this.loadData(url, async (buffer, vertexCount) => {
+      const mesh = new SplatMesh()
+      mesh.vertexCount = vertexCount
+      await mesh.setDataFromBuffer(buffer, vertexCount)
       onDone && onDone(mesh)
     })
     return this
@@ -107,12 +108,13 @@ class SplatLoader {
     this.loadDataStream(
       url,
       (vertexCount) => {
-        mesh = new SplatMesh(vertexCount)
+        mesh = new SplatMesh()
+        mesh.vertexCount = vertexCount
         onDone && onDone(mesh)
       },
-      (buffer, vertexCount) => {
+      async (buffer, vertexCount) => {
         if (mesh) {
-          mesh.appendDataFromBuffer(buffer, vertexCount)
+          await mesh.appendDataFromBuffer(buffer, vertexCount)
         }
       }
     )

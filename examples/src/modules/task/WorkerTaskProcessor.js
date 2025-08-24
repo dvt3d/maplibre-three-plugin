@@ -53,7 +53,7 @@ function canTransferArrayBuffer() {
   })
 }
 
-class TaskProcessor {
+class WorkerTaskProcessor {
   /**
    *
    * @param workerUrl
@@ -173,4 +173,4 @@ class TaskProcessor {
   }
 }
 
-export default TaskProcessor
+export default WorkerTaskProcessor
