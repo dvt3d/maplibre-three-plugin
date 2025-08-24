@@ -1,5 +1,5 @@
 import * as three from 'three';
-import { Scene, PerspectiveCamera, WebGLRenderer, Group, Object3DEventMap, Light, Object3D, Vector3, DirectionalLight, HemisphereLight, Mesh } from 'three';
+import { Scene, PerspectiveCamera, WebGLRenderer, Group, Light, Object3D, Vector3, DirectionalLight, HemisphereLight, Mesh } from 'three';
 
 interface IMap {
     transform: any;
@@ -61,9 +61,9 @@ interface ILight extends Light {
 /**
  * Extended Three.js Object3D interface with optional delegate and size
  */
-interface IObject3D<T extends Object3DEventMap = Object3DEventMap, D = Object3D> extends Object3D<T> {
+interface IObject3D {
     /** Optional delegate object */
-    delegate?: D;
+    delegate: Object3D;
     /** Optional size vector */
     size?: Vector3;
 }
@@ -82,8 +82,8 @@ declare class MapScene {
     get canvas(): HTMLCanvasElement;
     get camera(): PerspectiveCamera;
     get scene(): Scene;
-    get lights(): Group<Object3DEventMap>;
-    get world(): Group<Object3DEventMap>;
+    get lights(): Group<three.Object3DEventMap>;
+    get world(): Group<three.Object3DEventMap>;
     get renderer(): WebGLRenderer;
     /**
      *
@@ -111,13 +111,13 @@ declare class MapScene {
      * @param object
      * @returns {MapScene}
      */
-    addObject(object: IObject3D): MapScene;
+    addObject(object: IObject3D | Object3D): MapScene;
     /**
      *
      * @param object
      * @returns {MapScene}
      */
-    removeObject(object: IObject3D): MapScene;
+    removeObject(object: IObject3D | Object3D): MapScene;
     /**
      *
      * @returns {{position: *[], heading: *, pitch}}

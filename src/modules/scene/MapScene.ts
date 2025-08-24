@@ -7,7 +7,7 @@ import {
   Box3,
   Vector3,
 } from 'three'
-import type { Light, Object3D, Object3DEventMap } from 'three'
+import type { Light, Object3D } from 'three'
 import ThreeLayer from '../layer/ThreeLayer'
 import { WORLD_SIZE } from '../constants'
 import Util from '../utils/Util'
@@ -93,10 +93,9 @@ interface ILight extends Light {
 /**
  * Extended Three.js Object3D interface with optional delegate and size
  */
-interface IObject3D<T extends Object3DEventMap = Object3DEventMap, D = Object3D>
-  extends Object3D<T> {
+interface IObject3D {
   /** Optional delegate object */
-  delegate?: D
+  delegate: Object3D
   /** Optional size vector */
   size?: Vector3
 }
@@ -261,8 +260,9 @@ export class MapScene {
    * @param object
    * @returns {MapScene}
    */
-  addObject(object: IObject3D): MapScene {
-    this._world.add(object.delegate || object)
+  addObject(object: IObject3D | Object3D): MapScene {
+    let obj = 'delegate' in object ? object.delegate : object
+    this._world.add(obj)
     return this
   }
 
@@ -271,9 +271,10 @@ export class MapScene {
    * @param object
    * @returns {MapScene}
    */
-  removeObject(object: IObject3D): MapScene {
-    this._world.remove(object)
-    object.traverse((child) => {
+  removeObject(object: IObject3D | Object3D): MapScene {
+    let obj = 'delegate' in object ? object.delegate : object
+    this._world.remove(obj)
+    obj.traverse((child:any) => {
       // @ts-ignore
       if (child.geometry) child.geometry.dispose()
       // @ts-ignore
