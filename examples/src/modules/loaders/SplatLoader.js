@@ -91,7 +91,7 @@ class SplatLoader {
     this.loadData(url, async (buffer, vertexCount) => {
       const mesh = new SplatMesh()
       mesh.vertexCount = vertexCount
-      await mesh.setDataFromBuffer(buffer, vertexCount)
+      await mesh.setDataFromBuffer(buffer)
       onDone && onDone(mesh)
     })
     return this

@@ -286,20 +286,31 @@ class SplatMesh extends THREE.Mesh {
    * @param spzData
    * @private
    */
-  _updateDataFromSpz(spzData) {
+  async _updateDataFromSpz(spzData) {
     let vertexCount = spzData.numPoints
-    const positions = spzData.positions
-    const colors = spzData.colors
-    const scales = spzData.scales
-    const alphas = spzData.alphas
-    const rotations = spzData.rotations
     if (this._loadedVertexCount + vertexCount > maxVertexes) {
       vertexCount = maxVertexes - this._loadedVertexCount
     }
-
     if (vertexCount <= 0) {
       return
     }
+    const out_cs = new Float32Array(vertexCount * 4)
+    const out_rc = new Uint32Array(vertexCount * 4)
+    this._positions = new Float32Array(vertexCount * 4)
+    await wasmTaskProcessor.call(
+      'process_splats_from_spz',
+      spzData.positions,
+      spzData.scales,
+      spzData.rotations,
+      spzData.colors,
+      spzData.alphas,
+      vertexCount,
+      out_cs,
+      out_rc,
+      this._positions
+    )
+    this._centerAndScaleData.set(out_cs)
+    this._rotationAndColorData.set(out_rc)
   }
 
   /**
@@ -370,10 +381,10 @@ class SplatMesh extends THREE.Mesh {
    * @param vertexCount
    * @returns {SplatMesh}
    */
-  async setDataFromBuffer(buffer, vertexCount) {
+  async setDataFromBuffer(buffer) {
     this._loadedVertexCount = 0
-    await this._updateDataFromBuffer(buffer, vertexCount)
-    this._updateTexture(vertexCount)
+    await this._updateDataFromBuffer(buffer, this._vertexCount)
+    this._updateTexture(this._vertexCount)
     return this
   }
 
@@ -396,6 +407,8 @@ class SplatMesh extends THREE.Mesh {
    */
   async setDataFromSpz(spzData) {
     this._loadedVertexCount = 0
+    await this._updateDataFromSpz(spzData)
+    this._updateTexture(this._vertexCount)
     return this
   }
 
@@ -407,7 +420,7 @@ class SplatMesh extends THREE.Mesh {
   async setDataFromGeometry(geometry) {
     this._loadedVertexCount = 0
     await this._updateDataFromGeometry(geometry)
-    this._updateTexture(geometry.attributes.position.count)
+    this._updateTexture(this._vertexCount)
     return this
   }
 }

@@ -5,8 +5,6 @@ import { Group } from 'three'
 import { loadSpz } from '@spz-loader/core'
 import SplatMesh from './SplatMesh.js'
 
-const rowLength = 3 * 4 + 3 * 4 + 4 + 4
-
 class GLTFSpzGaussianSplattingExtension {
   constructor(parser) {
     this.parser = parser
@@ -31,11 +29,12 @@ class GLTFSpzGaussianSplattingExtension {
     pending.push(parser.loadGeometries(primitives))
     pending.push(this.loadBufferViews(primitives))
     return Promise.all(pending).then((results) => {
-      let group = new Group()
+      const group = new Group()
       const bufferViews = results[1]
       const attribute = bufferViews[0]
-      let mesh = new SplatMesh(attribute.numPoints)
-      mesh.setDataFromAttribute(attribute)
+      const mesh = new SplatMesh()
+      mesh.vertexCount = attribute.numPoints
+      mesh.setDataFromSpz(attribute)
       group.add(mesh)
       return group
     })
