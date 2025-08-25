@@ -16,7 +16,9 @@ import { SceneTransform } from '@dvt3d/maplibre-three-plugin'
 import Overlay from '../Overlay.js'
 import { Util } from '../../utils/index.js'
 import {
+  GaussianSplattingTilesetPlugin,
   GLTFGaussianSplattingExtension,
+  GLTFKtx2TextureInspectorPlugin,
   GLTFSpzGaussianSplattingExtension,
 } from '../../extensions/index.js'
 
@@ -38,6 +40,7 @@ const DEF_OPTS = {
   useUpdate: false,
   ionAccessToken: null,
   ionAssetId: null,
+  splatThreshold: -0.0001,
 }
 
 class Tileset extends Overlay {
@@ -56,15 +59,25 @@ class Tileset extends Overlay {
         plugins: [
           (parser) => new GLTFGaussianSplattingExtension(parser),
           (parser) => new GLTFSpzGaussianSplattingExtension(parser),
+          (parser) => new GLTFKtx2TextureInspectorPlugin(parser),
         ],
       })
+    )
+
+    if (options.ktxLoader) {
+      this._renderer.manager.addHandler(/.ktx2/, options.ktxLoader)
+    }
+
+    this._renderer.registerPlugin(
+      new GaussianSplattingTilesetPlugin(options.splatThreshold)
     )
 
     if (options.cesiumIon && options.cesiumIon.token) {
       this._renderer.registerPlugin(
         new CesiumIonAuthPlugin({
           apiToken: options.cesiumIon.token,
-          assetId: this.url,
+          assetId: this._url,
+          autoRefreshToken: true,
         })
       )
     }
@@ -172,7 +185,9 @@ class Tileset extends Overlay {
       const scale = SceneTransform.projectedUnitsPerMeter(positionDegrees.lat)
 
       this._delegate.scale.set(scale, scale, scale)
-      this._delegate.rotateX(Math.PI)
+      if (this._renderer?.rootTileSet?.asset?.gltfUpAxis !== 'Z') {
+        this._delegate.rotateX(Math.PI)
+      }
       this._delegate.rotateY(Math.PI)
       this._delegate.updateMatrixWorld()
 
@@ -243,6 +258,16 @@ class Tileset extends Overlay {
       this._delegate.rotateZ(rotation[2])
     }
 
+    return this
+  }
+
+  /**
+   *
+   * @returns {Tileset}
+   */
+  destroy() {
+    this._renderer.dispose()
+    this._renderer = null
     return this
   }
 }

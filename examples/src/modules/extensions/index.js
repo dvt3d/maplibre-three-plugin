@@ -1,3 +1,5 @@
 export { default as GLTFGaussianSplattingExtension } from './gaussian_splatting/GLTFGaussianSplattingExtension.js'
 export { default as GLTFSpzGaussianSplattingExtension } from './gaussian_splatting/GLTFSpzGaussianSplattingExtension.js'
+export { default as GaussianSplattingTilesetPlugin } from './gaussian_splatting/GaussianSplattingTilesetPlugin.js'
+export { default as GLTFKtx2TextureInspectorPlugin } from './gltf/GLTFKtx2TextureInspectorPlugin.js'
 export { default as SplatMesh } from './gaussian_splatting/SplatMesh.js'

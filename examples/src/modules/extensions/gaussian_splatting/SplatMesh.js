@@ -14,7 +14,6 @@ const gl = canvas.getContext('webgl2') || canvas.getContext('webgl')
 const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE)
 const maxVertexes = maxTextureSize * maxTextureSize
 
-const sortScheduler = new SortScheduler()
 const baseGeometry = new BufferGeometry()
 const positions = new BufferAttribute(
   new Float32Array([
@@ -55,6 +54,7 @@ class SplatMesh extends THREE.Mesh {
     this.frustumCulled = false
     this._positions = new Float32Array(0)
     this._bounds = null
+    this._sortScheduler = new SortScheduler()
   }
 
   get isSplatMesh() {
@@ -247,7 +247,7 @@ class SplatMesh extends THREE.Mesh {
     temp.set(this._positions)
     temp.set(out_position, this._positions.length)
     this._positions = temp
-    sortScheduler.dirty = true
+    this._sortScheduler.dirty = true
   }
 
   /**
@@ -326,23 +326,26 @@ class SplatMesh extends THREE.Mesh {
   _onMaterialBeforeRender(renderer, scene, camera, geometry, object, group) {
     let modelViewMatrix = this._getModelViewMatrix(camera)
     let camera_mtx = modelViewMatrix.elements
-    sortScheduler.tick(modelViewMatrix, (parameters, transferableObjects) => {
-      let view = new Float32Array([
-        camera_mtx[2],
-        camera_mtx[6],
-        camera_mtx[10],
-        camera_mtx[14],
-      ])
-      wasmTaskProcessor
-        .call('sort_splats', this._positions, view, this._threshold)
-        .then((sortedIndexes) => {
-          let indexes = new Uint32Array(sortedIndexes)
-          this.geometry.attributes.splatIndex.set(indexes)
-          this.geometry.attributes.splatIndex.needsUpdate = true
-          this.geometry.instanceCount = indexes.length
-          sortScheduler.isSorting = false
-        })
-    })
+    this._sortScheduler.tick(
+      modelViewMatrix,
+      (parameters, transferableObjects) => {
+        let view = new Float32Array([
+          camera_mtx[2],
+          camera_mtx[6],
+          camera_mtx[10],
+          camera_mtx[14],
+        ])
+        wasmTaskProcessor
+          .call('sort_splats', this._positions, view, this._threshold)
+          .then((sortedIndexes) => {
+            let indexes = new Uint32Array(sortedIndexes)
+            this.geometry.attributes.splatIndex.set(indexes)
+            this.geometry.attributes.splatIndex.needsUpdate = true
+            this.geometry.instanceCount = indexes.length
+            this._sortScheduler.isSorting = false
+          })
+      }
+    )
 
     const material = object.material
     const projectionMatrix = this._getProjectionMatrix(camera)
