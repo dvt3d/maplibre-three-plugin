@@ -34,12 +34,15 @@ const DEF_OPTS = {
     minSize: 0,
     maxSize: Infinity,
   },
+  cesiumIon: {
+    assetId: '',
+    apiToken: '',
+    autoRefreshToken: true,
+  },
   useDebug: false,
   useUnload: false,
   useFade: false,
   useUpdate: false,
-  ionAccessToken: null,
-  ionAssetId: null,
   splatThreshold: -0.0001,
 }
 
@@ -74,11 +77,12 @@ class Tileset extends Overlay {
 
     if (options.cesiumIon && options.cesiumIon.token) {
       this._renderer.registerPlugin(
-        new CesiumIonAuthPlugin({
-          apiToken: options.cesiumIon.token,
-          assetId: this._url,
-          autoRefreshToken: true,
-        })
+        new CesiumIonAuthPlugin(
+          Util.merge({}, DEF_OPTS.cesiumIon, {
+            apiToken: options.cesiumIon.apiToken,
+            assetId: this._url,
+          })
+        )
       )
     }
 
@@ -188,6 +192,7 @@ class Tileset extends Overlay {
       if (this._renderer?.rootTileSet?.asset?.gltfUpAxis !== 'Z') {
         this._delegate.rotateX(Math.PI)
       }
+
       this._delegate.rotateY(Math.PI)
       this._delegate.updateMatrixWorld()
 

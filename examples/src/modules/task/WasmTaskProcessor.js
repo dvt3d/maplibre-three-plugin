@@ -18,6 +18,10 @@ class WasmTaskProcessor {
     this._initPromise = null
   }
 
+  // get glue() {
+  //   return this.glue
+  // }
+
   async init() {
     if (this._ready) return
     if (this._initPromise) return this._initPromise
@@ -61,11 +65,21 @@ class WasmTaskProcessor {
     if (!fnName || typeof fnName !== 'string') {
       throw new Error('fnName must be a string')
     }
+    if (!this._ready) {
+      await this.init
+    }
     const ns = this._glue
     if (!ns || typeof ns[fnName] !== 'function') {
       throw new Error(`Exported function "${fnName}" not found on wasm module`)
     }
     return ns[fnName](...args) ?? null
+  }
+
+  async getMemory() {
+    if (!this._ready) {
+      await this.init
+    }
+    return this._glue.memory
   }
 
   /**

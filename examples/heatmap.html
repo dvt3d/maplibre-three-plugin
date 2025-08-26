@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <title>Three.js 3D 热区图示例（heatmap.js + Shader）</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+      html,
+      body {
+          margin: 0;
+          height: 100%;
+          background: #0b1020;
+          color: #eaeaea;
+          font-family: ui-sans-serif, system-ui, -apple-system;
+      }
+
+      #app {
+          position: fixed;
+          inset: 0;
+      }
+
+      #heatmap,
+      #greymap {
+          position: absolute;
+          left: 12px;
+          bottom: 12px;
+          width: 256px;
+          height: 256px;
+          background: #111;
+          border: 1px solid #333;
+          border-radius: 8px;
+          padding: 8px;
+          display: grid;
+          place-items: center;
+          opacity: 0.95;
+      }
+
+      #greymap {
+          left: 12px;
+          bottom: 290px;
+      }
+
+      .label {
+          position: absolute;
+          top: 8px;
+          left: 8px;
+          font-size: 12px;
+          color: #c7c7c7;
+      }
+
+      .hint {
+          position: absolute;
+          right: 12px;
+          bottom: 12px;
+          font-size: 12px;
+          color: #9aa4b2;
+          background: rgba(0, 0, 0, 0.3);
+          padding: 6px 10px;
+          border-radius: 6px;
+      }
+
+      canvas {
+          display: block;
+      }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+
+<!-- 仅用于显示/调试：两张由 heatmap.js 生成的画布（彩色热力与灰度），Three.js 会把它们采样为纹理 -->
+<div id="greymap"><span class="label">Grey Map</span></div>
+<div id="heatmap"><span class="label">Heat Map</span></div>
+<div class="hint">拖拽旋转 / 滚轮缩放</div>
+
+<!-- heatmap.js CDN -->
+<script src="https://unpkg.com/heatmap.js@2.0.5/build/heatmap.min.js"></script>
+
+<script type="importmap">
+  {
+    "imports": {
+      "maplibre-gl": "https://cdn.jsdelivr.net/npm/maplibre-gl/+esm",
+      "three": "https://cdn.jsdelivr.net/npm/three/+esm",
+      "three/examples/": "https://cdn.jsdelivr.net/npm/three/examples/",
+      "three/addons": "https://cdn.jsdelivr.net/npm/three/examples/jsm/Addons.js",
+      "3d-tiles-renderer": "https://cdn.jsdelivr.net/npm/3d-tiles-renderer/src/index.js",
+      "3d-tiles-renderer/plugins": "https://cdn.jsdelivr.net/npm/3d-tiles-renderer/src/plugins/index.js",
+      "@dvt3d/maplibre-three-plugin": "../dist/index.js",
+      "@spz-loader/core": "https://cdn.jsdelivr.net/npm/@spz-loader/core/+esm"
+    }
+  }
+</script>
+
+<!-- Three.js 模块与控件（同版本） -->
+<script type="module">
+  import * as THREE from 'three'
+  import { OrbitControls } from 'three/addons'
+
+  const vertexShader = `varying vec2 vUv;
+  uniform float Zscale;
+  uniform sampler2D greyMap;
+  void main() {
+      vUv = uv;
+      vec4 frgColor = texture2D(greyMap, uv);
+      float height = Zscale * frgColor.a;
+      vec3 transformed = vec3( position.x, position.y, height);
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(transformed, 1.0);
+  }
+`
+  const fragmentShader = `
+    precision highp float;
+    varying vec2 vUv;
+    uniform sampler2D heatMap;
+    uniform vec3 u_color;//基础颜色
+    uniform float u_opacity; // 透明度
+    void main() {
+        gl_FragColor = vec4(u_color, u_opacity) * texture2D(heatMap, vUv);
+    }
+`
+
+  // ========= 你的 HeatmapImage 类（小改：采用模块作用域的 THREE） =========
+  class HeatmapImage {
+    constructor(scene) {
+      const radius = 10
+      this.heatmap = window.h337.create({
+        container: document.getElementById('heatmap'),
+        gradient: {
+          0.5: '#1fc2e1',
+          0.6: '#24d560',
+          0.7: '#9cd522',
+          0.8: '#f1e12a',
+          0.9: '#ffbf3a',
+          1.0: '#ff0000'
+        },
+        radius,
+        maxOpacity: 1
+      })
+      this.greymap = window.h337.create({
+        container: document.getElementById('greymap'),
+        gradient: {
+          0: 'black',
+          '1.0': 'white'
+        },
+        radius,
+        maxOpacity: 1
+      })
+      this.initMesh(scene)
+    }
+
+    setRandomData(points, projection) {
+      points = points.map((point) => {
+        const [x, y] = projection([point[1], point[0]]) // projection([lng, lat]) -> [x,y]
+        return {
+          x: Math.floor(x * 5 + 250),
+          y: Math.floor(y * 5 + 250),
+          value: point[2]
+        }
+      })
+      const max = 1000
+      const min = 0
+      this.heatmap.setData({ max, min, data: points })
+      this.greymap.setData({ max, min, data: points })
+    }
+
+    setHeatData(points, projection) {
+      this.setRandomData(points, projection)
+      // 注意：heatmap.js 会在 container 内部创建 canvas，通常是第一个子元素
+      let texture = new THREE.CanvasTexture(this.heatmap._renderer.canvas)
+      texture.needsUpdate = true
+      let texture2 = new THREE.CanvasTexture(this.greymap._renderer.canvas)
+      texture2.needsUpdate = true
+
+      this.heatMapPlane.material.uniforms.heatMap.value = texture
+      this.heatMapPlane.material.uniforms.greyMap.value = texture2
+      this.heatMapPlane.material.side = THREE.DoubleSide
+    }
+
+    initMesh(scene) {
+      const geometry = new THREE.PlaneGeometry(100, 100, 300, 300)
+      const material = new THREE.ShaderMaterial({
+        transparent: true,
+        side: THREE.DoubleSide,
+        vertexShader,
+        fragmentShader,
+        uniforms: {
+          heatMap: { value: null },
+          greyMap: { value: null },
+          Zscale: { value: 5.0 },
+          u_color: { value: new THREE.Color('rgb(255, 255, 255)') },
+          u_opacity: { value: 1.0 }
+        }
+      })
+
+      this.heatMapPlane = new THREE.Mesh(geometry, material)
+      this.heatMapPlane.position.set(0, 0, 0)
+      scene.add(this.heatMapPlane)
+    }
+  }
+
+  // ========= Three.js 场景搭建 =========
+  const container = document.getElementById('app')
+  const renderer = new THREE.WebGLRenderer({ antialias: true })
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+  renderer.setSize(container.clientWidth, container.clientHeight)
+  container.appendChild(renderer.domElement)
+
+  const scene = new THREE.Scene()
+  scene.background = new THREE.Color('#0xffffff')
+
+  const camera = new THREE.PerspectiveCamera(
+    55,
+    container.clientWidth / container.clientHeight,
+    0.1,
+    1000
+  )
+  camera.position.set(120, 120, 140)
+
+  const controls = new OrbitControls(camera, renderer.domElement)
+  controls.enableDamping = true
+
+  // 柔和环境光+方向光，方便观察
+  scene.add(new THREE.AmbientLight(0xffffff, 0.6))
+  const dir = new THREE.DirectionalLight(0xffffff, 0.8)
+  dir.position.set(100, 150, 200)
+  scene.add(dir)
+
+  // // 辅助：坐标轴 & 平面框线
+  // const axes = new THREE.AxesHelper(80)
+  // axes.position.set(-60, -60, 0)
+  // scene.add(axes)
+
+  const heat = new HeatmapImage(scene)
+
+  // ========= 示例数据：1000 随机点 =========
+  // 点格式：[lat, lng, value]（保持与你的 setRandomData 输入一致）
+  const randomPoints = (() => {
+    const arr = []
+    const N = 1000
+    for (let i = 0; i < N; i++) {
+      // 这里我们不使用真实地理范围，仅在 [-50,50] 的“伪经纬度”内随机
+      const lat = Math.random() * 100 - 50
+      const lng = Math.random() * 100 - 50
+      const value = Math.floor(Math.random() * 30000)
+      arr.push([lat, lng, value])
+    }
+    return arr
+  })()
+
+  // 简单投影：把“伪经纬度”直接映射到一个近似正方形区域（可按需替换为 d3-geo 的投影）
+  // 输入：[lng, lat]，输出：[x, y]，范围约 [-50,50] -> [-50,50]
+  const projection = ([lng, lat]) => [lng, lat]
+
+  // 注入数据并生成纹理
+  heat.setHeatData(randomPoints, projection)
+
+  heat.heatMapPlane.position.z = 0.0
+  heat.heatMapPlane.rotation.x = -Math.PI * 0.0
+
+  // 自适应窗口尺寸
+  window.addEventListener('resize', () => {
+    const w = container.clientWidth,
+      h = container.clientHeight
+    camera.aspect = w / h
+    camera.updateProjectionMatrix()
+    renderer.setSize(w, h)
+  })
+
+  // 动画循环
+  ;(function animate() {
+    requestAnimationFrame(animate)
+    controls.update()
+    renderer.render(scene, camera)
+  })()
+</script>
+</body>
+</html>

@@ -7,6 +7,9 @@ class GLTFKtx2TextureInspectorPlugin {
   beforeRoot() {
     let textures = this.parse.json.textures
     let images = this.parse.json.images
+    if (!textures || !images) {
+      return
+    }
     for (let i = 0; i < textures.length; i++) {
       let texture = textures[i]
       if (

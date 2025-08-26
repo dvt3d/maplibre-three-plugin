@@ -1,5 +1,7 @@
 import { Vector3 } from 'three'
 
+const _center = new Vector3()
+
 class GaussianSplattingTilesetPlugin {
   constructor(threshold) {
     this._threshold = threshold || -0.00001
@@ -26,16 +28,17 @@ class GaussianSplattingTilesetPlugin {
     let camera = tiles.cameras[0]
     if (camera) {
       const viewMatrix = camera.matrixWorldInverse
+
       tiles.forEachLoadedModel((scene) => {
         scene.traverse((child) => {
           if (child.isSplatMesh) {
             child.threshold = this._threshold
-            const center = new Vector3()
             child.computeBounds()
-            child.bounds.getCenter(center)
-            center.applyMatrix4(child.matrixWorld)
-            center.applyMatrix4(viewMatrix)
-            let depth = -center.z
+            _center.set(0, 0, 0)
+            child.bounds.getCenter(_center)
+            _center.applyMatrix4(child.matrixWorld)
+            _center.applyMatrix4(viewMatrix)
+            let depth = -_center.z
             child.renderOrder = 1e5 - depth
           }
         })
