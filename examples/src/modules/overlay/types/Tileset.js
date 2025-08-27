@@ -189,7 +189,11 @@ class Tileset extends Overlay {
       const scale = SceneTransform.projectedUnitsPerMeter(positionDegrees.lat)
 
       this._delegate.scale.set(scale, scale, scale)
-      if (this._renderer?.rootTileSet?.asset?.gltfUpAxis !== 'Z') {
+
+      if (
+        !this._renderer.rootTileSet.asset.gltfUpAxis ||
+        this._renderer.rootTileSet.asset.gltfUpAxis === 'Z'
+      ) {
         this._delegate.rotateX(Math.PI)
       }
 
