@@ -1,8 +1,7 @@
 import maplibregl from 'maplibre-gl'
-import * as THREE from 'three'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
 import config from './config.js'
-import { Point } from './src/index.js'
+import { HeatMap } from './src/index.js'
 
 const map = new maplibregl.Map({
   container: 'map',
@@ -16,83 +15,30 @@ const map = new maplibregl.Map({
 
 const mapScene = new MTP.MapScene(map)
 
-function generatePosition(num) {
+function generatePoints(num) {
   let list = []
   for (let i = 0; i < num; i++) {
-    let lng = 120.38105869 + Math.random() * 0.5
-    let lat = 31.10115627 + Math.random() * 0.5
-    list.push([lng, lat])
+    let lng = 120.38105869 + Math.random() * 0.05
+    let lat = 31.10115627 + Math.random() * 0.05
+    list.push({
+      lng: lng,
+      lat: lat,
+      value: Math.random() * 1000,
+    })
   }
   return list
 }
-mapScene.addLight(new THREE.AmbientLight())
 
-const positions = generatePosition(30)
+let heatMapContainer = document.createElement('div')
 
-function computeBounds(positions) {
-  let xMin = Infinity
-  let xMax = -Infinity
-  let yMin = Infinity
-  let yMax = -Infinity
-  let v_positions = []
-  for (let i = 0; i < positions.length; i++) {
-    let position = positions[i]
-    let v = MTP.SceneTransform.lngLatToVector3(position[0], position[1])
-    if (v.x < xMin) {
-      xMin = v.x
-    }
+map.getContainer().appendChild(heatMapContainer)
 
-    if (v.x > xMax) {
-      xMax = v.x
-    }
-
-    if (v.y < yMin) {
-      yMin = v.y
-    }
-    if (v.y > yMax) {
-      yMax = v.y
-    }
-    v_positions.push(v)
-  }
-  return { xMin, yMin, xMax, yMax, v_positions }
-}
-
-let point = undefined
-positions.forEach((position) => {
-  point = new Point(
-    MTP.SceneTransform.lngLatToVector3(position[0], position[1])
-  )
-  mapScene.addObject(point)
+let heatMap = new HeatMap(heatMapContainer, {
+  h337: window.h337,
 })
 
-mapScene.flyTo(point)
+heatMap.setPoints(generatePoints(1000))
 
-let bounds = computeBounds(positions)
+mapScene.addObject(heatMap)
 
-console.log(bounds)
-
-let geometry = new THREE.PlaneGeometry(
-  Math.abs(bounds.xMax - bounds.xMin),
-  Math.abs(bounds.yMax - bounds.yMin),
-  300,
-  300
-)
-
-let mesh = new THREE.Mesh()
-
-mesh.geometry.dispose()
-
-mesh.geometry = geometry
-
-mesh.material = new THREE.MeshBasicMaterial({
-  color: 0xff0000,
-  side: THREE.DoubleSide,
-  transparent: true,
-  opacity: 0.2,
-})
-mesh.position.set(
-  (bounds.xMin + bounds.xMax) / 2,
-  (bounds.yMin + bounds.yMax) / 2,
-  0
-)
-mapScene.addObject(mesh)
+mapScene.flyTo(heatMap)

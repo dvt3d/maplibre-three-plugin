@@ -68,7 +68,7 @@ class WorkerPool {
       if (msg.ok) {
         task.resolve(msg.result)
       } else {
-        const err = new Error(msg.error?.message || 'Worker task failed')
+        const err = new Error(msg.error?.message || 'Worker tasks failed')
         err.name = msg.error?.name || 'WorkerError'
         err.stack = msg.error?.stack || err.stack
         task.reject(err)
@@ -211,7 +211,7 @@ class WorkerPool {
               throw `Export ${exportName} is not a function in module: ${url}`
             }
           } else {
-            throw 'Unknown task mode: ' + mode
+            throw 'Unknown tasks mode: ' + mode
           }
           const result = await fn(...args)
           const transfers = Array.from(getTransferableObjects(result))

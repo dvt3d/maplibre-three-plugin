@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import { BufferAttribute, BufferGeometry } from 'three'
 import gaussian_splatting_vs_glsl from '../../shaders/gaussian_splatting_vs_glsl.js'
 import gaussian_splatting_fs_glsl from '../../shaders/gaussian_splatting_fs_glsl.js'
-import WasmTaskProcessor from '../../task/WasmTaskProcessor.js'
+import WasmTaskProcessor from '../../tasks/WasmTaskProcessor.js'
 import SortScheduler from './SortScheduler.js'
 
 const wasmTaskProcessor = new WasmTaskProcessor(
@@ -248,6 +248,7 @@ class SplatMesh extends THREE.Mesh {
     temp.set(out_position, this._positions.length)
     this._positions = temp
     this._sortScheduler.dirty = true
+    buffer = null
   }
 
   /**
@@ -279,6 +280,8 @@ class SplatMesh extends THREE.Mesh {
     )
     this._centerAndScaleData.set(out_cs)
     this._rotationAndColorData.set(out_rc)
+    this._sortScheduler.dirty = true
+    geometry.dispose()
   }
 
   /**
@@ -311,6 +314,8 @@ class SplatMesh extends THREE.Mesh {
     )
     this._centerAndScaleData.set(out_cs)
     this._rotationAndColorData.set(out_rc)
+    this._sortScheduler.dirty = true
+    spzData = null
   }
 
   /**
