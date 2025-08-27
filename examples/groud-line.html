@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>Three.js 贴地宽线（不使用 Line2）</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #0b0c10;
+        color: #eee;
+      }
+      #info {
+        position: fixed;
+        left: 12px;
+        top: 12px;
+        font: 13px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Helvetica,
+          Arial, sans-serif;
+        background: rgba(0, 0, 0, 0.45);
+        padding: 10px 12px;
+        border-radius: 10px;
+      }
+      #info code {
+        background: rgba(255, 255, 255, 0.08);
+        padding: 2px 6px;
+        border-radius: 6px;
+      }
+      a {
+        color: #74c0ff;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="info">
+      <div><b>贴地宽线 · Ground Polyline</b></div>
+      <div>不使用 <code>Line2</code>，在 XZ 地面上生成具有宽度的网带。</div>
+      <div>W/S/A/D 移动相机，拖拽旋转；滚轮缩放。</div>
+      <div>可修改源码中的 <code>options.width</code> 调整线宽。</div>
+    </div>
+
+    <script type="importmap">
+      {
+        "imports": {
+          "maplibre-gl": "https://cdn.jsdelivr.net/npm/maplibre-gl/+esm",
+          "three": "https://cdn.jsdelivr.net/npm/three/+esm",
+          "three/examples/": "https://cdn.jsdelivr.net/npm/three/examples/",
+          "three/addons": "https://cdn.jsdelivr.net/npm/three/examples/jsm/Addons.js",
+          "3d-tiles-renderer": "https://cdn.jsdelivr.net/npm/3d-tiles-renderer/src/index.js",
+          "3d-tiles-renderer/plugins": "https://cdn.jsdelivr.net/npm/3d-tiles-renderer/src/plugins/index.js",
+          "@dvt3d/maplibre-three-plugin": "../dist/index.js",
+          "@spz-loader/core": "https://cdn.jsdelivr.net/npm/@spz-loader/core/+esm"
+        }
+      }
+    </script>
+    <script type="module">
+      import * as THREE from 'three'
+      import { OrbitControls } from 'three/addons'
+
+      class GroundPolyline extends THREE.Mesh {
+        constructor(points, options = {}) {
+          const material =
+            options.material ||
+            new THREE.MeshStandardMaterial({
+              color: options.color ?? 0x35c3ff,
+              transparent: true,
+              side: THREE.DoubleSide,
+              polygonOffset: true,
+              polygonOffsetFactor: -1,
+              polygonOffsetUnits: -1,
+            })
+          super(new THREE.BufferGeometry(), material)
+
+          this.type = 'GroundPolyline'
+          this.opts = {
+            width: options.width || 3.0,
+            y_offset: options.y_offset ?? options.yOffset ?? 0.01,
+            miter_limit: options.miter_limit ?? options.miterLimit ?? 4.0,
+          }
+          this.points = []
+          this.set_points(points || [])
+        }
+
+        set_points(points) {
+          if (!Array.isArray(points) || points.length < 2) {
+            throw new Error('ground polyline: 至少需要两个点')
+          }
+          // 去除零长度段
+          const clean_points = []
+          for (let i = 0; i < points.length; i++) {
+            const p = points[i]
+            if (!clean_points.length) {
+              clean_points.push(p.clone())
+              continue
+            }
+            const last = clean_points[clean_points.length - 1]
+            if (last.distanceToSquared(p) > 1e-12) clean_points.push(p.clone())
+          }
+          if (clean_points.length < 2)
+            throw new Error('ground polyline: 有效点不足')
+          this.points = clean_points
+          this._rebuild_geometry()
+        }
+
+        set_width(width) {
+          this.opts.width = width
+          this._rebuild_geometry()
+        }
+        set_y_offset(y) {
+          this.opts.y_offset = y
+          this._rebuild_geometry()
+        }
+        set_miter_limit(m) {
+          this.opts.miter_limit = m
+          this._rebuild_geometry()
+        }
+
+        static _intersect_2d(p0, v0, p1, v1) {
+          const denom = v0.clone().cross(v1)
+          if (Math.abs(denom) < 1e-6) return null
+          const t = p1.clone().sub(p0).cross(v1) / denom
+          return p0.clone().add(v0.clone().multiplyScalar(t))
+        }
+
+        _rebuild_geometry() {
+          const { width, y_offset, miter_limit } = this.opts
+
+          const half_w = width * 0.5
+
+          const pts = this.points
+
+          const count = pts.length
+
+          // 每段方向和左法线（XZ 平面）
+          const seg_dirs = new Array(count - 1)
+          const left_norms = new Array(count - 1)
+
+          for (let i = 0; i < count - 1; i++) {
+            const dir = new THREE.Vector2(
+              pts[i + 1].x - pts[i].x,
+              pts[i + 1].z - pts[i].z
+            ).normalize()
+            const left_n = new THREE.Vector2(-dir.y, dir.x)
+            seg_dirs[i] = dir
+            left_norms[i] = left_n
+          }
+
+          const left_side = new Array(count)
+          const right_side = new Array(count)
+
+          // 首尾端点
+          const n0 = left_norms[0]
+          const nE = left_norms[count - 2]
+
+          left_side[0] = new THREE.Vector3(
+            pts[0].x + n0.x * half_w,
+            pts[0].y + y_offset,
+            pts[0].z + n0.y * half_w
+          )
+
+          left_side[count - 1] = new THREE.Vector3(
+            pts[count - 1].x + nE.x * half_w,
+            pts[count - 1].y + y_offset,
+            pts[count - 1].z + nE.y * half_w
+          )
+
+          right_side[0] = new THREE.Vector3(
+            pts[0].x - n0.x * half_w,
+            pts[0].y + y_offset,
+            pts[0].z - n0.y * half_w
+          )
+
+          right_side[count - 1] = new THREE.Vector3(
+            pts[count - 1].x - nE.x * half_w,
+            pts[count - 1].y + y_offset,
+            pts[count - 1].z - nE.y * half_w
+          )
+
+          // 中间点
+          for (let i = 1; i < count - 1; i++) {
+            const p = pts[i]
+            const d0 = seg_dirs[i - 1],
+              ln0 = left_norms[i - 1]
+            const d1 = seg_dirs[i],
+              ln1 = left_norms[i]
+
+            // 左侧
+            {
+              const p0 = new THREE.Vector2(
+                p.x + ln0.x * half_w,
+                p.z + ln0.y * half_w
+              )
+              const v0 = d0.clone()
+              const p1 = new THREE.Vector2(
+                p.x + ln1.x * half_w,
+                p.z + ln1.y * half_w
+              )
+              const v1 = d1.clone()
+              let q = GroundPolyline._intersect_2d(p0, v0, p1, v1)
+              if (!q) {
+                const navg = ln0.clone().add(ln1).normalize()
+                q = new THREE.Vector2(
+                  p.x + navg.x * half_w,
+                  p.z + navg.y * half_w
+                )
+              }
+              const dx = q.x - p.x,
+                dz = q.y - p.z
+              const dist = Math.hypot(dx, dz)
+              const max_len = half_w * miter_limit
+              if (dist > max_len) {
+                const s = max_len / dist
+                q.set(p.x + dx * s, p.z + dz * s)
+              }
+              left_side[i] = new THREE.Vector3(q.x, p.y + y_offset, q.y)
+            }
+
+            // 右侧
+            {
+              const p0 = new THREE.Vector2(
+                p.x - ln0.x * half_w,
+                p.z - ln0.y * half_w
+              )
+              const v0 = d0.clone()
+              const p1 = new THREE.Vector2(
+                p.x - ln1.x * half_w,
+                p.z - ln1.y * half_w
+              )
+              const v1 = d1.clone()
+              let q = GroundPolyline._intersect_2d(p0, v0, p1, v1)
+              if (!q) {
+                const navg = ln0
+                  .clone()
+                  .multiplyScalar(-1)
+                  .add(ln1.clone().multiplyScalar(-1))
+                  .normalize()
+                q = new THREE.Vector2(
+                  p.x + navg.x * half_w,
+                  p.z + navg.y * half_w
+                )
+              }
+              const dx = q.x - p.x,
+                dz = q.y - p.z
+              const dist = Math.hypot(dx, dz)
+              const max_len = half_w * miter_limit
+              if (dist > max_len) {
+                const s = max_len / dist
+                q.set(p.x + dx * s, p.z + dz * s)
+              }
+              right_side[i] = new THREE.Vector3(q.x, p.y + y_offset, q.y)
+            }
+          }
+
+          // 写入几何
+          const position = new Float32Array(count * 2 * 3)
+          const index = new Uint32Array((count - 1) * 6)
+          for (let i = 0; i < count; i++) {
+            const l = left_side[i],
+              r = right_side[i]
+            position.set([l.x, l.y, l.z], i * 6 + 0)
+            position.set([r.x, r.y, r.z], i * 6 + 3)
+          }
+          let k = 0
+          for (let i = 0; i < count - 1; i++) {
+            const a = i * 2,
+              b = a + 1,
+              c = a + 3,
+              d = a + 2
+            index.set([a, b, c, a, c, d], k)
+            k += 6
+          }
+
+          const geo = this.geometry
+          geo.setAttribute('position', new THREE.BufferAttribute(position, 3))
+          geo.setIndex(new THREE.BufferAttribute(index, 1))
+          geo.computeVertexNormals()
+          geo.computeBoundingBox()
+          geo.computeBoundingSphere()
+        }
+      }
+
+      // -----------------------------
+      // 场景搭建
+      // -----------------------------
+      const renderer = new THREE.WebGLRenderer({ antialias: true })
+      renderer.setSize(window.innerWidth, window.innerHeight)
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2))
+      document.body.appendChild(renderer.domElement)
+
+      const scene = new THREE.Scene()
+      scene.background = new THREE.Color('#0b0c10')
+
+      const camera = new THREE.PerspectiveCamera(
+        60,
+        innerWidth / innerHeight,
+        0.1,
+        2000
+      )
+      camera.position.set(30, 30, 30)
+
+      const controls = new OrbitControls(camera, renderer.domElement)
+      controls.target.set(0, 0, 0)
+
+      // 地面网格
+      const grid = new THREE.GridHelper(200, 40, 0x334455, 0x223344)
+      scene.add(grid)
+
+      // 光照（可换 MeshBasicMaterial 则无需）
+      const amb = new THREE.AmbientLight(0xffffff, 0.6)
+      const dir = new THREE.DirectionalLight(0xffffff, 0.6)
+      dir.position.set(50, 80, 40)
+      scene.add(amb, dir)
+
+      // 造一条折线（可替换为你的路径坐标）
+      const path = [
+        new THREE.Vector3(-50, 0, -50),
+        new THREE.Vector3(-50, 0, -30),
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(50, 0, -30),
+      ]
+
+      const polyline = new GroundPolyline(path, {
+        width: 2,
+        y_offset: 0.02,
+        miter_limit: 1,
+        color: 0xff0000,
+      })
+      scene.add(polyline)
+
+      function animate() {
+        requestAnimationFrame(animate)
+        controls.update()
+        renderer.render(scene, camera)
+      }
+      animate()
+
+      window.addEventListener('resize', () => {
+        camera.aspect = innerWidth / innerHeight
+        camera.updateProjectionMatrix()
+        renderer.setSize(innerWidth, innerHeight)
+      })
+
+      // 动态改线宽： polyline.set_width(10);
+    </script>
+  </body>
+</html>
