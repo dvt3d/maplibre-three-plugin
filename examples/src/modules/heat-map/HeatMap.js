@@ -38,9 +38,6 @@ class HeatMap {
     container.setAttribute('id', Util.uuid())
     container.style.cssText = `width:${this._options.width}px;height:${this._options.height}px;visibility:hidden;`
 
-    this._delegate = new Group()
-    this._delegate.name = 'heat-map-root'
-
     this._colorMap = this._options.h337.create({
       container: container,
       backgroundColor: 'rgba(0,0,0,0)',
@@ -61,7 +58,7 @@ class HeatMap {
     this._colorTexture = new CanvasTexture(this._colorMap._renderer.canvas)
     this._grayTexture = new CanvasTexture(this._grayMap._renderer.canvas)
 
-    this._mesh = new Mesh(
+    this._delegate = new Mesh(
       new PlaneGeometry(1, 1),
       new HeatMapMaterial({
         ...this._options,
@@ -69,7 +66,6 @@ class HeatMap {
         grayTexture: this._grayTexture,
       })
     )
-    this._delegate.add(this._mesh)
 
     this._position = new Vector3()
     this._size = new Vector3()
@@ -198,10 +194,10 @@ class HeatMap {
 
     this._colorTexture.needsUpdate = true
     this._grayTexture.needsUpdate = true
-    this._mesh.geometry.dispose()
+    this._delegate.geometry.dispose()
     const width = Math.abs(bounds[2] - bounds[0])
     const height = Math.abs(bounds[3] - bounds[1])
-    this._mesh.geometry = new PlaneGeometry(width, height, 300, 300)
+    this._delegate.geometry = new PlaneGeometry(width, height, 300, 300)
     this._position.set(
       (bounds[0] + bounds[2]) / 2,
       (bounds[1] + bounds[3]) / 2,
