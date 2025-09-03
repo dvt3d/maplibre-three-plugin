@@ -31,8 +31,8 @@ const DEF_OPTS = {
   },
   lruCache: {
     maxBytesSize: Infinity,
-    minSize: 0,
-    maxSize: Infinity,
+    minSize: 6000,
+    maxSize: 8000,
   },
   cesiumIon: {
     assetId: '',
@@ -106,6 +106,7 @@ class Tileset extends Overlay {
       DEF_OPTS.lruCache,
       this._options.lruCache || {}
     )
+
     this._isLoaded = false
 
     this._delegate = new Group()

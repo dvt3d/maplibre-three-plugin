@@ -29,8 +29,13 @@ class SplatMesh extends THREE.Mesh {
     super()
     this._vertexCount = 0
     this._textureWidth = 2048
+    this._textureHeight = 1
     this._loadedVertexCount = 0
     this._threshold = -0.00001
+    this._centerAndScaleData = null
+    this._centerAndScaleTexture = null
+    this._rotationAndColorData = null
+    this._rotationAndColorTexture = null
     this.geometry = new THREE.InstancedBufferGeometry().copy(baseGeometry)
     this.geometry.instanceCount = 1
     this.material = new THREE.ShaderMaterial({
@@ -382,6 +387,26 @@ class SplatMesh extends THREE.Mesh {
       )
     }
     this._bounds = bounds
+  }
+
+  /**
+   *
+   */
+  dispose() {
+    this._bounds = null
+    if (this._centerAndScaleTexture) {
+      this._centerAndScaleTexture.dispose()
+      this._centerAndScaleData = null
+    }
+    if (this._rotationAndColorTexture) {
+      this._rotationAndColorTexture.dispose()
+      this._rotationAndColorData = null
+    }
+    this._positions = null
+    this._sortScheduler = null
+    this.geometry.dispose()
+    this.material.dispose()
+    this.parent = null
   }
   /**
    *

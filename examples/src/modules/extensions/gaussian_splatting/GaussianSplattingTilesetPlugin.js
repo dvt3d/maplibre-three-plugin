@@ -11,24 +11,18 @@ class GaussianSplattingTilesetPlugin {
 
   init(tiles) {
     this.tiles = tiles
-    this._onUpdateBefore = () => {
-      this.onUpdateBefore()
-    }
-    this._onUpdateAfter = () => {
-      this.onUpdateAfter()
-    }
-    tiles.addEventListener('update-before', this._onUpdateBefore)
-    tiles.addEventListener('update-after', this._onUpdateAfter)
+    tiles.addEventListener('update-before', this._onUpdateBefore.bind(this))
+    tiles.addEventListener('update-after', this._onUpdateAfter.bind(this))
+    tiles.addEventListener('dispose-model', this._onDisposeModel.bind(this))
   }
 
-  onUpdateBefore() {}
+  _onUpdateBefore() {}
 
-  onUpdateAfter() {
+  _onUpdateAfter() {
     const tiles = this.tiles
     let camera = tiles.cameras[0]
     if (camera) {
       const viewMatrix = camera.matrixWorldInverse
-
       tiles.forEachLoadedModel((scene) => {
         scene.traverse((child) => {
           if (child.isSplatMesh) {
@@ -46,10 +40,20 @@ class GaussianSplattingTilesetPlugin {
     }
   }
 
+  _onDisposeModel({ scene }) {
+    console.log(0)
+    scene.traverse((child) => {
+      if (child.isSplatMesh) {
+        child.dispose()
+      }
+    })
+  }
+
   dispose() {
     const tiles = this.tiles
-    tiles.removeEventListener('update-before', this._onUpdateBefore)
-    tiles.removeEventListener('update-after', this._onUpdateAfter)
+    tiles.removeEventListener('update-before', this._onUpdateBefore.bind(this))
+    tiles.removeEventListener('update-after', this._onUpdateAfter.bind(this))
+    tiles.removeEventListener('dispose-model', this._onDisposeModel.bind(this))
   }
 }
 
