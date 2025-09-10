@@ -8,7 +8,7 @@ import SplatMesh from './SplatMesh.js'
 class GLTFSpzGaussianSplattingExtension {
   constructor(parser) {
     this.parser = parser
-    this.name = 'KHR_spz_gaussian_splats_compression'
+    this.name = 'KHR_gaussian_splatting_compression_spz_2'
   }
 
   /**
@@ -23,14 +23,14 @@ class GLTFSpzGaussianSplattingExtension {
     if (!extensionsUsed || !extensionsUsed.includes(this.name)) {
       return null
     }
+
     const meshDef = json.meshes[meshIndex]
     const primitives = meshDef.primitives
     const pending = []
-    pending.push(parser.loadGeometries(primitives))
     pending.push(this.loadBufferViews(primitives))
     return Promise.all(pending).then((results) => {
       const group = new Group()
-      const bufferViews = results[1]
+      const bufferViews = results[0]
       const attribute = bufferViews[0]
       const mesh = new SplatMesh()
       mesh.vertexCount = attribute.numPoints
@@ -50,12 +50,28 @@ class GLTFSpzGaussianSplattingExtension {
     for (let i = 0; i < primitives.length; i++) {
       const primitive = primitives[i]
       const extensions = primitive.extensions
-      if (extensions[this.name]) {
+      if (
+        extensions['KHR_gaussian_splatting'] &&
+        extensions['KHR_gaussian_splatting'].extensions &&
+        extensions['KHR_gaussian_splatting'].extensions[this.name]
+      ) {
         pendingBufferViews.push(
           parser
-            .getDependency('bufferView', extensions[this.name].bufferView)
+            .getDependency(
+              'bufferView',
+              extensions['KHR_gaussian_splatting'].extensions[this.name]
+                .bufferView
+            )
             .then((bufferView) => loadSpz(bufferView))
         )
+      } else {
+        if (extensions[this.name]) {
+          pendingBufferViews.push(
+            parser
+              .getDependency('bufferView', extensions[this.name].bufferView)
+              .then((bufferView) => loadSpz(bufferView))
+          )
+        }
       }
     }
     return Promise.all(pendingBufferViews).then((bufferViews) => {

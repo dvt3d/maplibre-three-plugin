@@ -19,7 +19,11 @@ class GLTFGaussianSplattingExtension {
     const parser = this.parser
     const json = parser.json
     const extensionsUsed = json.extensionsUsed
-    if (!extensionsUsed || !extensionsUsed.includes(this.name)) {
+    if (
+      !extensionsUsed ||
+      !extensionsUsed.includes(this.name) ||
+      extensionsUsed.includes('KHR_gaussian_splatting_compression_spz_2')
+    ) {
       return null
     }
     const meshDef = json.meshes[meshIndex]

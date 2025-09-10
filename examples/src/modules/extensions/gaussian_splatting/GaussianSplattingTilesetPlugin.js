@@ -41,7 +41,6 @@ class GaussianSplattingTilesetPlugin {
   }
 
   _onDisposeModel({ scene }) {
-    console.log(0)
     scene.traverse((child) => {
       if (child.isSplatMesh) {
         child.dispose()
