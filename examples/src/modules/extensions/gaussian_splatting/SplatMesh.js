@@ -1,5 +1,22 @@
-import * as THREE from 'three'
-import { BufferAttribute, BufferGeometry } from 'three'
+import {
+  Box3,
+  BufferAttribute,
+  BufferGeometry,
+  CustomBlending,
+  DataTexture,
+  DynamicDrawUsage,
+  FloatType,
+  InstancedBufferAttribute,
+  InstancedBufferGeometry,
+  Mesh,
+  OneFactor,
+  RGBAFormat,
+  RGBAIntegerFormat,
+  ShaderMaterial,
+  UnsignedIntType,
+  Vector3,
+  Vector4,
+} from 'three'
 import gaussian_splatting_vs_glsl from '../../shaders/gaussian_splatting_vs_glsl.js'
 import gaussian_splatting_fs_glsl from '../../shaders/gaussian_splatting_fs_glsl.js'
 import WasmTaskProcessor from '../../tasks/WasmTaskProcessor.js'
@@ -24,7 +41,7 @@ const positions = new BufferAttribute(
 )
 baseGeometry.setAttribute('position', positions)
 
-class SplatMesh extends THREE.Mesh {
+class SplatMesh extends Mesh {
   constructor() {
     super()
     this._vertexCount = 0
@@ -36,21 +53,19 @@ class SplatMesh extends THREE.Mesh {
     this._centerAndScaleTexture = null
     this._rotationAndColorData = null
     this._rotationAndColorTexture = null
-    this.geometry = new THREE.InstancedBufferGeometry().copy(baseGeometry)
+    this.geometry = new InstancedBufferGeometry().copy(baseGeometry)
     this.geometry.instanceCount = 1
-    this.material = new THREE.ShaderMaterial({
+    this.material = new ShaderMaterial({
       uniforms: {
         viewport: { value: new Float32Array([1980, 1080]) }, // Dummy. will be overwritten
-        focal: { value: 1000.0 }, // Dummy. will be overwritten
         centerAndScaleTexture: { value: null },
         covAndColorTexture: { value: null },
-        gsProjectionMatrix: { value: null },
         gsModelViewMatrix: { value: null },
       },
       vertexShader: gaussian_splatting_vs_glsl,
       fragmentShader: gaussian_splatting_fs_glsl,
-      blending: THREE.CustomBlending,
-      blendSrcAlpha: THREE.OneFactor,
+      blending: CustomBlending,
+      blendSrcAlpha: OneFactor,
       depthTest: true,
       depthWrite: false,
       transparent: true,
@@ -96,12 +111,12 @@ class SplatMesh extends THREE.Mesh {
       this._centerAndScaleTexture.dispose()
     }
 
-    this._centerAndScaleTexture = new THREE.DataTexture(
+    this._centerAndScaleTexture = new DataTexture(
       this._centerAndScaleData,
       this._textureWidth,
       this._textureHeight,
-      THREE.RGBAFormat,
-      THREE.FloatType
+      RGBAFormat,
+      FloatType
     )
 
     this._rotationAndColorData = new Uint32Array(
@@ -112,29 +127,23 @@ class SplatMesh extends THREE.Mesh {
       this._rotationAndColorTexture.dispose()
     }
 
-    this._rotationAndColorTexture = new THREE.DataTexture(
+    this._rotationAndColorTexture = new DataTexture(
       this._rotationAndColorData,
       this._textureWidth,
       this._textureHeight,
-      THREE.RGBAIntegerFormat,
-      THREE.UnsignedIntType
+      RGBAIntegerFormat,
+      UnsignedIntType
     )
     this._rotationAndColorTexture.internalFormat = 'RGBA32UI'
 
     const splatIndexArray = new Uint32Array(
       this._textureWidth * this._textureHeight
     )
-    const splatIndexes = new THREE.InstancedBufferAttribute(
-      splatIndexArray,
-      1,
-      false
-    )
-    splatIndexes.setUsage(THREE.DynamicDrawUsage)
+    const splatIndexes = new InstancedBufferAttribute(splatIndexArray, 1, false)
+    splatIndexes.setUsage(DynamicDrawUsage)
     this.geometry.setAttribute('splatIndex', splatIndexes)
-
     this.material.uniforms.centerAndScaleTexture.value =
       this._centerAndScaleTexture
-
     this.material.uniforms.covAndColorTexture.value =
       this._rotationAndColorTexture
   }
@@ -146,42 +155,12 @@ class SplatMesh extends THREE.Mesh {
   /**
    *
    * @param camera
-   * @returns {THREE.Matrix4}
-   * @private
-   */
-  _getProjectionMatrix(camera) {
-    let mtx = camera.projectionMatrix.clone()
-    mtx.elements[4] *= -1
-    mtx.elements[5] *= -1
-    mtx.elements[6] *= -1
-    mtx.elements[7] *= -1
-    return mtx
-  }
-
-  /**
-   *
-   * @param camera
    * @returns {Matrix4}
    * @private
    */
   _getModelViewMatrix(camera) {
-    const viewMatrix = camera.matrixWorld.clone()
-    viewMatrix.elements[1] *= -1.0
-    viewMatrix.elements[4] *= -1.0
-    viewMatrix.elements[6] *= -1.0
-    viewMatrix.elements[9] *= -1.0
-    viewMatrix.elements[13] *= -1.0
-
-    const mtx = this.matrixWorld.clone()
-    mtx.invert()
-    mtx.elements[1] *= -1.0
-    mtx.elements[4] *= -1.0
-    mtx.elements[6] *= -1.0
-    mtx.elements[9] *= -1.0
-    mtx.elements[13] *= -1.0
-    mtx.multiply(viewMatrix)
-    mtx.invert()
-    return mtx
+    let viewMatrix = camera.matrixWorld.clone().invert()
+    return viewMatrix.multiply(this.matrixWorld)
   }
 
   /**
@@ -356,17 +335,12 @@ class SplatMesh extends THREE.Mesh {
           })
       }
     )
-
     const material = object.material
-    const projectionMatrix = this._getProjectionMatrix(camera)
-    material.uniforms.gsProjectionMatrix.value = projectionMatrix
     material.uniforms.gsModelViewMatrix.value = modelViewMatrix
-    let viewport = new THREE.Vector4()
+    let viewport = new Vector4()
     renderer.getCurrentViewport(viewport)
-    const focal = (viewport.w / 2.0) * Math.abs(projectionMatrix.elements[5])
     material.uniforms.viewport.value[0] = viewport.z
     material.uniforms.viewport.value[1] = viewport.w
-    material.uniforms.focal.value = focal
   }
 
   /**
@@ -376,12 +350,12 @@ class SplatMesh extends THREE.Mesh {
     if (this._positions.length / 4 >= this._vertexCount && this._bounds) {
       return
     }
-    let bounds = new THREE.Box3()
+    let bounds = new Box3()
     for (let i = 0; i < this._positions.length; i += 4) {
       bounds.expandByPoint(
-        new THREE.Vector3(
+        new Vector3(
           this._positions[i + 0],
-          -this._positions[i + 1],
+          this._positions[i + 1],
           this._positions[i + 2]
         )
       )

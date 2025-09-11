@@ -30,8 +30,8 @@ rtc.position.copy(
   )
 )
 
-rtc.rotateX(Math.PI / 2)
-rtc.rotateY(-Math.PI / 2)
+rtc.rotateX(-Math.PI / 2)
+rtc.rotateY(Math.PI / 2)
 
 mapScene.addObject(rtc)
 
@@ -43,8 +43,6 @@ splatLoader.loadStream('./assets/1.splat', (mesh) => {
 })
 
 splatLoader.loadStream('./assets/2.splat', (mesh) => {
-  mesh.threshold = -0.000001
-
   rtc.add(mesh)
 })
 

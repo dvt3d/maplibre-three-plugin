@@ -75,7 +75,7 @@ class Tileset extends Overlay {
       new GaussianSplattingTilesetPlugin(options.splatThreshold)
     )
 
-    if (options.cesiumIon && options.cesiumIon.token) {
+    if (options.cesiumIon && options.cesiumIon.apiToken) {
       this._renderer.registerPlugin(
         new CesiumIonAuthPlugin(
           Util.merge({}, DEF_OPTS.cesiumIon, {

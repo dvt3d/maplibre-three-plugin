@@ -26,9 +26,8 @@ rtc.position.copy(
   MTP.SceneTransform.lngLatToVector3(120.71508193750839, 31.270782107613073)
 )
 
-rtc.rotateX(Math.PI / 2)
-
-rtc.rotateY(-Math.PI / 2)
+rtc.rotateX(-Math.PI / 2)
+rtc.rotateY(Math.PI / 2)
 
 mapScene.addObject(rtc)
 

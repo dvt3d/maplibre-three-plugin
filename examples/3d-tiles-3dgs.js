@@ -19,17 +19,20 @@ const mapScene = new MTP.MapScene(map)
 
 mapScene.addLight(new THREE.AmbientLight())
 
-let url = '//resource.dvgis.cn/data/3dtiles/jiaotang-spz/tileset.json'
-
-let tileset = new Tileset(url)
+let tileset = new Tileset(3667783, {
+  lruCache: {
+    minSize: 60,
+    maxSize: 80,
+  },
+  cesiumIon: {
+    apiToken: config.cesium_key,
+  },
+})
 
 tileset.autoDisableRendererCulling = true
-tileset.errorTarget = 0.1
 
 tileset.on('loaded', () => {
   mapScene.addObject(tileset)
-  tileset.setRotation([Math.PI / 2, 0, 0])
-  tileset.setHeight(20)
   mapScene.flyTo(tileset)
 })
 
