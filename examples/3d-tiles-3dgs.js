@@ -15,8 +15,6 @@ const map = new maplibregl.Map({
   maxZoom: 30,
 })
 
-map.showTileBoundaries = true
-
 const mapScene = new MTP.MapScene(map)
 
 mapScene.addLight(new THREE.AmbientLight())
