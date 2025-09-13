@@ -1,6 +1,8 @@
 # maplibre-three-plugin
 
-`maplibre-three-plugin` is a bridge plugin that cleverly connects [MapLibre GL JS](https://maplibre.org/maplibre-gl-js/docs/) with [Three.js](https://threejs.org/), enabling developers to implement 3D rendering and animation on maps.
+`maplibre-three-plugin` is a bridge plugin that cleverly
+connects [MapLibre GL JS](https://maplibre.org/maplibre-gl-js/docs/) with [Three.js](https://threejs.org/), enabling
+developers to implement 3D rendering and animation on maps.
 
 ## Install
 
@@ -15,7 +17,8 @@ yarn add @dvt3d/maplibre-three-plugin
 `maplibre-three-plugin` depends on three, please make sure three is installed before using it.
 
 ```html
-<div id="map-container" ></div>
+
+<div id="map-container"></div>
 ```
 
 ```javascript
@@ -52,12 +55,14 @@ glTFLoader.load('./assets/34M_17/34M_17.gltf', (gltf) => {
 ```
 
 ## Examples
- |                           ![pic](./examples/index.png)                           |                           ![pic](./examples/point.png)                           |                             ![pic](./examples/point-collection.png)                              |                          ![pic](./examples/billboard.png)                          |
- |:--------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------------------:|:----------------------------------------------------------------------------------:|
- |    [model](https://dvt3d.github.io/maplibre-three-plugin/examples/index.html)    |    [point](https://dvt3d.github.io/maplibre-three-plugin/examples/point.html)    | [point-collection](https://dvt3d.github.io/maplibre-three-plugin/examples/point-collection.html) | [billboard](https://dvt3d.github.io/maplibre-three-plugin/examples/billboard.html) |
- |                         ![pic](./examples/div-icon.png)                          |                         ![pic](./examples/3d-tiles.png)                          |                               ![pic](./examples/3d-tiles-osgb.png)                               |                          ![pic](./examples/sun-light.png)                          |
- | [div-icon](https://dvt3d.github.io/maplibre-three-plugin/examples/div-icon.html) | [3d-tiles](https://dvt3d.github.io/maplibre-three-plugin/examples/3d-tiles.html) |    [3d-tiles-osgb](https://dvt3d.github.io/maplibre-three-plugin/examples/3d-tiles-osgb.html)    | [sun-light](https://dvt3d.github.io/maplibre-three-plugin/examples/sun-light.html) |
 
+|                                    ![pic](./examples/index.png)                                    |                              ![pic](./examples/sun-light.png)                              |                              ![pic](./examples/point.png)                              |                             ![pic](./examples/point-collection.png)                              |                                                
+|:--------------------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------------:|:--------------------------------------------------------------------------------------:|:------------------------------------------------------------------------------------------------:|
+|             [model](https://dvt3d.github.io/maplibre-three-plugin/examples/index.html)             |     [sun-light](https://dvt3d.github.io/maplibre-three-plugin/examples/sun-light.html)     |       [point](https://dvt3d.github.io/maplibre-three-plugin/examples/point.html)       | [point-collection](https://dvt3d.github.io/maplibre-three-plugin/examples/point-collection.html) | 
+|                                  ![pic](./examples/billboard.png)                                  |                              ![pic](./examples/div-icon.png)                               |                            ![pic](./examples/3d-tiles.png)                             |                               ![pic](./examples/3d-tiles-osgb.png)                               |                         
+|         [billboard](https://dvt3d.github.io/maplibre-three-plugin/examples/billboard.html)         |      [div-icon](https://dvt3d.github.io/maplibre-three-plugin/examples/div-icon.html)      |    [3d-tiles](https://dvt3d.github.io/maplibre-three-plugin/examples/3d-tiles.html)    |    [3d-tiles-osgb](https://dvt3d.github.io/maplibre-three-plugin/examples/3d-tiles-osgb.html)    |         
+|                             ![pic](./examples/3d-tiles-cesium-ion.png)                             |                            ![pic](./examples/3d-tiles-3dgs.png)                            |                           ![pic](./examples/3d-gs-splat.png)                           |                                 ![pic](./examples/heat-map.png)                                  |
+| [3d-tiles-cesium](https://dvt3d.github.io/maplibre-three-plugin/examples/3d-tiles-cesium-ion.html) | [3d-tiles-3dgs](https://dvt3d.github.io/maplibre-three-plugin/examples/3d-tiles-3dgs.html) | [3d-gs-splat](https://dvt3d.github.io/maplibre-three-plugin/examples/3d-gs-splat.html) |         [heat-map](https://dvt3d.github.io/maplibre-three-plugin/examples/heat-map.html)         |
 
 ## Docs
 
@@ -70,18 +75,21 @@ const mapScene = new MapScene(map)
 ```
 
 #### creation
- - constructor(map,[options])
-   - params
-     - `{Map} map ` : map instance
-     - `{Object} options ` : config
+
+- constructor(map,[options])
+    - params
+        - `{Map} map ` : map instance
+        - `{Object} options ` : config
+
 ```js
 // config
 Object({
-    scene: null, //THREE.Scene，if not passed in, the default scene will be used
-    camera: null, //THREE.Camera, if not passed in, the default camera will be used
-    renderer: null, //THREE.WebGLRenderer if not passed in, the default renderer will be used
-    preserveDrawingBuffer: false,
-    renderLoop: (ins) =>{} //Frame animation rendering function, if not passed in, the default function will be used，the params is an instance for MapScene
+  scene: null, //THREE.Scene，if not passed in, the default scene will be used
+  camera: null, //THREE.Camera, if not passed in, the default camera will be used
+  renderer: null, //THREE.WebGLRenderer if not passed in, the default renderer will be used
+  preserveDrawingBuffer: false,
+  renderLoop: (ins) => {
+  } //Frame animation rendering function, if not passed in, the default function will be used，the params is an instance for MapScene
 })
 ```
 
@@ -105,25 +113,27 @@ Object({
 #### methods
 
 - **_addLight(light)_**
-  
-  Add light to the scene, support custom light objects, but the custom light objects need to support the `delegate` property, and the `delegate` type is `THREE.Object3D`
+
+  Add light to the scene, support custom light objects, but the custom light objects need to support the `delegate`
+  property, and the `delegate` type is `THREE.Object3D`
     - params
         - `{THREE.Object3D | Sun | CustomLight } light `
     - returns
-      - `this`
+        - `this`
 
 - **_removeLight(light)_**
 
-    Remove light from the scene
+  Remove light from the scene
 
     - params
-      - `{THREE.Object3D | Sun | CustomLight } light `
+        - `{THREE.Object3D | Sun | CustomLight } light `
     - returns
         - `this`
-      
+
 - **_addObject(object)_**
-   
-    Add an object to world，support custom object, but the custom object need to support the `delegate` property, and the `delegate` type is `THREE.Object3D`
+
+  Add an object to world，support custom object, but the custom object need to support the `delegate` property, and the
+  `delegate` type is `THREE.Object3D`
 
     - params
         - `{THREE.Object3D | CustomObject} object `
@@ -131,7 +141,7 @@ Object({
         - `this`
 - **_removeObject(object)_**
 
-   Remove an object from world
+  Remove an object from world
 
     - params
         - `{THREE.Object3D | CustomObject} object `
@@ -140,25 +150,26 @@ Object({
 
 - **_flyTo(target,[completed],[duration])_**
 
-   Fly the map to the provided target over a period of time, the completion callback will be triggered when the flight is complete, the target needs to contain the `position` property 
+  Fly the map to the provided target over a period of time, the completion callback will be triggered when the flight is
+  complete, the target needs to contain the `position` property
 
     - params
-      - `{THREE.Object3D | CustomObject} target `
-      - `{Function} completed `: 
-      - `{Number} duration `: 
+        - `{THREE.Object3D | CustomObject} target `
+        - `{Function} completed `:
+        - `{Number} duration `:
     - returns
         - `this`
 
 - **_zoomTo(target,[completed])_**
 
-    Zoom the map to the provided target
+  Zoom the map to the provided target
 
     - params
         - `{Ojbect} target `
         - `{Function} completed `:
     - returns
         - `this`
-      
+
 - **_on(type,callback)_**
     - params
         - `{String} type `
@@ -187,10 +198,10 @@ const scale = new SceneTransform.projectedUnitsPerMeter(24)
     - params
     - returns
         - `{Number} value`
-      
+
 - **_projectedUnitsPerMeter(lat)_**
     - params
-       - `{Number} lat `
+        - `{Number} lat `
     - returns
         - `{Number} value`
 
@@ -213,13 +224,13 @@ const scale = new SceneTransform.projectedUnitsPerMeter(24)
 #### examples
 
 ```js
-const sun=  new Sun()
+const sun = new Sun()
 ```
 
 #### creation
-- constructor()
-  - params
 
+- constructor()
+    - params
 
 #### properties
 
@@ -233,16 +244,16 @@ const sun=  new Sun()
 
 - **_update(frameState)_**
     - params
-        - `{Object} frameState`: 
+        - `{Object} frameState`:
     - returns
-        - `this` 
+        - `this`
 
 ### Creator
 
 #### examples
 
 ```js
-const rtcGroup =  Creator.createRTCGroup([-1000,0,0])
+const rtcGroup = Creator.createRTCGroup([-1000, 0, 0])
 ```
 
 #### static methods

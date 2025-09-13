@@ -23,17 +23,17 @@ mapScene.addLight(new THREE.AmbientLight())
 
 let rtc = new THREE.Group()
 rtc.position.copy(
-  MTP.SceneTransform.lngLatToVector3(120.71508193750839, 31.270782107613073)
+  MTP.SceneTransform.lngLatToVector3(120.71508193750839, 31.270782107613073, 10)
 )
 
-rtc.rotateX(-Math.PI / 2)
+rtc.rotateX(Math.PI / 2)
 rtc.rotateY(Math.PI / 2)
 
 mapScene.addObject(rtc)
 
 const splatLoader = new SplatLoader()
 
-splatLoader.loadStream('./assets/yqjt.splat', (mesh) => {
+splatLoader.loadStream('//resource.dvgis.cn/data/models/yqjt.splat', (mesh) => {
   mesh.threshold = -0.0000001
   rtc.add(mesh)
 })

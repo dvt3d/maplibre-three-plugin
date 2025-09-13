@@ -23,7 +23,7 @@ import WasmTaskProcessor from '../../tasks/WasmTaskProcessor.js'
 import SortScheduler from './SortScheduler.js'
 
 const wasmTaskProcessor = new WasmTaskProcessor(
-  new URL('../../../wasm/splats/wasm_splats.js', import.meta.url).href
+  new URL('../../../wasm/splats/wasm_splats.min.js', import.meta.url).href
 )
 await wasmTaskProcessor.init()
 const canvas = document.createElement('canvas')
