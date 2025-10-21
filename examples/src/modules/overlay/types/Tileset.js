@@ -20,6 +20,7 @@ import {
   GLTFGaussianSplattingExtension,
   GLTFKtx2TextureInspectorPlugin,
   GLTFSpzGaussianSplattingExtension,
+  GLTFSpz2GaussianSplattingExtension,
 } from '../../extensions/index.js'
 
 const _box = new Box3()
@@ -62,6 +63,7 @@ class Tileset extends Overlay {
         plugins: [
           (parser) => new GLTFGaussianSplattingExtension(parser),
           (parser) => new GLTFSpzGaussianSplattingExtension(parser),
+          (parser) => new GLTFSpz2GaussianSplattingExtension(parser),
           (parser) => new GLTFKtx2TextureInspectorPlugin(parser),
         ],
       })
