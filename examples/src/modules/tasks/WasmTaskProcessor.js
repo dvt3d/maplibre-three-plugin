@@ -18,10 +18,6 @@ class WasmTaskProcessor {
     this._initPromise = null
   }
 
-  // get glue() {
-  //   return this.glue
-  // }
-
   async init() {
     if (this._ready) return
     if (this._initPromise) return this._initPromise
