@@ -1,4 +1,5 @@
 import { SplatMesh } from '../extensions/index.js'
+import { requestBuffer } from '../utils/index.js'
 
 const rowLength = 3 * 4 + 3 * 4 + 4 + 4
 
@@ -9,28 +10,18 @@ class SplatLoader {
    *
    * @param url
    * @param onDone
+   * @param onProcess
+   * @returns {SplatLoader}
    */
-  loadData(url, onDone) {
-    fetch(url).then(async (res) => {
-      const reader = res.body.getReader()
-      const chunks = []
-      let receivedLength = 0
-      // eslint-disable-next-line no-constant-condition
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        chunks.push(value)
-        receivedLength += value.length
-      }
-      const buffer = new Uint8Array(receivedLength)
-      let offset = 0
-      for (const chunk of chunks) {
-        buffer.set(chunk, offset)
-        offset += chunk.length
-      }
-      const vertexCount = Math.floor(receivedLength / rowLength)
-      onDone(buffer.buffer, vertexCount)
-    })
+  loadData(url, onDone, onProcess = null) {
+    requestBuffer(
+      url,
+      (buffer) => {
+        onDone(buffer.buffer, Math.floor(buffer.length / rowLength))
+      },
+      onProcess
+    )
+    return this
   }
 
   /**
@@ -85,15 +76,20 @@ class SplatLoader {
    *
    * @param url
    * @param onDone
+   * @param onProcess
    * @returns {SplatLoader}
    */
-  load(url, onDone) {
-    this.loadData(url, async (buffer, vertexCount) => {
-      const mesh = new SplatMesh()
-      mesh.vertexCount = vertexCount
-      await mesh.setDataFromBuffer(buffer)
-      onDone && onDone(mesh)
-    })
+  load(url, onDone, onProcess = null) {
+    this.loadData(
+      url,
+      async (buffer, vertexCount) => {
+        const mesh = new SplatMesh()
+        mesh.vertexCount = vertexCount
+        await mesh.setDataFromBuffer(buffer)
+        onDone && onDone(mesh)
+      },
+      onProcess
+    )
     return this
   }
 

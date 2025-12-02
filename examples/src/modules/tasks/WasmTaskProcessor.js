@@ -62,7 +62,7 @@ class WasmTaskProcessor {
       throw new Error('fnName must be a string')
     }
     if (!this._ready) {
-      await this.init
+      await this.init()
     }
     const ns = this._glue
     if (!ns || typeof ns[fnName] !== 'function') {
@@ -73,7 +73,7 @@ class WasmTaskProcessor {
 
   async getMemory() {
     if (!this._ready) {
-      await this.init
+      await this.init()
     }
     return this._glue.memory
   }

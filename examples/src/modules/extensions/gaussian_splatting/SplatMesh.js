@@ -304,6 +304,40 @@ class SplatMesh extends Mesh {
 
   /**
    *
+   * @param spzData
+   * @private
+   */
+  async _updateDataFromSog(sogData) {
+    let vertexCount = sogData.count
+    if (this._loadedVertexCount + vertexCount > maxVertexes) {
+      vertexCount = maxVertexes - this._loadedVertexCount
+    }
+    if (vertexCount <= 0) {
+      return
+    }
+    const out_cs = new Float32Array(vertexCount * 4)
+    const out_rc = new Uint32Array(vertexCount * 4)
+    this._positions = new Float32Array(vertexCount * 4)
+    await wasmTaskProcessor.call(
+      'process_splats_from_sog',
+      sogData.positions,
+      sogData.scales,
+      sogData.rotations,
+      sogData.colors,
+      sogData.alphas,
+      vertexCount,
+      out_cs,
+      out_rc,
+      this._positions
+    )
+    this._centerAndScaleData.set(out_cs)
+    this._rotationAndColorData.set(out_rc)
+    this._sortScheduler.dirty = true
+    sogData = null
+  }
+
+  /**
+   *
    * @param renderer
    * @param scene
    * @param camera
@@ -427,6 +461,18 @@ class SplatMesh extends Mesh {
   async setDataFromGeometry(geometry) {
     this._loadedVertexCount = 0
     await this._updateDataFromGeometry(geometry)
+    this._updateTexture(this._vertexCount)
+    return this
+  }
+
+  /**
+   *
+   * @param sogData
+   * @returns {Promise<SplatMesh>}
+   */
+  async setDataFromSog(sogData) {
+    this._loadedVertexCount = 0
+    await this._updateDataFromSpz(sogData)
     this._updateTexture(this._vertexCount)
     return this
   }

@@ -19,14 +19,14 @@ const mapScene = new MTP.MapScene(map)
 
 mapScene.addLight(new THREE.AmbientLight())
 
-let tileset = new Tileset(3667783, {
+let tileset = new Tileset('http://localhost:8080/sz-gisbox/tileset.json', {
   lruCache: {
     minSize: 60,
     maxSize: 80,
   },
-  cesiumIon: {
-    apiToken: config.cesium_key,
-  },
+  // cesiumIon: {
+  //   apiToken: config.cesium_key,
+  // },
 })
 
 tileset.autoDisableRendererCulling = true
