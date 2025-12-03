@@ -22,15 +22,14 @@ const mapScene = new MTP.MapScene(map)
 mapScene.addLight(new THREE.AmbientLight())
 
 let rtc = new THREE.Group()
-rtc.position.copy(
-  MTP.SceneTransform.lngLatToVector3(113.05, 28.29, 10)
-)
+rtc.position.copy(MTP.SceneTransform.lngLatToVector3(113.05, 28.29, 10))
 
 rtc.rotateX(-Math.PI / 2)
 rtc.rotateY(Math.PI / 2)
 
 mapScene.addObject(rtc)
 const sogLoader = new SogLoader()
+
 sogLoader.load('http://localhost:8080/ggy.sog', (mesh) => {
   mesh.threshold = -0.0000001
   rtc.add(mesh)

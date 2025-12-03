@@ -21,11 +21,9 @@ import gaussian_splatting_vs_glsl from '../../shaders/gaussian_splatting_vs_glsl
 import gaussian_splatting_fs_glsl from '../../shaders/gaussian_splatting_fs_glsl.js'
 import WasmTaskProcessor from '../../tasks/WasmTaskProcessor.js'
 import SortScheduler from './SortScheduler.js'
-
-const wasmTaskProcessor = new WasmTaskProcessor(
-  new URL('../../../wasm/splats/wasm_splats.min.js', import.meta.url).href
+const splatTaskProcessor = new WasmTaskProcessor(
+  new URL('../../../wasm/splat/wasm_splat.min.js', import.meta.url).href
 )
-await wasmTaskProcessor.init()
 const canvas = document.createElement('canvas')
 const gl = canvas.getContext('webgl2') || canvas.getContext('webgl')
 const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE)
@@ -216,7 +214,7 @@ class SplatMesh extends Mesh {
     const out_cs = new Float32Array(vertexCount * 4)
     const out_rc = new Uint32Array(vertexCount * 4)
     const out_position = new Float32Array(vertexCount * 4)
-    await wasmTaskProcessor.call(
+    await splatTaskProcessor.call(
       'process_splats_from_buffer',
       new Uint8Array(buffer),
       new Float32Array(buffer),
@@ -251,7 +249,7 @@ class SplatMesh extends Mesh {
     const out_cs = new Float32Array(vertexCount * 4)
     const out_rc = new Uint32Array(vertexCount * 4)
     this._positions = new Float32Array(vertexCount * 4)
-    await wasmTaskProcessor.call(
+    await splatTaskProcessor.call(
       'process_splats_from_geometry',
       geometry.attributes.position.array,
       geometry.attributes._scale.array,
@@ -284,7 +282,7 @@ class SplatMesh extends Mesh {
     const out_cs = new Float32Array(vertexCount * 4)
     const out_rc = new Uint32Array(vertexCount * 4)
     this._positions = new Float32Array(vertexCount * 4)
-    await wasmTaskProcessor.call(
+    await splatTaskProcessor.call(
       'process_splats_from_spz',
       spzData.positions,
       spzData.scales,
@@ -300,40 +298,6 @@ class SplatMesh extends Mesh {
     this._rotationAndColorData.set(out_rc)
     this._sortScheduler.dirty = true
     spzData = null
-  }
-
-  /**
-   *
-   * @param spzData
-   * @private
-   */
-  async _updateDataFromSog(sogData) {
-    let vertexCount = sogData.count
-    if (this._loadedVertexCount + vertexCount > maxVertexes) {
-      vertexCount = maxVertexes - this._loadedVertexCount
-    }
-    if (vertexCount <= 0) {
-      return
-    }
-    const out_cs = new Float32Array(vertexCount * 4)
-    const out_rc = new Uint32Array(vertexCount * 4)
-    this._positions = new Float32Array(vertexCount * 4)
-    await wasmTaskProcessor.call(
-      'process_splats_from_sog',
-      sogData.positions,
-      sogData.scales,
-      sogData.rotations,
-      sogData.colors,
-      sogData.alphas,
-      vertexCount,
-      out_cs,
-      out_rc,
-      this._positions
-    )
-    this._centerAndScaleData.set(out_cs)
-    this._rotationAndColorData.set(out_rc)
-    this._sortScheduler.dirty = true
-    sogData = null
   }
 
   /**
@@ -358,7 +322,7 @@ class SplatMesh extends Mesh {
           camera_mtx[10],
           camera_mtx[14],
         ])
-        wasmTaskProcessor
+        splatTaskProcessor
           .call('sort_splats', this._positions, view, this._threshold)
           .then((sortedIndexes) => {
             let indexes = new Uint32Array(sortedIndexes)
@@ -461,18 +425,6 @@ class SplatMesh extends Mesh {
   async setDataFromGeometry(geometry) {
     this._loadedVertexCount = 0
     await this._updateDataFromGeometry(geometry)
-    this._updateTexture(this._vertexCount)
-    return this
-  }
-
-  /**
-   *
-   * @param sogData
-   * @returns {Promise<SplatMesh>}
-   */
-  async setDataFromSog(sogData) {
-    this._loadedVertexCount = 0
-    await this._updateDataFromSpz(sogData)
     this._updateTexture(this._vertexCount)
     return this
   }
