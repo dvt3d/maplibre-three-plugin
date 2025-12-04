@@ -8,6 +8,9 @@ const webpTaskProcessor = new WasmTaskProcessor(
 const sogTaskProcessor = new WasmTaskProcessor(
   new URL('../../wasm/sog/wasm_sog.min.js', import.meta.url).href
 )
+await webpTaskProcessor.init()
+await sogTaskProcessor.init()
+
 class SogLoader {
   constructor() {}
   /**

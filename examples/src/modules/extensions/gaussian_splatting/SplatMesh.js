@@ -24,6 +24,8 @@ import SortScheduler from './SortScheduler.js'
 const splatTaskProcessor = new WasmTaskProcessor(
   new URL('../../../wasm/splat/wasm_splat.min.js', import.meta.url).href
 )
+await splatTaskProcessor.init()
+
 const canvas = document.createElement('canvas')
 const gl = canvas.getContext('webgl2') || canvas.getContext('webgl')
 const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE)
