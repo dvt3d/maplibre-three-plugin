@@ -2,7 +2,7 @@ import maplibregl from 'maplibre-gl'
 import * as THREE from 'three'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
 import config from './config.js'
-import { SplatLoader } from './src/index.js'
+import { Tileset } from './src/index.js'
 
 const map = new maplibregl.Map({
   container: 'map',
@@ -19,20 +19,27 @@ const mapScene = new MTP.MapScene(map)
 
 mapScene.addLight(new THREE.AmbientLight())
 
-let rtc = MTP.Creator.createMercatorRTCGroup(
-  [113.03932757890647, 28.294469403362328, 5],
-  [-Math.PI / 2, Math.PI / 2]
-)
-mapScene.addObject(rtc)
-
-const splatLoader = new SplatLoader()
-
-splatLoader.loadStream('http://localhost:8080/ggy.splat', (mesh) => {
-  mesh.threshold = -0.0000001
-  rtc.add(mesh)
-  mapScene.flyTo(rtc)
+let tileset = new Tileset(3667783, {
+  lruCache: {
+    minSize: 60,
+    maxSize: 80,
+  },
+  cesiumIon: {
+    apiToken: config.cesium_key,
+  },
 })
 
-mapScene.on('postRender', () => {
-  map.triggerRepaint()
+tileset.autoDisableRendererCulling = true
+
+tileset.on('loaded', () => {
+  mapScene.addObject(tileset)
+  mapScene.flyTo(tileset)
 })
+
+mapScene
+  .on('preRender', (e) => {
+    tileset.update(e.frameState)
+  })
+  .on('postRender', () => {
+    map.triggerRepaint()
+  })
