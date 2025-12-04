@@ -13,27 +13,28 @@ const map = new maplibregl.Map({
   pitch: 60,
   canvasContextAttributes: { antialias: true },
   maxZoom: 30,
+  center: [113.05, 28.29],
+  zoom: 18,
 })
 
 const mapScene = new MTP.MapScene(map)
 
 mapScene.addLight(new THREE.AmbientLight())
 
-let tileset = new Tileset('http://localhost:8080/sz-gisbox/tileset.json', {
-  lruCache: {
-    minSize: 60,
-    maxSize: 80,
-  },
-  // cesiumIon: {
-  //   apiToken: config.cesium_key,
-  // },
+let tileset = new Tileset('http://localhost:8080/3dties-ggy/tileset.json', {
+  splatThreshold: -0.0000001,
 })
 
 tileset.autoDisableRendererCulling = true
 
 tileset.on('loaded', () => {
   mapScene.addObject(tileset)
-  mapScene.flyTo(tileset)
+  tileset.position = MTP.SceneTransform.lngLatToVector3(
+    113.03932921746389,
+    28.294146211897612,
+    10
+  )
+  tileset.setRotation([-Math.PI / 2, -Math.PI / 2, 0])
 })
 
 mapScene

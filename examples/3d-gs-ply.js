@@ -13,8 +13,6 @@ const map = new maplibregl.Map({
   pitch: 60,
   canvasContextAttributes: { antialias: true },
   maxZoom: 30,
-  center: [113.05, 28.29],
-  zoom: 18,
 })
 
 const mapScene = new MTP.MapScene(map)
@@ -22,11 +20,10 @@ const mapScene = new MTP.MapScene(map)
 // add light
 mapScene.addLight(new THREE.AmbientLight())
 
-let rtc = new THREE.Group()
-rtc.position.copy(MTP.SceneTransform.lngLatToVector3(113.05, 28.29, 10))
-
-rtc.rotateX(-Math.PI / 2)
-rtc.rotateY(Math.PI / 2)
+const rtc = MTP.Creator.createMercatorRTCGroup(
+  [113.03932921746389, 28.294146211897612, 5],
+  [-Math.PI / 2, Math.PI / 2]
+)
 
 mapScene.addObject(rtc)
 
@@ -35,6 +32,7 @@ const plyLoader = new PlyLoader()
 plyLoader.load('http://localhost:8080/ggy.ply', (mesh) => {
   mesh.threshold = -0.0000001
   rtc.add(mesh)
+  mapScene.flyTo(rtc)
 })
 
 mapScene.on('postRender', () => {

@@ -12,7 +12,7 @@ class Creator {
    * @param scale
    */
   static createRTCGroup(
-    center: number | number[],
+    center: number[],
     rotation: number[],
     scale: number[]
   ): Group {
@@ -48,7 +48,7 @@ class Creator {
    * @param scale
    */
   static createMercatorRTCGroup(
-    center: number | number[],
+    center: number[],
     rotation: number[],
     scale: number[]
   ): Group {
