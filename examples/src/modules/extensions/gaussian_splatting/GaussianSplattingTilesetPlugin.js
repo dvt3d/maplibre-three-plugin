@@ -24,12 +24,15 @@ class GaussianSplattingTilesetPlugin {
     if (camera) {
       const viewMatrix = camera.matrixWorldInverse
       tiles.forEachLoadedModel((scene) => {
-        scene.traverse((child) => {
+        scene.traverse(async (child) => {
           if (child.isSplatMesh) {
             child.threshold = this._threshold
-            child.computeBounds()
-            _center.set(0, 0, 0)
-            child.bounds.getCenter(_center)
+            await child.computeBounds()
+            _center.set(
+              (child.bounds[0] + child.bounds[3]) / 2,
+              (child.bounds[1] + child.bounds[4]) / 2,
+              (child.bounds[2] + child.bounds[5]) / 2
+            )
             _center.applyMatrix4(child.matrixWorld)
             _center.applyMatrix4(viewMatrix)
             let depth = -_center.z

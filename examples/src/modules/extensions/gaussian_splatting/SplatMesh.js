@@ -72,9 +72,9 @@ class SplatMesh extends Mesh {
     })
     this.material.onBeforeRender = this._onMaterialBeforeRender.bind(this)
     this.frustumCulled = false
-    this._positions = new Float32Array(0)
     this._bounds = null
     this._sortScheduler = new SortScheduler()
+    this._bufferId = null
   }
 
   get isSplatMesh() {
@@ -215,22 +215,28 @@ class SplatMesh extends Mesh {
     }
     const out_cs = new Float32Array(vertexCount * 4)
     const out_rc = new Uint32Array(vertexCount * 4)
-    const out_position = new Float32Array(vertexCount * 4)
-    await splatTaskProcessor.call(
-      'process_splats_from_buffer',
-      new Uint8Array(buffer),
-      new Float32Array(buffer),
-      vertexCount,
-      out_cs,
-      out_rc,
-      out_position
-    )
+    if (this._bufferId === null) {
+      this._bufferId = await splatTaskProcessor.call(
+        'process_splats_from_buffer',
+        new Uint8Array(buffer),
+        new Float32Array(buffer),
+        vertexCount,
+        out_cs,
+        out_rc
+      )
+    } else {
+      await splatTaskProcessor.call(
+        'append_data_from_buffer',
+        this._bufferId,
+        new Uint8Array(buffer),
+        new Float32Array(buffer),
+        vertexCount,
+        out_cs,
+        out_rc
+      )
+    }
     this._centerAndScaleData.set(out_cs, this._loadedVertexCount * 4)
     this._rotationAndColorData.set(out_rc, this._loadedVertexCount * 4)
-    let temp = new Float32Array(this._positions.length + out_position.length)
-    temp.set(this._positions)
-    temp.set(out_position, this._positions.length)
-    this._positions = temp
     this._sortScheduler.dirty = true
     buffer = null
   }
@@ -250,8 +256,7 @@ class SplatMesh extends Mesh {
     }
     const out_cs = new Float32Array(vertexCount * 4)
     const out_rc = new Uint32Array(vertexCount * 4)
-    this._positions = new Float32Array(vertexCount * 4)
-    await splatTaskProcessor.call(
+    this._bufferId = await splatTaskProcessor.call(
       'process_splats_from_geometry',
       geometry.attributes.position.array,
       geometry.attributes._scale.array,
@@ -259,8 +264,7 @@ class SplatMesh extends Mesh {
       geometry.attributes.color.array,
       vertexCount,
       out_cs,
-      out_rc,
-      this._positions
+      out_rc
     )
     this._centerAndScaleData.set(out_cs)
     this._rotationAndColorData.set(out_rc)
@@ -283,8 +287,7 @@ class SplatMesh extends Mesh {
     }
     const out_cs = new Float32Array(vertexCount * 4)
     const out_rc = new Uint32Array(vertexCount * 4)
-    this._positions = new Float32Array(vertexCount * 4)
-    await splatTaskProcessor.call(
+    this._bufferId = await splatTaskProcessor.call(
       'process_splats_from_spz',
       spzData.positions,
       spzData.scales,
@@ -293,8 +296,7 @@ class SplatMesh extends Mesh {
       spzData.alphas,
       vertexCount,
       out_cs,
-      out_rc,
-      this._positions
+      out_rc
     )
     this._centerAndScaleData.set(out_cs)
     this._rotationAndColorData.set(out_rc)
@@ -325,7 +327,7 @@ class SplatMesh extends Mesh {
           camera_mtx[14],
         ])
         splatTaskProcessor
-          .call('sort_splats', this._positions, view, this._threshold)
+          .call('sort_splats', this._bufferId, view, this._threshold)
           .then((sortedIndexes) => {
             let indexes = new Uint32Array(sortedIndexes)
             this.geometry.attributes.splatIndex.set(indexes)
@@ -346,27 +348,20 @@ class SplatMesh extends Mesh {
   /**
    *
    */
-  computeBounds() {
-    if (this._positions.length / 4 >= this._vertexCount && this._bounds) {
+  async computeBounds() {
+    if (this._bufferId === null || this._bounds) {
       return
     }
-    let bounds = new Box3()
-    for (let i = 0; i < this._positions.length; i += 4) {
-      bounds.expandByPoint(
-        new Vector3(
-          this._positions[i + 0],
-          this._positions[i + 1],
-          this._positions[i + 2]
-        )
-      )
-    }
-    this._bounds = bounds
+    this._bounds = await splatTaskProcessor.call(
+      'compute_bounds',
+      this._bufferId
+    )
   }
 
   /**
    *
    */
-  dispose() {
+  async dispose() {
     this._bounds = null
     if (this._centerAndScaleTexture) {
       this._centerAndScaleTexture.dispose()
@@ -376,7 +371,8 @@ class SplatMesh extends Mesh {
       this._rotationAndColorTexture.dispose()
       this._rotationAndColorData = null
     }
-    this._positions = null
+    await splatTaskProcessor.call('unregister_positions', this._bufferId)
+    this._bufferId = null
     this._sortScheduler = null
     this.geometry.dispose()
     this.material.dispose()
