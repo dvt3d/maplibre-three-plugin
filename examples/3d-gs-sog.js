@@ -19,18 +19,19 @@ const mapScene = new MTP.MapScene(map)
 
 mapScene.addLight(new THREE.AmbientLight())
 
-const rtc = MTP.Creator.createMercatorRTCGroup(
-  [113.03932921746389, 28.294146211897612, 5],
+let rtc = MTP.Creator.createMercatorRTCGroup(
+  [113.03932757890647, 28.294469403362328, 5],
   [-Math.PI / 2, Math.PI / 2]
 )
 mapScene.addObject(rtc)
-const sogLoader = new SogLoader()
 
+const sogLoader = new SogLoader()
 sogLoader.load('http://localhost:8080/ggy.sog', (mesh) => {
   mesh.threshold = -0.0000001
   rtc.add(mesh)
   mapScene.flyTo(rtc)
 })
+
 mapScene.on('postRender', () => {
   map.triggerRepaint()
 })

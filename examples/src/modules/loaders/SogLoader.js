@@ -11,8 +11,10 @@ const sogTaskProcessor = new WasmTaskProcessor(
 )
 
 await Promise.all([webpTaskProcessor.init(), sogTaskProcessor.init()])
+
 class SogLoader {
   constructor() {}
+
   /**
    *
    * @param url
@@ -24,19 +26,25 @@ class SogLoader {
       url,
       async (buffer) => {
         const files = unzipSync(buffer)
+
         const metaBytes = files['meta.json']
         const metaStr = new TextDecoder().decode(metaBytes)
         const meta = JSON.parse(metaStr)
+
         const count = meta.count
-        const funName = 'webp_decode_rgba'
+
+        const funcName = 'webp_decode_rgba'
+
         const sogData = await Promise.all([
-          webpTaskProcessor.call(funName, files[meta.means.files[0]]),
-          webpTaskProcessor.call(funName, files[meta.means.files[1]]),
-          webpTaskProcessor.call(funName, files[meta.quats.files[0]]),
-          webpTaskProcessor.call(funName, files[meta.scales.files[0]]),
-          webpTaskProcessor.call(funName, files[meta.sh0.files[0]]),
+          webpTaskProcessor.call(funcName, files[meta.means.files[0]]),
+          webpTaskProcessor.call(funcName, files[meta.means.files[1]]),
+          webpTaskProcessor.call(funcName, files[meta.quats.files[0]]),
+          webpTaskProcessor.call(funcName, files[meta.scales.files[0]]),
+          webpTaskProcessor.call(funcName, files[meta.sh0.files[0]]),
         ])
+
         const outBuffer = new Uint8Array(count * 32)
+
         await sogTaskProcessor.call(
           'sog_to_splat',
           metaStr,
@@ -47,6 +55,8 @@ class SogLoader {
           sogData[4].rgba,
           outBuffer
         )
+
+        console.log(outBuffer)
         onDone?.(outBuffer.buffer, count)
       },
       onProcess

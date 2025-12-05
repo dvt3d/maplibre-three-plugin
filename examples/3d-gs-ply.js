@@ -20,11 +20,10 @@ const mapScene = new MTP.MapScene(map)
 // add light
 mapScene.addLight(new THREE.AmbientLight())
 
-const rtc = MTP.Creator.createMercatorRTCGroup(
-  [113.03932921746389, 28.294146211897612, 5],
+let rtc = MTP.Creator.createMercatorRTCGroup(
+  [113.03932757890647, 28.294469403362328, 5],
   [-Math.PI / 2, Math.PI / 2]
 )
-
 mapScene.addObject(rtc)
 
 const plyLoader = new PlyLoader()

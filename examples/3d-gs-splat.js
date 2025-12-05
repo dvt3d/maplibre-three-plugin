@@ -19,14 +19,15 @@ const mapScene = new MTP.MapScene(map)
 
 mapScene.addLight(new THREE.AmbientLight())
 
-const rtc = MTP.Creator.createMercatorRTCGroup(
-  [113.03932921746389, 28.294146211897612, 5],
+let rtc = MTP.Creator.createMercatorRTCGroup(
+  [113.03932757890647, 28.294469403362328, 5],
   [-Math.PI / 2, Math.PI / 2]
 )
 mapScene.addObject(rtc)
+
 const splatLoader = new SplatLoader()
 
-splatLoader.load('http://localhost:8080/ggy.splat', (mesh) => {
+splatLoader.loadStream('http://localhost:8080/ggy.splat', (mesh) => {
   mesh.threshold = -0.0000001
   rtc.add(mesh)
   mapScene.flyTo(rtc)

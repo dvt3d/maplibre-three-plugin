@@ -72,7 +72,7 @@ class Creator {
    * @returns {Mesh}
    */
   static createShadowGround(
-    center: number | number[],
+    center: number[],
     width?: number,
     height?: number
   ): Mesh {
