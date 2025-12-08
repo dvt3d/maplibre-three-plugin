@@ -51,7 +51,8 @@ class SplatLoader {
           if (vertexCount) {
             const vertexBytes = vertexCount * rowLength
             const vertexData = buffer.subarray(0, vertexBytes) // 保证处理的数据为 N * rowLength
-            onPrecess && onPrecess(vertexData.buffer, vertexCount)
+            onPrecess &&
+              onPrecess(new Uint8Array(vertexData).buffer, vertexCount)
           }
           // 更新leftover，存储多出来的数字节，字节长度可能不足 rowLength，需要存储下来，用于下一次计算
           leftover = buffer.subarray(
@@ -65,7 +66,7 @@ class SplatLoader {
       if (leftover.length) {
         const vertexCount = Math.floor(leftover.length / rowLength)
         if (vertexCount) {
-          onPrecess && onPrecess(leftover.buffer, vertexCount)
+          onPrecess && onPrecess(new Uint8Array(leftover).buffer, vertexCount)
         }
       }
     })

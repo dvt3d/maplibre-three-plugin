@@ -1,5 +1,4 @@
 import {
-  Box3,
   BufferAttribute,
   BufferGeometry,
   CustomBlending,
@@ -14,15 +13,16 @@ import {
   RGBAIntegerFormat,
   ShaderMaterial,
   UnsignedIntType,
-  Vector3,
   Vector4,
 } from 'three'
 import gaussian_splatting_vs_glsl from '../../shaders/gaussian_splatting_vs_glsl.js'
 import gaussian_splatting_fs_glsl from '../../shaders/gaussian_splatting_fs_glsl.js'
-import WasmTaskProcessor from '../../tasks/WasmTaskProcessor.js'
 import SortScheduler from './SortScheduler.js'
-const splatTaskProcessor = new WasmTaskProcessor(
-  new URL('../../../wasm/splat/wasm_splat.min.js', import.meta.url).href
+import WorkerTaskProcessor from '../../tasks/WorkerTaskProcessor.js'
+import { Util } from '../../utils/index.js'
+
+const splatTaskProcessor = new WorkerTaskProcessor(
+  new URL('../../../wasm/splat/wasm_splat.worker.min.js', import.meta.url).href
 )
 await splatTaskProcessor.init()
 
@@ -44,6 +44,7 @@ baseGeometry.setAttribute('position', positions)
 class SplatMesh extends Mesh {
   constructor() {
     super()
+    this._meshId = Util.uuid()
     this._vertexCount = 0
     this._textureWidth = 2048
     this._textureHeight = 1
@@ -74,7 +75,8 @@ class SplatMesh extends Mesh {
     this.frustumCulled = false
     this._bounds = null
     this._sortScheduler = new SortScheduler()
-    this._bufferId = null
+
+    this._loadChain = Promise.resolve()
   }
 
   get isSplatMesh() {
@@ -213,31 +215,27 @@ class SplatMesh extends Mesh {
     if (vertexCount <= 0) {
       return
     }
-    const out_cs = new Float32Array(vertexCount * 4)
-    const out_rc = new Uint32Array(vertexCount * 4)
-    if (this._bufferId === null) {
-      this._bufferId = await splatTaskProcessor.call(
+    let data = null
+    if (this._loadedVertexCount === 0) {
+      data = await splatTaskProcessor.call(
         'process_splats_from_buffer',
-        new Uint8Array(buffer),
-        new Float32Array(buffer),
-        vertexCount,
-        out_cs,
-        out_rc
+        this._meshId,
+        buffer,
+        vertexCount
       )
     } else {
-      await splatTaskProcessor.call(
+      data = await splatTaskProcessor.call(
         'append_data_from_buffer',
-        this._bufferId,
-        new Uint8Array(buffer),
-        new Float32Array(buffer),
-        vertexCount,
-        out_cs,
-        out_rc
+        this._meshId,
+        buffer,
+        vertexCount
       )
     }
-    this._centerAndScaleData.set(out_cs, this._loadedVertexCount * 4)
-    this._rotationAndColorData.set(out_rc, this._loadedVertexCount * 4)
-    this._sortScheduler.dirty = true
+    if (data && this._meshId === data.meshId) {
+      this._centerAndScaleData.set(data.out_cs, this._loadedVertexCount * 4)
+      this._rotationAndColorData.set(data.out_rc, this._loadedVertexCount * 4)
+      this._sortScheduler.dirty = true
+    }
     buffer = null
   }
 
@@ -254,21 +252,21 @@ class SplatMesh extends Mesh {
     if (vertexCount <= 0) {
       return
     }
-    const out_cs = new Float32Array(vertexCount * 4)
-    const out_rc = new Uint32Array(vertexCount * 4)
-    this._bufferId = await splatTaskProcessor.call(
+    const data = await splatTaskProcessor.call(
       'process_splats_from_geometry',
+      this._meshId,
       geometry.attributes.position.array,
       geometry.attributes._scale.array,
       geometry.attributes._rotation.array,
       geometry.attributes.color.array,
-      vertexCount,
-      out_cs,
-      out_rc
+      vertexCount
     )
-    this._centerAndScaleData.set(out_cs)
-    this._rotationAndColorData.set(out_rc)
-    this._sortScheduler.dirty = true
+    if (data && this._meshId === data.meshId) {
+      this._centerAndScaleData.set(data.out_cs)
+      this._rotationAndColorData.set(data.out_rc)
+      this._sortScheduler.dirty = true
+    }
+
     geometry.dispose()
   }
 
@@ -285,22 +283,22 @@ class SplatMesh extends Mesh {
     if (vertexCount <= 0) {
       return
     }
-    const out_cs = new Float32Array(vertexCount * 4)
-    const out_rc = new Uint32Array(vertexCount * 4)
-    this._bufferId = await splatTaskProcessor.call(
+    const data = await splatTaskProcessor.call(
       'process_splats_from_spz',
+      this._meshId,
       spzData.positions,
       spzData.scales,
       spzData.rotations,
       spzData.colors,
       spzData.alphas,
-      vertexCount,
-      out_cs,
-      out_rc
+      vertexCount
     )
-    this._centerAndScaleData.set(out_cs)
-    this._rotationAndColorData.set(out_rc)
-    this._sortScheduler.dirty = true
+    if (data && this._meshId === data.meshId) {
+      this._centerAndScaleData.set(data.out_cs)
+      this._rotationAndColorData.set(data.out_rc)
+      this._sortScheduler.dirty = true
+    }
+
     spzData = null
   }
 
@@ -317,26 +315,25 @@ class SplatMesh extends Mesh {
   _onMaterialBeforeRender(renderer, scene, camera, geometry, object, group) {
     let modelViewMatrix = this._getModelViewMatrix(camera)
     let camera_mtx = modelViewMatrix.elements
-    this._sortScheduler.tick(
-      modelViewMatrix,
-      (parameters, transferableObjects) => {
-        let view = new Float32Array([
-          camera_mtx[2],
-          camera_mtx[6],
-          camera_mtx[10],
-          camera_mtx[14],
-        ])
-        splatTaskProcessor
-          .call('sort_splats', this._bufferId, view, this._threshold)
-          .then((sortedIndexes) => {
-            let indexes = new Uint32Array(sortedIndexes)
+    this._sortScheduler.tick(modelViewMatrix, () => {
+      let view = new Float32Array([
+        camera_mtx[2],
+        camera_mtx[6],
+        camera_mtx[10],
+        camera_mtx[14],
+      ])
+      splatTaskProcessor
+        .call('sort_splats', this._meshId, view, this._threshold)
+        .then((result) => {
+          if (this._meshId === result.meshId) {
+            let indexes = new Uint32Array(result.data)
             this.geometry.attributes.splatIndex.set(indexes)
             this.geometry.attributes.splatIndex.needsUpdate = true
             this.geometry.instanceCount = indexes.length
             this._sortScheduler.isSorting = false
-          })
-      }
-    )
+          }
+        })
+    })
     const material = object.material
     material.uniforms.gsModelViewMatrix.value = modelViewMatrix
     let viewport = new Vector4()
@@ -349,13 +346,13 @@ class SplatMesh extends Mesh {
    *
    */
   async computeBounds() {
-    if (this._bufferId === null || this._bounds) {
+    if (this._bounds) {
       return
     }
-    this._bounds = await splatTaskProcessor.call(
-      'compute_bounds',
-      this._bufferId
-    )
+    const result = await splatTaskProcessor.call('compute_bounds', this._meshId)
+    if (this._meshId === result._meshId) {
+      this._bounds = result.data
+    }
   }
 
   /**
@@ -386,7 +383,10 @@ class SplatMesh extends Mesh {
    */
   async setDataFromBuffer(buffer) {
     this._loadedVertexCount = 0
-    await this._updateDataFromBuffer(buffer, this._vertexCount)
+    this._loadChain = this._loadChain.then(() =>
+      this._updateDataFromBuffer(buffer, this._vertexCount)
+    )
+    await this._loadChain
     this._updateTexture(this._vertexCount)
     return this
   }
@@ -398,7 +398,10 @@ class SplatMesh extends Mesh {
    * @returns {SplatMesh}
    */
   async appendDataFromBuffer(buffer, vertexCount) {
-    await this._updateDataFromBuffer(buffer, vertexCount)
+    this._loadChain = this._loadChain.then(() =>
+      this._updateDataFromBuffer(buffer, vertexCount)
+    )
+    await this._loadChain
     this._updateTexture(vertexCount)
     return this
   }

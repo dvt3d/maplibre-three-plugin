@@ -124,27 +124,21 @@ class PlyLoader {
     requestBuffer(
       url,
       (buffer) => {
-        console.time('all')
         const text = new TextDecoder().decode(
           buffer.subarray(0, MAX_HEADER_SIZE)
         )
-        console.time('parseHeader')
         const headerEnd = text.indexOf('end_header\n')
         if (headerEnd < 0) {
           throw new Error('Invalid PLY: header too large or missing end_header')
         }
         const header = this._parseHeader(text, headerEnd)
-        console.timeEnd('parseHeader')
         const vertexCount = header.vertexCount
-        console.time('parserData')
         const outBuffer = this._parserData(
           buffer.buffer,
           headerEnd + 11,
           vertexCount,
           header
         )
-        console.timeEnd('parserData')
-        console.timeEnd('all')
         onDone?.(outBuffer, vertexCount)
       },
       onProcess

@@ -55,8 +55,6 @@ class SogLoader {
           sogData[4].rgba,
           outBuffer
         )
-
-        console.log(outBuffer)
         onDone?.(outBuffer.buffer, count)
       },
       onProcess

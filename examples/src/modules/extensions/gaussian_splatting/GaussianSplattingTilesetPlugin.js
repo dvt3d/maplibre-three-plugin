@@ -28,15 +28,17 @@ class GaussianSplattingTilesetPlugin {
           if (child.isSplatMesh) {
             child.threshold = this._threshold
             await child.computeBounds()
-            _center.set(
-              (child.bounds[0] + child.bounds[3]) / 2,
-              (child.bounds[1] + child.bounds[4]) / 2,
-              (child.bounds[2] + child.bounds[5]) / 2
-            )
-            _center.applyMatrix4(child.matrixWorld)
-            _center.applyMatrix4(viewMatrix)
-            let depth = -_center.z
-            child.renderOrder = 1e5 - depth
+            if (child.bounds) {
+              _center.set(
+                (child.bounds[0] + child.bounds[3]) / 2,
+                (child.bounds[1] + child.bounds[4]) / 2,
+                (child.bounds[2] + child.bounds[5]) / 2
+              )
+              _center.applyMatrix4(child.matrixWorld)
+              _center.applyMatrix4(viewMatrix)
+              let depth = -_center.z
+              child.renderOrder = 1e5 - depth
+            }
           }
         })
       })
