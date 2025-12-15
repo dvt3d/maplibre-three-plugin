@@ -46,7 +46,7 @@ class SplatMesh extends Mesh {
     super()
     this._meshId = Util.uuid()
     this._vertexCount = 0
-    this._textureWidth = 2048
+    this._textureWidth = maxTextureSize
     this._textureHeight = 1
     this._loadedVertexCount = 0
     this._threshold = -0.00001
