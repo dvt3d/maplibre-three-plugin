@@ -14,6 +14,8 @@ import {
   ShaderMaterial,
   UnsignedIntType,
   Vector4,
+  Frustum,
+  Matrix4,
 } from 'three'
 import gaussian_splatting_vs_glsl from '../../shaders/gaussian_splatting_vs_glsl.js'
 import gaussian_splatting_fs_glsl from '../../shaders/gaussian_splatting_fs_glsl.js'
@@ -31,15 +33,15 @@ const gl = canvas.getContext('webgl2') || canvas.getContext('webgl')
 const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE)
 const maxVertexes = maxTextureSize * maxTextureSize
 
-const baseGeometry = new BufferGeometry()
-const positions = new BufferAttribute(
+const _baseGeometry = new BufferGeometry()
+const _positions = new BufferAttribute(
   new Float32Array([
     -2.0, -2.0, 0.0, 2.0, 2.0, 0.0, -2.0, 2.0, 0.0, 2.0, -2.0, 0.0, 2.0, 2.0,
     0.0, -2.0, -2.0, 0.0,
   ]),
   3
 )
-baseGeometry.setAttribute('position', positions)
+_baseGeometry.setAttribute('position', _positions)
 
 class SplatMesh extends Mesh {
   constructor() {
@@ -54,7 +56,7 @@ class SplatMesh extends Mesh {
     this._centerAndScaleTexture = null
     this._rotationAndColorData = null
     this._rotationAndColorTexture = null
-    this.geometry = new InstancedBufferGeometry().copy(baseGeometry)
+    this.geometry = new InstancedBufferGeometry().copy(_baseGeometry)
     this.geometry.instanceCount = 1
     this.material = new ShaderMaterial({
       uniforms: {
@@ -313,19 +315,33 @@ class SplatMesh extends Mesh {
    */
   _onMaterialBeforeRender(renderer, scene, camera, geometry, object, group) {
     let modelViewMatrix = this._getModelViewMatrix(camera)
-    let camera_mtx = modelViewMatrix.elements
     this._sortScheduler.tick(modelViewMatrix, () => {
-      let view = new Float32Array([
+      const camera_mtx = modelViewMatrix.elements
+      const view = new Float32Array([
         camera_mtx[2],
         camera_mtx[6],
         camera_mtx[10],
         camera_mtx[14],
       ])
+      const planes = new Float32Array(6 * 4)
+      const projViewMatrix = new Matrix4()
+      projViewMatrix.multiplyMatrices(
+        camera.projectionMatrix,
+        camera.matrixWorldInverse
+      )
+      const frustum = new Frustum()
+      frustum.setFromProjectionMatrix(projViewMatrix)
+      frustum.planes.forEach((p, i) => {
+        planes[i * 4 + 0] = p.normal.x
+        planes[i * 4 + 1] = p.normal.y
+        planes[i * 4 + 2] = p.normal.z
+        planes[i * 4 + 3] = p.constant
+      })
       splatTaskProcessor
-        .call('sort_splats', this._meshId, view, this._threshold)
+        .call('sort_splats', this._meshId, view, planes, this._threshold)
         .then((result) => {
           if (this._meshId === result.meshId) {
-            let indexes = new Uint32Array(result.data)
+            const indexes = new Uint32Array(result.data)
             this.geometry.attributes.splatIndex.set(indexes)
             this.geometry.attributes.splatIndex.needsUpdate = true
             this.geometry.instanceCount = indexes.length
@@ -335,7 +351,7 @@ class SplatMesh extends Mesh {
     })
     const material = object.material
     material.uniforms.gsModelViewMatrix.value = modelViewMatrix
-    let viewport = new Vector4()
+    const viewport = new Vector4()
     renderer.getCurrentViewport(viewport)
     material.uniforms.viewport.value[0] = viewport.z
     material.uniforms.viewport.value[1] = viewport.w
