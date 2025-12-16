@@ -20,14 +20,14 @@ const mapScene = new MTP.MapScene(map)
 mapScene.addLight(new THREE.AmbientLight())
 
 let rtc = MTP.Creator.createMercatorRTCGroup(
-  [113.03932757890647, 28.294469403362328, 5],
-  [-Math.PI / 2, Math.PI / 2]
+  [113.03932757890647, 28.294469403362328, 2],
+  [-Math.PI / 2, Math.PI / 2, Math.PI]
 )
 mapScene.addObject(rtc)
 
 const sogLoader = new SogLoader()
-sogLoader.load('http://localhost:8080/ggy.sog', (mesh) => {
-  mesh.threshold = -0.0000001
+sogLoader.load('http://localhost:8080/yanjiahuayuan.sog', (mesh) => {
+  mesh.threshold = -0.000001
   rtc.add(mesh)
   mapScene.flyTo(rtc)
 })
