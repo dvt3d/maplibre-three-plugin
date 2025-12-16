@@ -78,6 +78,7 @@ class SplatMesh extends Mesh {
     this._bounds = null
     this._sortScheduler = new SortScheduler()
     this._loadChain = Promise.resolve()
+    this._useFrustumCulled = false
   }
 
   get isSplatMesh() {
@@ -100,20 +101,15 @@ class SplatMesh extends Mesh {
     if (vertexCount === this._vertexCount) {
       return
     }
-
     this._vertexCount = Math.min(vertexCount, maxVertexes)
-
     this._textureHeight =
       Math.floor((this._vertexCount - 1) / this._textureWidth) + 1
-
     this._centerAndScaleData = new Float32Array(
       this._textureWidth * this._textureHeight * 4
     )
-
     if (this._centerAndScaleTexture) {
       this._centerAndScaleTexture.dispose()
     }
-
     this._centerAndScaleTexture = new DataTexture(
       this._centerAndScaleData,
       this._textureWidth,
@@ -153,6 +149,14 @@ class SplatMesh extends Mesh {
 
   get vertexCount() {
     return this._vertexCount
+  }
+
+  set useFrustumCulled(v) {
+    this._useFrustumCulled = v
+  }
+
+  get useFrustumCulled() {
+    return this._useFrustumCulled
   }
 
   /**
@@ -323,20 +327,24 @@ class SplatMesh extends Mesh {
         camera_mtx[10],
         camera_mtx[14],
       ])
-      const planes = new Float32Array(6 * 4)
-      const projViewMatrix = new Matrix4()
-      projViewMatrix.multiplyMatrices(
-        camera.projectionMatrix,
-        camera.matrixWorldInverse
-      )
-      const frustum = new Frustum()
-      frustum.setFromProjectionMatrix(projViewMatrix)
-      frustum.planes.forEach((p, i) => {
-        planes[i * 4 + 0] = p.normal.x
-        planes[i * 4 + 1] = p.normal.y
-        planes[i * 4 + 2] = p.normal.z
-        planes[i * 4 + 3] = p.constant
-      })
+
+      let planes = new Float32Array(0)
+      if (this._useFrustumCulled) {
+        planes = new Float32Array(6 * 4)
+        const projViewMatrix = new Matrix4()
+        projViewMatrix.multiplyMatrices(
+          camera.projectionMatrix,
+          camera.matrixWorldInverse
+        )
+        const frustum = new Frustum()
+        frustum.setFromProjectionMatrix(projViewMatrix)
+        frustum.planes.forEach((p, i) => {
+          planes[i * 4 + 0] = p.normal.x
+          planes[i * 4 + 1] = p.normal.y
+          planes[i * 4 + 2] = p.normal.z
+          planes[i * 4 + 3] = p.constant
+        })
+      }
       splatTaskProcessor
         .call('sort_splats', this._meshId, view, planes, this._threshold)
         .then((result) => {
