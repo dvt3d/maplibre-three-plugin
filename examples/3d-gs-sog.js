@@ -26,7 +26,7 @@ let rtc = MTP.Creator.createMercatorRTCGroup(
 mapScene.addObject(rtc)
 
 const sogLoader = new SogLoader()
-sogLoader.load('http://localhost:8080/yanjiahuayuan.sog', (mesh) => {
+sogLoader.load('http://localhost:8080/ggy.sog', (mesh) => {
   mesh.threshold = -0.000001
   rtc.add(mesh)
   mapScene.flyTo(rtc)
