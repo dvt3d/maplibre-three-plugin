@@ -27,7 +27,7 @@ mapScene.addObject(rtc)
 
 const splatLoader = new SplatLoader()
 
-splatLoader.loadStream('http://localhost:8080/ggy.splat', (mesh) => {
+splatLoader.load('http://localhost:8080/ggy.splat', (mesh) => {
   mesh.threshold = -0.0000001
   rtc.add(mesh)
   mapScene.flyTo(rtc)
