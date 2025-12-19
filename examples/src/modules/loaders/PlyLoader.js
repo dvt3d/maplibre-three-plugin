@@ -1,5 +1,6 @@
 import { SplatMesh } from '../extensions/index.js'
 import { requestBuffer } from '../utils/index.js'
+import { WorkerTaskProcessor } from '../tasks/index.js'
 
 const TYPE_MAP = {
   double: 'getFloat64',
@@ -241,10 +242,15 @@ class PlyLoader {
    * @returns {PlyLoader}
    */
   load(url, onDone, onProcess = null) {
+    const worker = new WorkerTaskProcessor(
+      new URL('../../wasm/splat/wasm_splat.worker.min.js', import.meta.url).href
+    )
     this.loadData(
       url,
       async (buffer, vertexCount) => {
+        await worker.init()
         const mesh = new SplatMesh()
+        mesh.worker = worker
         mesh.vertexCount = vertexCount
         await mesh.setDataFromBuffer(buffer)
         onDone && onDone(mesh)
@@ -262,9 +268,13 @@ class PlyLoader {
    */
   loadStream(url, onDone) {
     let mesh = null
+    const worker = new WorkerTaskProcessor(
+      new URL('../../wasm/splat/wasm_splat.worker.min.js', import.meta.url).href
+    )
     this.loadDataStream(
       url,
-      (vertexCount) => {
+      async (vertexCount) => {
+        await worker.init()
         mesh = new SplatMesh()
         mesh.vertexCount = vertexCount
         onDone && onDone(mesh)

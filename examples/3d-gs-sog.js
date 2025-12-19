@@ -21,7 +21,7 @@ mapScene.addLight(new THREE.AmbientLight())
 
 let rtc = MTP.Creator.createMercatorRTCGroup(
   [113.03932757890647, 28.294469403362328, 2],
-  [-Math.PI / 2, Math.PI / 2, Math.PI]
+  [-Math.PI / 2, Math.PI / 2]
 )
 mapScene.addObject(rtc)
 

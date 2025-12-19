@@ -2,7 +2,7 @@ import maplibregl from 'maplibre-gl'
 import * as THREE from 'three'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
 import config from './config.js'
-import { SplatLoader } from './src/index.js'
+import { SplatLoader, WorkerTaskProcessor } from './src/index.js'
 
 const map = new maplibregl.Map({
   container: 'map',
@@ -20,7 +20,7 @@ const mapScene = new MTP.MapScene(map)
 mapScene.addLight(new THREE.AmbientLight())
 
 let rtc = MTP.Creator.createMercatorRTCGroup(
-  [113.03932757890647, 28.294469403362328, 5],
+  [113.03932757890647, 28.294469403362328, 2],
   [-Math.PI / 2, Math.PI / 2]
 )
 mapScene.addObject(rtc)

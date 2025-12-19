@@ -1,5 +1,6 @@
 import { SplatMesh } from '../extensions/index.js'
 import { requestBuffer } from '../utils/index.js'
+import { WorkerTaskProcessor } from '../tasks/index.js'
 
 const rowLength = 3 * 4 + 3 * 4 + 4 + 4
 
@@ -76,15 +77,21 @@ class SplatLoader {
   /**
    *
    * @param url
+   * @param options
    * @param onDone
    * @param onProcess
    * @returns {SplatLoader}
    */
   load(url, onDone, onProcess = null) {
+    const worker = new WorkerTaskProcessor(
+      new URL('../../wasm/splat/wasm_splat.worker.min.js', import.meta.url).href
+    )
     this.loadData(
       url,
       async (buffer, vertexCount) => {
+        await worker.init()
         const mesh = new SplatMesh()
+        mesh.worker = worker
         mesh.vertexCount = vertexCount
         await mesh.setDataFromBuffer(buffer)
         onDone && onDone(mesh)
@@ -97,15 +104,21 @@ class SplatLoader {
   /**
    *
    * @param url
+   * @param options
    * @param onDone
    * @returns {SplatLoader}
    */
-  loadStream(url, onDone) {
+  loadStream(url, options = {}, onDone) {
     let mesh = null
+    const worker = new WorkerTaskProcessor(
+      new URL('../../wasm/splat/wasm_splat.worker.min.js', import.meta.url).href
+    )
     this.loadDataStream(
       url,
-      (vertexCount) => {
+      async (vertexCount) => {
+        await worker.init()
         mesh = new SplatMesh()
+        mesh.worker = worker
         mesh.vertexCount = vertexCount
         onDone && onDone(mesh)
       },

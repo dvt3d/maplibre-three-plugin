@@ -6,8 +6,9 @@ import { loadSpz } from '@spz-loader/core'
 import SplatMesh from './SplatMesh.js'
 
 class GLTFSpzGaussianSplattingExtension {
-  constructor(parser) {
+  constructor(parser, worker) {
     this.parser = parser
+    this.worker = worker
     this.name = 'KHR_spz_gaussian_splats_compression'
   }
 
@@ -33,6 +34,7 @@ class GLTFSpzGaussianSplattingExtension {
       const bufferViews = results[0]
       const attribute = bufferViews[0]
       const mesh = new SplatMesh()
+      mesh.worker = this.worker
       mesh.vertexCount = attribute.numPoints
       mesh.setDataFromSpz(attribute)
       group.add(mesh)

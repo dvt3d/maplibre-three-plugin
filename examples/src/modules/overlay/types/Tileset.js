@@ -45,6 +45,7 @@ const DEF_OPTS = {
   useFade: false,
   useUpdate: false,
   splatThreshold: -0.0001,
+  splatWorker: null,
 }
 
 class Tileset extends Overlay {
@@ -56,19 +57,32 @@ class Tileset extends Overlay {
     this._url = url
     this._options = options
     this._renderer = new TilesRenderer(this._url)
+    this._splatWorker = this._options.splatWorker
     this._renderer.registerPlugin(
       new GLTFExtensionsPlugin({
         dracoLoader: options.dracoLoader,
         ktxLoader: options.ktxLoader,
         plugins: [
-          (parser) => new GLTFGaussianSplattingExtension(parser),
-          (parser) => new GLTFSpzGaussianSplattingExtension(parser),
-          (parser) => new GLTFSpz2GaussianSplattingExtension(parser),
+          ...(this._splatWorker
+            ? [
+                (parser) =>
+                  new GLTFGaussianSplattingExtension(parser, this._splatWorker),
+                (parser) =>
+                  new GLTFSpzGaussianSplattingExtension(
+                    parser,
+                    this._splatWorker
+                  ),
+                (parser) =>
+                  new GLTFSpz2GaussianSplattingExtension(
+                    parser,
+                    this._splatWorker
+                  ),
+              ]
+            : []),
           (parser) => new GLTFKtx2TextureInspectorPlugin(parser),
         ],
       })
     )
-
     if (options.ktxLoader) {
       this._renderer.manager.addHandler(/.ktx2/, options.ktxLoader)
     }
@@ -119,6 +133,7 @@ class Tileset extends Overlay {
 
     this._type = 'Tileset'
     this.on('load-tile-set', this._onTilesLoaded.bind(this))
+    this._ready = false
   }
 
   get fetchOptions() {
@@ -151,6 +166,10 @@ class Tileset extends Overlay {
 
   get size() {
     return this._size
+  }
+
+  async _initWorker() {
+    await this._splatWorker.init()
   }
 
   /**
@@ -269,7 +288,6 @@ class Tileset extends Overlay {
     if (rotation[2]) {
       this._delegate.rotateZ(rotation[2])
     }
-
     return this
   }
 

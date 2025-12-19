@@ -2,6 +2,7 @@ import { requestBuffer } from '../utils/index.js'
 import { SplatMesh } from '../extensions/index.js'
 import { unzipSync } from 'fflate'
 import WasmTaskProcessor from '../tasks/WasmTaskProcessor.js'
+import { WorkerTaskProcessor } from '../tasks/index.js'
 
 const webpTaskProcessor = new WasmTaskProcessor(
   new URL('../../wasm/webp/wasm_webp.min.js', import.meta.url).href
@@ -70,10 +71,15 @@ class SogLoader {
    * @returns {SogLoader}
    */
   load(url, onDone, onProcess = null) {
+    const worker = new WorkerTaskProcessor(
+      new URL('../../wasm/splat/wasm_splat.worker.min.js', import.meta.url).href
+    )
     this.loadData(
       url,
       async (buffer, vertexCount) => {
+        await worker.init()
         const mesh = new SplatMesh()
+        mesh.worker = worker
         mesh.vertexCount = vertexCount
         await mesh.setDataFromBuffer(buffer)
         onDone && onDone(mesh)

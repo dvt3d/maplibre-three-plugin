@@ -221,15 +221,10 @@ class SplatMesh extends Mesh {
    * @private
    */
   async _updateDataFromBuffer(buffer, vertexCount) {
-    if (!this._worker) {
-      return
-    }
-
     if (this._loadedVertexCount + vertexCount > maxVertexes) {
       vertexCount = maxVertexes - this._loadedVertexCount
     }
-
-    if (vertexCount <= 0) {
+    if (vertexCount <= 0 || !this._worker) {
       return
     }
     let data = await this._worker.call(
@@ -254,14 +249,10 @@ class SplatMesh extends Mesh {
    * @private
    */
   async _updateDataFromGeometry(geometry) {
-    if (!this._worker) {
-      return
-    }
     let vertexCount = Math.min(geometry.attributes.position.count, maxVertexes)
-    if (vertexCount <= 0) {
+    if (vertexCount <= 0 || !this._worker) {
       return
     }
-
     const data = await this._worker.call(
       'process_splats_from_geometry',
       this._meshId,
@@ -286,11 +277,8 @@ class SplatMesh extends Mesh {
    * @private
    */
   async _updateDataFromSpz(spzData) {
-    if (!this._worker) {
-      return
-    }
     let vertexCount = Math.min(spzData.numPoints, maxVertexes)
-    if (vertexCount <= 0) {
+    if (vertexCount <= 0 || !this._worker) {
       return
     }
     const data = await this._worker.call(
@@ -323,44 +311,50 @@ class SplatMesh extends Mesh {
    */
   _onMaterialBeforeRender(renderer, scene, camera, geometry, object, group) {
     let modelViewMatrix = this._getModelViewMatrix(camera)
-    this._sortScheduler.tick(modelViewMatrix, () => {
-      const camera_mtx = modelViewMatrix.elements
-      const view = new Float32Array([
-        camera_mtx[2],
-        camera_mtx[6],
-        camera_mtx[10],
-        camera_mtx[14],
-      ])
 
-      let planes = new Float32Array(0)
-      if (this._useFrustumCulled) {
-        planes = new Float32Array(6 * 4)
-        const projViewMatrix = new Matrix4()
-        projViewMatrix.multiplyMatrices(
-          camera.projectionMatrix,
-          camera.matrixWorldInverse
-        )
-        const frustum = new Frustum()
-        frustum.setFromProjectionMatrix(projViewMatrix)
-        frustum.planes.forEach((p, i) => {
-          planes[i * 4 + 0] = p.normal.x
-          planes[i * 4 + 1] = p.normal.y
-          planes[i * 4 + 2] = p.normal.z
-          planes[i * 4 + 3] = p.constant
-        })
-      }
-      this._worker
-        .call('sort_splats', this._meshId, view, planes, this._threshold)
-        .then((result) => {
-          if (this._meshId === result.meshId) {
-            const indexes = new Uint32Array(result.data)
-            this.geometry.attributes.splatIndex.set(indexes)
-            this.geometry.attributes.splatIndex.needsUpdate = true
-            this.geometry.instanceCount = indexes.length
-            this._sortScheduler.isSorting = false
-          }
-        })
-    })
+    this._sortScheduler &&
+      this._sortScheduler.tick(modelViewMatrix, () => {
+        const camera_mtx = modelViewMatrix.elements
+        const view = new Float32Array([
+          camera_mtx[2],
+          camera_mtx[6],
+          camera_mtx[10],
+          camera_mtx[14],
+        ])
+
+        let planes = new Float32Array(0)
+        if (this._useFrustumCulled) {
+          planes = new Float32Array(6 * 4)
+          const projViewMatrix = new Matrix4()
+          projViewMatrix.multiplyMatrices(
+            camera.projectionMatrix,
+            camera.matrixWorldInverse
+          )
+          const frustum = new Frustum()
+          frustum.setFromProjectionMatrix(projViewMatrix)
+          frustum.planes.forEach((p, i) => {
+            planes[i * 4 + 0] = p.normal.x
+            planes[i * 4 + 1] = p.normal.y
+            planes[i * 4 + 2] = p.normal.z
+            planes[i * 4 + 3] = p.constant
+          })
+        }
+        this._worker &&
+          this._worker
+            .call('sort_splats', this._meshId, view, planes, this._threshold)
+            .then((result) => {
+              if (!result) {
+                this._sortScheduler.isSorting = false
+              }
+              if (result && this._meshId === result.meshId) {
+                const indexes = new Uint32Array(result.data)
+                this.geometry.attributes.splatIndex.set(indexes)
+                this.geometry.attributes.splatIndex.needsUpdate = true
+                this.geometry.instanceCount = indexes.length
+                this._sortScheduler.isSorting = false
+              }
+            })
+      })
     const material = object.material
     material.uniforms.gsModelViewMatrix.value = modelViewMatrix
     const viewport = new Vector4()
@@ -373,10 +367,7 @@ class SplatMesh extends Mesh {
    *
    */
   async computeBounds() {
-    if (this._worker) {
-      return
-    }
-    if (this._bounds) {
+    if (this._bounds || !this._worker) {
       return
     }
     const result = await this._worker.call('compute_bounds', this._meshId)
