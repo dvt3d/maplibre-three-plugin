@@ -18,28 +18,21 @@ import {
 import gaussian_splatting_vs_glsl from '../../shaders/gaussian_splatting_vs_glsl.js'
 import gaussian_splatting_fs_glsl from '../../shaders/gaussian_splatting_fs_glsl.js'
 import SortScheduler from './SortScheduler.js'
-import WorkerTaskProcessor from '../../tasks/WorkerTaskProcessor.js'
 import { Util } from '../../utils/index.js'
 
-const splatTaskProcessor = new WorkerTaskProcessor(
-  new URL('../../../wasm/splat/wasm_splat.worker.min.js', import.meta.url).href
-)
-await splatTaskProcessor.init()
-
-const canvas = document.createElement('canvas')
-const gl = canvas.getContext('webgl2') || canvas.getContext('webgl')
-const maxTextureSize = gl.getParameter(gl.MAX_TEXTURE_SIZE)
+const maxTextureSize = Util.getMaxTextureSize()
 const maxVertexes = maxTextureSize * maxTextureSize
 
-const baseGeometry = new BufferGeometry()
-const positions = new BufferAttribute(
-  new Float32Array([
-    -2.0, -2.0, 0.0, 2.0, 2.0, 0.0, -2.0, 2.0, 0.0, 2.0, -2.0, 0.0, 2.0, 2.0,
-    0.0, -2.0, -2.0, 0.0,
-  ]),
-  3
+const _baseGeometry = new BufferGeometry().setAttribute(
+  'position',
+  new BufferAttribute(
+    new Float32Array([
+      -2.0, -2.0, 0.0, 2.0, 2.0, 0.0, -2.0, 2.0, 0.0, 2.0, -2.0, 0.0, 2.0, 2.0,
+      0.0, -2.0, -2.0, 0.0,
+    ]),
+    3
+  )
 )
-baseGeometry.setAttribute('position', positions)
 
 class SplatMesh extends Mesh {
   constructor() {
@@ -54,7 +47,7 @@ class SplatMesh extends Mesh {
     this._centerAndScaleTexture = null
     this._rotationAndColorData = null
     this._rotationAndColorTexture = null
-    this.geometry = new InstancedBufferGeometry().copy(baseGeometry)
+    this.geometry = new InstancedBufferGeometry().copy(_baseGeometry)
     this.geometry.instanceCount = 1
     this.material = new ShaderMaterial({
       uniforms: {
@@ -75,8 +68,9 @@ class SplatMesh extends Mesh {
     this.frustumCulled = false
     this._bounds = null
     this._sortScheduler = new SortScheduler()
-
     this._loadChain = Promise.resolve()
+    this._
+    this._worker = null
   }
 
   get isSplatMesh() {
@@ -89,6 +83,14 @@ class SplatMesh extends Mesh {
 
   get threshold() {
     return this._threshold
+  }
+
+  set worker(worker) {
+    this._worker = worker
+  }
+
+  get worker() {
+    return this._worker
   }
 
   get bounds() {
@@ -209,28 +211,25 @@ class SplatMesh extends Mesh {
    * @private
    */
   async _updateDataFromBuffer(buffer, vertexCount) {
+    if (!this._worker) {
+      return
+    }
+
     if (this._loadedVertexCount + vertexCount > maxVertexes) {
       vertexCount = maxVertexes - this._loadedVertexCount
     }
+
     if (vertexCount <= 0) {
       return
     }
-    let data = null
-    if (this._loadedVertexCount === 0) {
-      data = await splatTaskProcessor.call(
-        'process_splats_from_buffer',
-        this._meshId,
-        buffer,
-        vertexCount
-      )
-    } else {
-      data = await splatTaskProcessor.call(
-        'append_data_from_buffer',
-        this._meshId,
-        buffer,
-        vertexCount
-      )
-    }
+    let data = await this._worker.call(
+      this._loadedVertexCount === 0
+        ? 'process_splats_from_buffer'
+        : 'append_data_from_buffer',
+      this._meshId,
+      buffer,
+      vertexCount
+    )
     if (data && this._meshId === data.meshId) {
       this._centerAndScaleData.set(data.out_cs, this._loadedVertexCount * 4)
       this._rotationAndColorData.set(data.out_rc, this._loadedVertexCount * 4)
@@ -245,14 +244,15 @@ class SplatMesh extends Mesh {
    * @private
    */
   async _updateDataFromGeometry(geometry) {
-    let vertexCount = geometry.attributes.position.count
-    if (vertexCount > maxVertexes) {
-      vertexCount = maxVertexes
+    if (!this._worker) {
+      return
     }
+    let vertexCount = Math.min(geometry.attributes.position.count, maxVertexes)
     if (vertexCount <= 0) {
       return
     }
-    const data = await splatTaskProcessor.call(
+
+    const data = await this._worker.call(
       'process_splats_from_geometry',
       this._meshId,
       geometry.attributes.position.array,
@@ -261,12 +261,12 @@ class SplatMesh extends Mesh {
       geometry.attributes.color.array,
       vertexCount
     )
+
     if (data && this._meshId === data.meshId) {
       this._centerAndScaleData.set(data.out_cs)
       this._rotationAndColorData.set(data.out_rc)
       this._sortScheduler.dirty = true
     }
-
     geometry.dispose()
   }
 
@@ -276,14 +276,14 @@ class SplatMesh extends Mesh {
    * @private
    */
   async _updateDataFromSpz(spzData) {
-    let vertexCount = spzData.numPoints
-    if (this._loadedVertexCount + vertexCount > maxVertexes) {
-      vertexCount = maxVertexes - this._loadedVertexCount
+    if (!this._worker) {
+      return
     }
+    let vertexCount = Math.min(spzData.numPoints, maxVertexes)
     if (vertexCount <= 0) {
       return
     }
-    const data = await splatTaskProcessor.call(
+    const data = await this._worker.call(
       'process_splats_from_spz',
       this._meshId,
       spzData.positions,
@@ -298,7 +298,6 @@ class SplatMesh extends Mesh {
       this._rotationAndColorData.set(data.out_rc)
       this._sortScheduler.dirty = true
     }
-
     spzData = null
   }
 
@@ -322,10 +321,10 @@ class SplatMesh extends Mesh {
         camera_mtx[10],
         camera_mtx[14],
       ])
-      splatTaskProcessor
+      this._worker
         .call('sort_splats', this._meshId, view, this._threshold)
         .then((result) => {
-          if (this._meshId === result.meshId) {
+          if (result && this._meshId === result.meshId) {
             let indexes = new Uint32Array(result.data)
             this.geometry.attributes.splatIndex.set(indexes)
             this.geometry.attributes.splatIndex.needsUpdate = true
@@ -346,11 +345,14 @@ class SplatMesh extends Mesh {
    *
    */
   async computeBounds() {
+    if (this._worker) {
+      return
+    }
     if (this._bounds) {
       return
     }
-    const result = await splatTaskProcessor.call('compute_bounds', this._meshId)
-    if (this._meshId === result._meshId) {
+    const result = await this._worker.call('compute_bounds', this._meshId)
+    if (this._meshId === result.meshId) {
       this._bounds = result.data
     }
   }
