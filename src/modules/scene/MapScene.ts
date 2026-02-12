@@ -21,6 +21,8 @@ const DEF_OPTS = {
   preserveDrawingBuffer: false,
 }
 
+const DEF_LAYER_ID = 'map_scene_layer'
+
 export interface IMap {
   transform: any
   on(type: string, listener: () => any): any
@@ -36,6 +38,7 @@ export interface IMap {
     pitch: number
     duration: number
   }): void
+  moveLayer(id: String, beforeId?: String): void
 }
 
 /**
@@ -195,8 +198,8 @@ export class MapScene {
    * @private
    */
   _onMapRender() {
-    if (!this._map.getLayer('map_scene_layer')) {
-      this._map.addLayer(new ThreeLayer('map_scene_layer', this))
+    if (!this._map.getLayer(DEF_LAYER_ID)) {
+      this._map.addLayer(new ThreeLayer(DEF_LAYER_ID, this))
     }
   }
 
@@ -274,7 +277,7 @@ export class MapScene {
   removeObject(object: IObject3D | Object3D): MapScene {
     let obj = 'delegate' in object ? object.delegate : object
     this._world.remove(obj)
-    obj.traverse((child:any) => {
+    obj.traverse((child: any) => {
       // @ts-ignore
       if (child.geometry) child.geometry.dispose()
       // @ts-ignore
@@ -438,6 +441,15 @@ export class MapScene {
   off(type: string, callback: () => void): MapScene {
     // @ts-ignore
     this._event.removeEventListener(type, callback)
+    return this
+  }
+
+  /**
+   *
+   * @param beforeId
+   */
+  layerBeforeTo(beforeId?: String): MapScene {
+    this._map.moveLayer(DEF_LAYER_ID, beforeId)
     return this
   }
 }

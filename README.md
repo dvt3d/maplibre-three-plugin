@@ -184,6 +184,16 @@ Object({
     - returns
         - `this`
 
+- **_layerBeforeTo([beforeId])_**
+
+  Moves the three to a different z-position, If beforeId is omitted, the layer will be appended to the end of the layers
+  array and appear above all other layers on the map.
+
+    - params
+        - `{String} beforeId `
+    - returns
+        - `this`
+
 ### SceneTransform
 
 #### examples
@@ -208,8 +218,8 @@ const scale = new SceneTransform.projectedUnitsPerMeter(24)
 - **_lngLatToVector3(lng, [lat], [alt] )_**
     - params
         - `{Array | Number} lng `
-        - `{ Number} lat `
-        - `{ Number} alt `
+        - `{Number} lat `
+        - `{Number} alt `
     - returns
         - `{THREE.Vector3} v`
 
