@@ -2,11 +2,15 @@
  * @author Caven Chen
  */
 import { Group } from 'three'
+import { SpzLoader } from '3dgs-loader'
+import { SplatMesh } from '@dvt3d/splat-mesh'
+
 class GLTFSpzGaussianSplattingExtension {
   constructor(parser, worker) {
     this.parser = parser
     this.worker = worker
     this.name = 'KHR_spz_gaussian_splats_compression'
+    this.spzLoader = new SpzLoader()
   }
 
   /**
@@ -26,15 +30,14 @@ class GLTFSpzGaussianSplattingExtension {
     const primitives = meshDef.primitives
     const pending = []
     pending.push(this.loadBufferViews(primitives))
-    return Promise.all(pending).then((results) => {
+    return Promise.all(pending).then(async (results) => {
       const group = new Group()
       const bufferViews = results[0]
-      const attribute = bufferViews[0]
-      // const mesh = new SplatMesh()
-      // mesh.worker = this.worker
-      // mesh.vertexCount = attribute.numPoints
-      // mesh.setDataFromSpz(attribute)
-      // group.add(mesh)
+      const data = bufferViews[0]
+      const mesh = new SplatMesh()
+      mesh.attachWorker(this.worker)
+      mesh.setVertexCount(data.numSplats)
+      await mesh.setDataFromBuffer(data.buffer)
       return group
     })
   }
@@ -49,13 +52,15 @@ class GLTFSpzGaussianSplattingExtension {
     for (let i = 0; i < primitives.length; i++) {
       const primitive = primitives[i]
       const extensions = primitive.extensions
-      // if (extensions[this.name]) {
-      //   pendingBufferViews.push(
-      //     parser
-      //       .getDependency('bufferView', extensions[this.name].bufferView)
-      //       .then((bufferView) => loadSpz(bufferView))
-      //   )
-      // }
+      if (extensions[this.name]) {
+        pendingBufferViews.push(
+          parser
+            .getDependency('bufferView', extensions[this.name].bufferView)
+            .then((bufferView) =>
+              this.spzLoader.parseAsSplat(new Uint8Array(bufferView))
+            )
+        )
+      }
     }
     return Promise.all(pendingBufferViews).then((bufferViews) => {
       return bufferViews

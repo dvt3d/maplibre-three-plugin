@@ -2,6 +2,7 @@
  * @author Caven Chen
  */
 import { Group } from 'three'
+import { SplatMesh } from '@dvt3d/splat-mesh'
 
 class GLTFGaussianSplattingExtension {
   constructor(parser, worker) {
@@ -30,15 +31,15 @@ class GLTFGaussianSplattingExtension {
     const primitives = meshDef.primitives
     const pending = []
     pending.push(parser.loadGeometries(primitives))
-    return Promise.all(pending).then((results) => {
+    return Promise.all(pending).then(async (results) => {
       const group = new Group()
       const geometries = results[0]
       const geometry = geometries[0]
-      // const mesh = new SplatMesh()
-      // mesh.vertexCount = geometry.attributes.position.count
-      // mesh.worker = this.worker
-      // mesh.setDataFromGeometry(geometry)
-      // group.add(mesh)
+      const mesh = new SplatMesh()
+      mesh.attachWorker(this.worker)
+      mesh.setVertexCount(geometry.attributes.position.count)
+      await mesh.setDataFromGeometry(geometry)
+      group.add(mesh)
       return group
     })
   }

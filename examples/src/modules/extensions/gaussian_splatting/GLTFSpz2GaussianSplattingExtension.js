@@ -2,7 +2,6 @@
  * @author Caven Chen
  */
 import { Group } from 'three'
-import { loadSpz } from '@spz-loader/core'
 import { SplatMesh } from '@dvt3d/splat-mesh'
 import { SpzLoader } from '3dgs-loader'
 
@@ -22,6 +21,8 @@ class GLTFSpz2GaussianSplattingExtension {
   loadMesh(meshIndex) {
     const parser = this.parser
     const json = parser.json
+
+    console.log(json)
     const extensionsUsed = json.extensionsUsed
     if (!extensionsUsed || !extensionsUsed.includes(this.name)) {
       return null
@@ -34,12 +35,12 @@ class GLTFSpz2GaussianSplattingExtension {
     return Promise.all(pending).then(async (results) => {
       const group = new Group()
       const bufferViews = results[0]
-      const attribute = bufferViews[0]
+      const data = bufferViews[0]
       const mesh = new SplatMesh()
       mesh.attachWorker(this.worker)
-      mesh.setVertexCount(attribute.numPoints)
-      // await mesh.setDataFromSpz(attribute)
-      // group.add(mesh)
+      mesh.setVertexCount(data.numSplats)
+      await mesh.setDataFromBuffer(data.buffer)
+      group.add(mesh)
       return group
     })
   }
@@ -66,15 +67,6 @@ class GLTFSpz2GaussianSplattingExtension {
               extensions['KHR_gaussian_splatting'].extensions[this.name]
                 .bufferView
             )
-            .then((bufferView) => loadSpz(bufferView))
-        )
-        pendingBufferViews.push(
-          parser
-            .getDependency(
-              'bufferView',
-              extensions['KHR_gaussian_splatting'].extensions[this.name]
-                .bufferView
-            )
             .then((bufferView) =>
               this.spzLoader.parseAsSplat(new Uint8Array(bufferView))
             )
@@ -84,7 +76,9 @@ class GLTFSpz2GaussianSplattingExtension {
           pendingBufferViews.push(
             parser
               .getDependency('bufferView', extensions[this.name].bufferView)
-              .then((bufferView) => loadSpz(bufferView))
+              .then((bufferView) =>
+                this.spzLoader.parseAsSplat(new Uint8Array(bufferView))
+              )
           )
         }
       }
