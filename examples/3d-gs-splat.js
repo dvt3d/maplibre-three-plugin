@@ -1,19 +1,11 @@
-import maplibregl from 'maplibre-gl'
 import * as THREE from 'three'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
-import config from './config.js'
-import { SplatLoader, WorkerTaskProcessor } from './src/index.js'
+import { SplatLoader } from '3dgs-loader'
+import { SplatWorker, SplatMesh } from '@dvt3d/splat-mesh'
 
-const map = new maplibregl.Map({
-  container: 'map',
-  style:
-    'https://api.maptiler.com/maps/basic-v2/style.json?key=' +
-    config.maptiler_key,
-  maxPitch: 85,
-  pitch: 60,
-  canvasContextAttributes: { antialias: true },
-  maxZoom: 30,
-})
+const map = window.map
+
+map.setMaxZoom(30)
 
 const mapScene = new MTP.MapScene(map)
 
@@ -25,14 +17,20 @@ let rtc = MTP.Creator.createMercatorRTCGroup(
 )
 mapScene.addObject(rtc)
 
-const splatLoader = new SplatLoader()
-
-splatLoader.load('http://localhost:8080/ggy.splat', (mesh) => {
-  mesh.threshold = -0.0000001
-  rtc.add(mesh)
-  mapScene.flyTo(rtc)
+const splatLoader = new SplatLoader({
+  workerLimit: 1,
+  workerBaseUrl: 'https://cdn.jsdelivr.net/npm/3dgs-loader@1.2.0/dist/',
 })
 
-mapScene.on('postRender', () => {
-  map.triggerRepaint()
-})
+const data = await splatLoader.load('http://localhost:8080/ggy.splat')
+
+const splatWorker = new SplatWorker(
+  'https://cdn.jsdelivr.net/npm/@dvt3d/splat-mesh@1.1.1/dist/workers/'
+)
+const splatMesh = new SplatMesh()
+splatMesh.threshold = -0.000001
+splatMesh.attachWorker(splatWorker)
+splatMesh.setVertexCount(data.numSplats)
+await splatMesh.setDataFromBuffer(data.buffer)
+rtc.add(splatMesh)
+mapScene.flyTo(rtc)

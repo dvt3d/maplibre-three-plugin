@@ -3,13 +3,15 @@
  */
 import { Group } from 'three'
 import { loadSpz } from '@spz-loader/core'
-import SplatMesh from './SplatMesh.js'
+import { SplatMesh } from '@dvt3d/splat-mesh'
+import { SpzLoader } from '3dgs-loader'
 
 class GLTFSpz2GaussianSplattingExtension {
   constructor(parser, worker) {
     this.parser = parser
     this.worker = worker
     this.name = 'KHR_gaussian_splatting_compression_spz_2'
+    this.spzLoader = new SpzLoader()
   }
 
   /**
@@ -29,15 +31,15 @@ class GLTFSpz2GaussianSplattingExtension {
     const primitives = meshDef.primitives
     const pending = []
     pending.push(this.loadBufferViews(primitives))
-    return Promise.all(pending).then((results) => {
+    return Promise.all(pending).then(async (results) => {
       const group = new Group()
       const bufferViews = results[0]
       const attribute = bufferViews[0]
       const mesh = new SplatMesh()
-      mesh.worker = this.worker
-      mesh.vertexCount = attribute.numPoints
-      mesh.setDataFromSpz(attribute)
-      group.add(mesh)
+      mesh.attachWorker(this.worker)
+      mesh.setVertexCount(attribute.numPoints)
+      // await mesh.setDataFromSpz(attribute)
+      // group.add(mesh)
       return group
     })
   }
@@ -65,6 +67,17 @@ class GLTFSpz2GaussianSplattingExtension {
                 .bufferView
             )
             .then((bufferView) => loadSpz(bufferView))
+        )
+        pendingBufferViews.push(
+          parser
+            .getDependency(
+              'bufferView',
+              extensions['KHR_gaussian_splatting'].extensions[this.name]
+                .bufferView
+            )
+            .then((bufferView) =>
+              this.spzLoader.parseAsSplat(new Uint8Array(bufferView))
+            )
         )
       } else {
         if (extensions[this.name]) {

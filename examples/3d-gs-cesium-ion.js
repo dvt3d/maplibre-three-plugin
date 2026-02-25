@@ -1,28 +1,18 @@
-import maplibregl from 'maplibre-gl'
 import * as THREE from 'three'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
 import config from './config.js'
-import { Tileset, WorkerTaskProcessor } from './src/index.js'
+import { SplatWorker } from '@dvt3d/splat-mesh'
+import { Tileset } from './src/index.js'
 
-const map = new maplibregl.Map({
-  container: 'map',
-  style:
-    'https://api.maptiler.com/maps/basic-v2/style.json?key=' +
-    config.maptiler_key,
-  maxPitch: 85,
-  pitch: 60,
-  canvasContextAttributes: { antialias: true },
-  maxZoom: 30,
-})
+const map = window.map
 
 const mapScene = new MTP.MapScene(map)
 
 mapScene.addLight(new THREE.AmbientLight())
 
-const splatWorker = new WorkerTaskProcessor(
-  new URL('./src/wasm/splat/wasm_splat.worker.min.js', import.meta.url).href
+const splatWorker = new SplatWorker(
+  'https://cdn.jsdelivr.net/npm/@dvt3d/splat-mesh@1.1.1/dist/workers/'
 )
-
 await splatWorker.init()
 
 let tileset = new Tileset(3667783, {

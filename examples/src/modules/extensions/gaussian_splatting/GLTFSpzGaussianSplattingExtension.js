@@ -2,9 +2,6 @@
  * @author Caven Chen
  */
 import { Group } from 'three'
-import { loadSpz } from '@spz-loader/core'
-import SplatMesh from './SplatMesh.js'
-
 class GLTFSpzGaussianSplattingExtension {
   constructor(parser, worker) {
     this.parser = parser
@@ -33,11 +30,11 @@ class GLTFSpzGaussianSplattingExtension {
       const group = new Group()
       const bufferViews = results[0]
       const attribute = bufferViews[0]
-      const mesh = new SplatMesh()
-      mesh.worker = this.worker
-      mesh.vertexCount = attribute.numPoints
-      mesh.setDataFromSpz(attribute)
-      group.add(mesh)
+      // const mesh = new SplatMesh()
+      // mesh.worker = this.worker
+      // mesh.vertexCount = attribute.numPoints
+      // mesh.setDataFromSpz(attribute)
+      // group.add(mesh)
       return group
     })
   }
@@ -52,13 +49,13 @@ class GLTFSpzGaussianSplattingExtension {
     for (let i = 0; i < primitives.length; i++) {
       const primitive = primitives[i]
       const extensions = primitive.extensions
-      if (extensions[this.name]) {
-        pendingBufferViews.push(
-          parser
-            .getDependency('bufferView', extensions[this.name].bufferView)
-            .then((bufferView) => loadSpz(bufferView))
-        )
-      }
+      // if (extensions[this.name]) {
+      //   pendingBufferViews.push(
+      //     parser
+      //       .getDependency('bufferView', extensions[this.name].bufferView)
+      //       .then((bufferView) => loadSpz(bufferView))
+      //   )
+      // }
     }
     return Promise.all(pendingBufferViews).then((bufferViews) => {
       return bufferViews

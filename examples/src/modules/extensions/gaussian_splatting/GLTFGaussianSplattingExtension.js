@@ -2,7 +2,6 @@
  * @author Caven Chen
  */
 import { Group } from 'three'
-import SplatMesh from './SplatMesh.js'
 
 class GLTFGaussianSplattingExtension {
   constructor(parser, worker) {
@@ -35,11 +34,11 @@ class GLTFGaussianSplattingExtension {
       const group = new Group()
       const geometries = results[0]
       const geometry = geometries[0]
-      const mesh = new SplatMesh()
-      mesh.vertexCount = geometry.attributes.position.count
-      mesh.worker = this.worker
-      mesh.setDataFromGeometry(geometry)
-      group.add(mesh)
+      // const mesh = new SplatMesh()
+      // mesh.vertexCount = geometry.attributes.position.count
+      // mesh.worker = this.worker
+      // mesh.setDataFromGeometry(geometry)
+      // group.add(mesh)
       return group
     })
   }

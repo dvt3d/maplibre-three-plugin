@@ -57,6 +57,7 @@ class Tileset extends Overlay {
     this._url = url
     this._options = options
     this._renderer = new TilesRenderer(this._url)
+
     this._splatWorker = this._options.splatWorker
     this._renderer.registerPlugin(
       new GLTFExtensionsPlugin({
@@ -132,7 +133,7 @@ class Tileset extends Overlay {
     this._event = this._renderer
 
     this._type = 'Tileset'
-    this.on('load-tile-set', this._onTilesLoaded.bind(this))
+    this.on('load-tileset', this._onTilesLoaded.bind(this))
     this._ready = false
   }
 
@@ -213,8 +214,8 @@ class Tileset extends Overlay {
       this._delegate.scale.set(scale, scale, scale)
 
       if (
-        !this._renderer.rootTileSet.asset.gltfUpAxis ||
-        this._renderer.rootTileSet.asset.gltfUpAxis === 'Z'
+        !this._renderer.rootTileset.asset.gltfUpAxis ||
+        this._renderer.rootTileset.asset.gltfUpAxis === 'Z'
       ) {
         this._delegate.rotateX(Math.PI)
       }
@@ -237,7 +238,7 @@ class Tileset extends Overlay {
       this.fire('loaded')
     }
     this._renderer.removeEventListener(
-      'load-tile-set',
+      'load-tileset',
       this._onTilesLoaded.bind(this)
     )
   }

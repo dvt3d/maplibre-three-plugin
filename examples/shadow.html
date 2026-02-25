@@ -17,6 +17,7 @@
           padding: 0;
           margin: 0;
       }
+
       html,
       body {
           width: 100%;
@@ -34,20 +35,22 @@
 <body>
 <div id="map-container" class="map-container"></div>
 <script type="importmap">
-  {
-    "imports": {
-      "maplibre-gl": "https://cdn.jsdelivr.net/npm/maplibre-gl/+esm",
-      "three": "https://cdn.jsdelivr.net/npm/three/+esm",
-      "three/examples/": "https://cdn.jsdelivr.net/npm/three/examples/",
-      "three/addons": "https://cdn.jsdelivr.net/npm/three/examples/jsm/Addons.js",
-      "3d-tiles-renderer": "https://cdn.jsdelivr.net/npm/3d-tiles-renderer/+esm",
-      "3d-tiles-renderer/plugins": "https://cdn.jsdelivr.net/npm/3d-tiles-renderer/src/plugins/index.js",
-      "@dvt3d/maplibre-three-plugin": "../dist/index.js",
-      "@spz-loader/core": "https://cdn.jsdelivr.net/npm/@spz-loader/core/+esm",
-      "fflate": "https://cdn.jsdelivr.net/npm/fflate/+esm"
-    }
+{
+  "imports": {
+    "maplibre-gl": "https://cdn.jsdelivr.net/npm/maplibre-gl/+esm",
+    "three": "https://cdn.jsdelivr.net/npm/three/+esm",
+    "three/examples/": "https://cdn.jsdelivr.net/npm/three/examples/",
+    "three/addons": "https://cdn.jsdelivr.net/npm/three/examples/jsm/Addons.js",
+    "3d-tiles-renderer": "https://cdn.jsdelivr.net/npm/3d-tiles-renderer/+esm",
+    "3d-tiles-renderer/plugins": "https://cdn.jsdelivr.net/npm/3d-tiles-renderer/build/index.plugins.js",
+    "3dgs-loader": "https://cdn.jsdelivr.net/npm/3dgs-loader@1.2.0/+esm",
+    "@dvt3d/splat-mesh": "https://cdn.jsdelivr.net/npm/@dvt3d/splat-mesh@1.1.1/+esm",
+    "@spz-loader/core": "https://cdn.jsdelivr.net/npm/@spz-loader/core/+esm",
+    "@dvt3d/maplibre-three-plugin": "../dist/index.js"
   }
+}
 </script>
+<script src="map.js" type="module"></script>
 <script src="shadow.js" type="module"></script>
 </body>
 </html>

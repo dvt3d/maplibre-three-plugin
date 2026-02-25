@@ -1,23 +1,14 @@
-import maplibregl from 'maplibre-gl'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
-import config from './config.js'
 import { ModelLoader, Tileset } from './src/index.js'
 
-let map = new maplibregl.Map({
-  container: 'map',
-  style:
-    'https://api.maptiler.com/maps/basic-v2/style.json?key=' +
-    config.maptiler_key, // style URL
-  maxPitch: 85,
-  pitch: 60,
-  canvasContextAttributes: { antialias: true },
-})
+const map = window.map
 
-let mapScene = new MTP.MapScene(map)
+const mapScene = new MTP.MapScene(map)
 
 mapScene.renderer.shadowMap.enabled = true
 
 const sun = new MTP.Sun()
+
 sun.currentTime = '2025/7/12 8:00:00'
 sun.castShadow = true
 sun.setShadow()
@@ -26,6 +17,7 @@ mapScene.addLight(sun)
 ModelLoader.setDracoLoader({
   path: 'https://cdn.jsdelivr.net/npm/three/examples/jsm/libs/draco/',
 })
+
 ModelLoader.setKtx2loader({
   path: 'https://cdn.jsdelivr.net/npm/three/examples/jsm/libs/basis/',
   renderer: mapScene.renderer,

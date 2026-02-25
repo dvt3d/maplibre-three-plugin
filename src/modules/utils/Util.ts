@@ -84,6 +84,7 @@ class Util {
       pitch: number
       cameraToCenterDistance: number
       tileSize: number
+      maxZoom: number
     },
     center: string | number[],
     boundingSize: { x: number; y: number; z: number }
@@ -114,7 +115,7 @@ class Util {
     return {
       center: [_center.lng, _center.lat],
       cameraHeight,
-      zoom,
+      zoom: Math.min(zoom, transform.maxZoom),
     }
   }
 

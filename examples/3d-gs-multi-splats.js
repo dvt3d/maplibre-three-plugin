@@ -52,9 +52,9 @@ mapScene
   .on('preRender', (e) => {
     const scene = e.frameState.scene
     const cameraMatrix = e.frameState.camera.matrixWorldInverse
-    scene.traverse((child) => {
+    scene.traverse(async (child) => {
       if (child.isSplatMesh) {
-        child.computeBounds()
+        await child.computeBounds()
         child.bounds.getCenter(center)
         center.applyMatrix4(child.matrixWorld)
         center.applyMatrix4(cameraMatrix)

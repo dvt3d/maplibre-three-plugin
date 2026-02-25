@@ -380,7 +380,16 @@ var MapScene = class {
     this._world.position.set(WORLD_SIZE / 2, WORLD_SIZE / 2, 0);
     this._world.matrixAutoUpdate = false;
     this._scene.add(this._world);
-    this._map.on("render", this._onMapRender.bind(this));
+    if (this.map.painter.addRenderHook) {
+      const cameraSync = new CameraSync_default(this._map, this._world, this._camera);
+      cameraSync.syncCamera(true);
+      this.map.painter.addRenderHook(
+        "afterTranslucent",
+        this._onMapAfterTranslucent.bind(this)
+      );
+    } else {
+      this._map.on("render", this._onMapRender.bind(this));
+    }
     this._event = new EventDispatcher();
   }
   get map() {
@@ -403,6 +412,12 @@ var MapScene = class {
   }
   get renderer() {
     return this._renderer;
+  }
+  /**
+   *
+   */
+  _onMapAfterTranslucent() {
+    this.render();
   }
   /**
    *

@@ -3,6 +3,7 @@ import { Scene, PerspectiveCamera, WebGLRenderer, Group, Light, Object3D, Vector
 
 interface IMap {
     transform: any;
+    painter: any;
     on(type: string, listener: () => any): any;
     getCanvas(): HTMLCanvasElement;
     getLayer(id: string): any;
@@ -85,6 +86,10 @@ declare class MapScene {
     get lights(): Group<three.Object3DEventMap>;
     get world(): Group<three.Object3DEventMap>;
     get renderer(): WebGLRenderer;
+    /**
+     *
+     */
+    _onMapAfterTranslucent(): void;
     /**
      *
      * @private
@@ -272,14 +277,14 @@ declare class Creator {
      * @param rotation
      * @param scale
      */
-    static createRTCGroup(center: number | number[], rotation: number[], scale: number[]): Group;
+    static createRTCGroup(center: number[], rotation: number[], scale: number[]): Group;
     /**
      *
      * @param center
      * @param rotation
      * @param scale
      */
-    static createMercatorRTCGroup(center: number | number[], rotation: number[], scale: number[]): Group;
+    static createMercatorRTCGroup(center: number[], rotation: number[], scale: number[]): Group;
     /**
      *
      * @param center
@@ -287,7 +292,7 @@ declare class Creator {
      * @param height
      * @returns {Mesh}
      */
-    static createShadowGround(center: number | number[], width?: number, height?: number): Mesh;
+    static createShadowGround(center: number[], width?: number, height?: number): Mesh;
 }
 
 export { Creator, MapScene, SceneTransform, Sun };

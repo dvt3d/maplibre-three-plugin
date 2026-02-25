@@ -1,41 +1,56 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
-    />
-    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
-    <title>billboard</title>
-    <link
-      href="https://cdn.jsdelivr.net/npm/maplibre-gl/dist/maplibre-gl.min.css"
-      rel="stylesheet"
-    />
-    <style>
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0"
+  />
+  <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+  <title>billboard</title>
+  <link
+    href="https://cdn.jsdelivr.net/npm/maplibre-gl/dist/maplibre-gl.min.css"
+    rel="stylesheet"
+  />
+  <style>
       * {
-        margin: 0;
-        padding: 0;
+          margin: 0;
+          padding: 0;
       }
-    </style>
-  </head>
-  <body>
-    <div id="map" style="width: 100vw; height: 100vh"></div>
-    <script type="importmap">
-      {
-        "imports": {
-          "maplibre-gl": "https://cdn.jsdelivr.net/npm/maplibre-gl/+esm",
-          "three": "https://cdn.jsdelivr.net/npm/three/+esm",
-          "three/examples/": "https://cdn.jsdelivr.net/npm/three/examples/",
-          "three/addons": "https://cdn.jsdelivr.net/npm/three/examples/jsm/Addons.js",
-          "3d-tiles-renderer": "https://cdn.jsdelivr.net/npm/3d-tiles-renderer/+esm",
-          "3d-tiles-renderer/plugins": "https://cdn.jsdelivr.net/npm/3d-tiles-renderer/src/plugins/index.js",
-          "@dvt3d/maplibre-three-plugin": "../dist/index.js",
-          "@spz-loader/core": "https://cdn.jsdelivr.net/npm/@spz-loader/core/+esm",
-          "fflate": "https://cdn.jsdelivr.net/npm/fflate/+esm"
-        }
+
+      html,
+      body {
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
       }
-    </script>
-    <script src="billboard.js" type="module"></script>
-  </body>
+
+      .map-container {
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+      }
+  </style>
+</head>
+<body>
+<div id="map-container" class="map-container"></div>
+<script type="importmap">
+{
+  "imports": {
+    "maplibre-gl": "https://cdn.jsdelivr.net/npm/maplibre-gl/+esm",
+    "three": "https://cdn.jsdelivr.net/npm/three/+esm",
+    "three/examples/": "https://cdn.jsdelivr.net/npm/three/examples/",
+    "three/addons": "https://cdn.jsdelivr.net/npm/three/examples/jsm/Addons.js",
+    "3d-tiles-renderer": "https://cdn.jsdelivr.net/npm/3d-tiles-renderer/+esm",
+    "3d-tiles-renderer/plugins": "https://cdn.jsdelivr.net/npm/3d-tiles-renderer/build/index.plugins.js",
+    "3dgs-loader": "https://cdn.jsdelivr.net/npm/3dgs-loader@1.2.0/+esm",
+    "@dvt3d/splat-mesh": "https://cdn.jsdelivr.net/npm/@dvt3d/splat-mesh@1.1.1/+esm",
+    "@spz-loader/core": "https://cdn.jsdelivr.net/npm/@spz-loader/core/+esm",
+    "@dvt3d/maplibre-three-plugin": "../dist/index.js"
+  }
+}
+</script>
+<script src="map.js" type="module"></script>
+<script src="billboard.js" type="module"></script>
+</body>
 </html>
