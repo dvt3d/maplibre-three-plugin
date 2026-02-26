@@ -1,12 +1,9 @@
-import {
-  DRACOLoader,
-  KTX2Loader,
-  GLTFLoader,
-  FBXLoader,
-  OBJLoader,
-} from 'three/addons'
 import { LoadingManager } from 'three'
-
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js'
+import { KTX2Loader } from 'three/addons/loaders/KTX2Loader.js'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import { FBXLoader } from 'three/addons/loaders/FBXLoader.js'
+import { OBJLoader } from 'three/addons/loaders/OBJLoader.js'
 const loadingManager = new LoadingManager()
 
 const dracoLoader = new DRACOLoader(loadingManager)

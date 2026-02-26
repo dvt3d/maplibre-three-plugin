@@ -25,17 +25,17 @@ yarn add @dvt3d/maplibre-three-plugin
 
 import maplibregl from 'maplibre-gl'
 import * as THREE from 'three'
-import { GLTFLoader } from 'three/addons'
+import {GLTFLoader} from 'three/addons'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
 
 const map = new maplibregl.Map({
-  container: 'map-container', // container id
-  style: 'https://api.maptiler.com/maps/basic-v2/style.json?key=get_access_key',
-  zoom: 18,
-  center: [148.9819, -35.3981],
-  pitch: 60,
-  canvasContextAttributes: { antialias: true },
-  maxPitch: 85,
+    container: 'map-container', // container id
+    style: 'https://api.maptiler.com/maps/basic-v2/style.json?key=get_access_key',
+    zoom: 18,
+    center: [148.9819, -35.3981],
+    pitch: 60,
+    canvasContextAttributes: {antialias: true},
+    maxPitch: 85,
 })
 
 //init three scene
@@ -48,9 +48,9 @@ mapScene.addLight(new THREE.AmbientLight())
 const glTFLoader = new GLTFLoader()
 
 glTFLoader.load('./assets/34M_17/34M_17.gltf', (gltf) => {
-  let rtcGroup = MTP.Creator.createRTCGroup([148.9819, -35.39847])
-  rtcGroup.add(gltf.scene)
-  mapScene.addObject(rtcGroup)
+    let rtcGroup = MTP.Creator.createRTCGroup([148.9819, -35.39847])
+    rtcGroup.add(gltf.scene)
+    mapScene.addObject(rtcGroup)
 })
 ```
 
@@ -84,16 +84,73 @@ const mapScene = new MapScene(map)
 ```js
 // config
 Object({
-  scene: null, //THREE.Scene，if not passed in, the default scene will be used
-  camera: null, //THREE.Camera, if not passed in, the default camera will be used
-  renderer: null, //THREE.WebGLRenderer if not passed in, the default renderer will be used
-  preserveDrawingBuffer: false,
-  renderLoop: (ins) => {
-  } //Frame animation rendering function, if not passed in, the default function will be used，the params is an instance for MapScene
+    /**
+     * Existing THREE.Scene instance.
+     * If not provided, an internal default scene will be created.
+     */
+    scene: null,
+
+    /**
+     * Existing THREE.Camera instance.
+     * If not provided, an internal default camera will be created.
+     */
+    camera: null,
+
+    /**
+     * Existing THREE.WebGLRenderer instance.
+     * If not provided, an internal default renderer will be created.
+     */
+    renderer: null,
+
+    /**
+     * Whether to preserve the drawing buffer.
+     * When enabled, the canvas content will be retained after rendering,
+     * which is useful for screenshots or readPixels operations.
+     * Note: Enabling this may have a performance impact.
+     */
+    preserveDrawingBuffer: false,
+
+    /**
+     * Whether to enable post-processing rendering.
+     * When enabled, Three.js content will be rendered through
+     * an offscreen render target before being composited onto the map.
+     * When disabled, Three.js renders directly into the shared MapLibre canvas
+     * for maximum performance and stability.
+     */
+    enablePostProcessing: false,
+
+    /**
+     * Custom frame render loop.
+     *
+     * This function will be called every frame.
+     * If not provided, the internal default render loop will be used.
+     *
+     * ⚠️ Note:
+     * Providing a custom renderLoop means you take full control
+     * of the render lifecycle. The built-in rendering pipeline
+     * will be bypassed.
+     *
+     * As a result, the following internal event hooks will
+     * NOT be triggered automatically:
+     *
+     * - preReset
+     * - postReset
+     * - preRender
+     * - postRender
+     *
+     * If needed, you must manually call the corresponding logic
+     * inside your custom renderLoop.
+     *
+     * @param {MapScene} ins - The current MapScene instance
+     */
+    renderLoop: (ins) => {
+    }
 })
 ```
 
 #### event hooks
+
+These hooks are only triggered when using the internal render loop.
 
 - `preReset` : A hook that calls `renderer.resetState` before each animation frame
 - `postReset`: A hook that calls `renderer.resetState` after each animation frame
@@ -109,6 +166,9 @@ Object({
 - `{THREE.Group} lights`: `readonly`
 - `{THREE.Group} world` : `readonly`
 - `{THREE.WebGLRenderer} renderer` : `readonly`
+- `{EffectComposer} composer` : `readonly`
+- `{RenderPass} renderPass` : `readonly`
+- `{ShaderPass} customOutPass` : `readonly`
 
 #### methods
 
@@ -171,6 +231,9 @@ Object({
         - `this`
 
 - **_on(type,callback)_**
+
+  Registers an event listener for the specified event type
+
     - params
         - `{String} type `
         - `{Function} callback `:
@@ -178,6 +241,9 @@ Object({
         - `this`
 
 - **_off(type,callback)_**
+
+  Removes a previously registered event listener for the specified event type
+
     - params
         - `{String} type `
         - `{Function} callback `:
@@ -191,6 +257,25 @@ Object({
 
     - params
         - `{String} beforeId `
+    - returns
+        - `this`
+
+- **_addPass(pass)_**
+
+  Adds a post-processing pass to the internal EffectComposer. The pass will be inserted before the final output pass to
+  ensure correct rendering order.
+
+    - params
+        - `{THREE.Pass} pass `
+    - returns
+        - `this`
+
+- **_removePass(pass)_**
+
+  Removes a previously added post-processing pass from the internal EffectComposer.
+
+    - params
+        - `{THREE.Pass} pass `
     - returns
         - `this`
 
@@ -274,7 +359,7 @@ const rtcGroup = Creator.createRTCGroup([-1000, 0, 0])
         - `{Array} rotation`: default value is [0,0,0]
         - `{Array} scale`: scale corresponding to the current latitude
     - returns
-        - `{THREE.Group} rtc`
+        - `{THREE.Group} group`
 
 - **_createMercatorRTCGroup(center, [rotation], [scale])_**
     - params
@@ -282,7 +367,7 @@ const rtcGroup = Creator.createRTCGroup([-1000, 0, 0])
         - `{Array} rotation`: default value is [0,0,0]
         - `{Array} scale`: scale corresponding to the current latitude
     - returns
-        - `{THREE.Group} rtc`
+        - `{THREE.Group} group`
 
 - **_createShadowGround(center, [width], [height])_**
     - params
@@ -290,4 +375,4 @@ const rtcGroup = Creator.createRTCGroup([-1000, 0, 0])
         - `{Number} width`: default value is 100
         - `{Number} height` : default value is 100
     - returns
-        - `{Object} rtc`
+        - `{THREE.Mesh} mesh`

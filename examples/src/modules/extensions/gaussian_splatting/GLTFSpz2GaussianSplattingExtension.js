@@ -21,8 +21,6 @@ class GLTFSpz2GaussianSplattingExtension {
   loadMesh(meshIndex) {
     const parser = this.parser
     const json = parser.json
-
-    console.log(json)
     const extensionsUsed = json.extensionsUsed
     if (!extensionsUsed || !extensionsUsed.includes(this.name)) {
       return null

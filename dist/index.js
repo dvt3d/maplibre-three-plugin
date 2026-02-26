@@ -9,7 +9,10 @@ import {
   Vector3 as Vector33,
   NormalBlending
 } from "three";
-import { EffectComposer, RenderPass, ShaderPass } from "three/addons";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import "three/addons/postprocessing/Pass.js";
+import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
 
 // src/modules/constants/index.ts
 var WORLD_SIZE = 512 * 2e3;
@@ -336,7 +339,6 @@ var CustomOutputShader = {
 		precision highp float;
 		varying vec2 vUv;
 		void main() {
-
 			vUv = uv;
 			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
 

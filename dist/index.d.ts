@@ -1,6 +1,9 @@
 import * as three from 'three';
 import { Scene, PerspectiveCamera, WebGLRenderer, Group, Light, Object3D, Vector3, DirectionalLight, HemisphereLight, Mesh } from 'three';
-import { EffectComposer, RenderPass, ShaderPass, Pass } from 'three/addons';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { Pass } from 'three/addons/postprocessing/Pass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 
 interface IMap {
     transform: any;

@@ -8,7 +8,10 @@ import {
   Vector3,
   NormalBlending,
 } from 'three'
-import { EffectComposer, RenderPass, ShaderPass, Pass } from 'three/addons'
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
+import { Pass } from 'three/addons/postprocessing/Pass.js'
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js'
 import type { Light, Object3D } from 'three'
 import ThreeLayer from '../layer/ThreeLayer'
 import { WORLD_SIZE } from '../constants'
@@ -20,8 +23,8 @@ const DEF_OPTS = {
   scene: null,
   camera: null,
   renderer: null,
-  renderLoop: null,
   preserveDrawingBuffer: false,
+  renderLoop: null,
   enablePostProcessing: false,
 }
 

@@ -1,7 +1,9 @@
 import * as THREE from 'three'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
 import { ModelLoader, Tileset } from './src/index.js'
-import { ShaderPass, DotScreenShader, RGBShiftShader } from 'three/addons'
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js'
+import { RGBShiftShader } from 'three/addons/shaders/RGBShiftShader.js'
+import { DotScreenShader } from 'three/addons/shaders/DotScreenShader.js'
 
 const map = window.map
 
@@ -10,16 +12,13 @@ const mapScene = new MTP.MapScene(map, {
 })
 
 mapScene.addLight(new THREE.AmbientLight())
-
 ModelLoader.setDracoLoader({
   path: 'https://cdn.jsdelivr.net/npm/three/examples/jsm/libs/draco/',
 })
-
 ModelLoader.setKtx2loader({
   path: 'https://cdn.jsdelivr.net/npm/three/examples/jsm/libs/basis/',
   renderer: mapScene.renderer,
 })
-
 let url = '//resource.dvgis.cn/data/3dtiles/dayanta/tileset.json'
 
 let tileset = new Tileset(url, {

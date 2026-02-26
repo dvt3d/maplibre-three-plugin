@@ -2,7 +2,7 @@
  * @author Caven Chen
  */
 
-import { CSS3DSprite } from 'three/addons'
+import { CSS3DSprite } from 'three/addons/renderers/CSS3DRenderer.js'
 import Overlay from '../Overlay.js'
 import { Util } from '../../utils/index.js'
 
