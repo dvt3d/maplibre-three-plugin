@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
-import { GLTFLoader } from 'three/addons'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 const map = window.map
 map.setZoom(18)
 
