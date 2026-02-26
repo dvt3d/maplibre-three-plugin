@@ -1,11 +1,13 @@
 import * as THREE from 'three'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
-import config from './config/index.js'
 import { ModelLoader, Tileset } from './src/index.js'
+import { ShaderPass, DotScreenShader, RGBShiftShader } from 'three/addons'
 
 const map = window.map
 
-const mapScene = new MTP.MapScene(map)
+const mapScene = new MTP.MapScene(map, {
+  enablePostProcessing: true,
+})
 
 mapScene.addLight(new THREE.AmbientLight())
 
@@ -18,20 +20,29 @@ ModelLoader.setKtx2loader({
   renderer: mapScene.renderer,
 })
 
-let tileset = new Tileset(40866, {
+let url = '//resource.dvgis.cn/data/3dtiles/dayanta/tileset.json'
+
+let tileset = new Tileset(url, {
   dracoLoader: ModelLoader.getDracoLoader(),
   ktxLoader: ModelLoader.getKtx2loader(),
-  cesiumIon: {
-    apiToken: config.cesium_key,
-  },
 })
 
 tileset.autoDisableRendererCulling = true
+tileset.errorTarget = 6
+
 tileset.on('loaded', () => {
   mapScene.addObject(tileset)
-  tileset.setHeight(-70)
+  tileset.setHeight(-420)
   mapScene.flyTo(tileset)
 })
+
+const effect1 = new ShaderPass(DotScreenShader)
+effect1.uniforms['scale'].value = 4
+const effect2 = new ShaderPass(RGBShiftShader)
+effect2.uniforms['amount'].value = 0.0015
+
+mapScene.addPass(effect1).addPass(effect2)
+
 mapScene
   .on('preRender', (e) => {
     tileset.update(e.frameState)

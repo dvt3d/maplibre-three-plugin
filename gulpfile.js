@@ -9,7 +9,6 @@ import fse from 'fs-extra'
 import path from 'path'
 import gulp from 'gulp'
 import tsup from 'tsup'
-import GlobalsPlugin from 'esbuild-plugin-globals'
 import shell from 'shelljs'
 import chalk from 'chalk'
 
@@ -23,37 +22,16 @@ const buildConfig = {
   splitting: false,
 }
 
-async function buildModules(options) {
-  // Build IIFE
-  if (options.iife) {
-    await tsup.build({
-      ...buildConfig,
-      format: 'iife',
-      globalName: 'MTP',
-      minify: options.minify,
-      esbuildPlugins: [
-        GlobalsPlugin({
-          three: 'THREE',
-        }),
-      ],
-      esbuildOptions: (options, context) => {
-        delete options.outdir
-        options.outfile = path.join('dist', 'mtp.min.js')
-      },
-    })
-  }
-  // Build Node
-  if (options.node) {
-    await tsup.build({
-      ...buildConfig,
-      format: 'esm',
-      minify: options.minify,
-      esbuildOptions: (options, context) => {
-        delete options.outdir
-        options.outfile = path.join('dist', 'index.js')
-      },
-    })
-  }
+async function buildModules(options = {}) {
+  await tsup.build({
+    ...buildConfig,
+    format: 'esm',
+    minify: options.minify,
+    esbuildOptions: (options, context) => {
+      delete options.outdir
+      options.outfile = path.join('dist', 'index.js')
+    },
+  })
 }
 
 async function regenerate(option, content) {
@@ -72,11 +50,11 @@ export const dev = gulp.series(() => {
   })
   watcher
     .on('ready', async () => {
-      await regenerate({ node: true })
+      await regenerate()
     })
     .on('change', async () => {
       let now = new Date().getTime()
-      await regenerate({ node: true })
+      await regenerate()
       shell.echo(
         chalk.green(`regenerate lib takes ${new Date().getTime() - now} ms`)
       )
@@ -84,16 +62,6 @@ export const dev = gulp.series(() => {
   return watcher
 })
 
-export const buildIIFE = gulp.series(() => buildModules({ iife: true }))
+export const build = gulp.series(() => buildModules())
 
-export const buildNode = gulp.series(() => buildModules({ node: true }))
-
-export const build = gulp.series(
-  () => buildModules({ iife: true }),
-  () => buildModules({ node: true })
-)
-
-export const buildRelease = gulp.series(
-  () => buildModules({ iife: true, minify: true }),
-  () => buildModules({ node: true, minify: true })
-)
+export const buildRelease = gulp.series(() => buildModules({ minify: true }))

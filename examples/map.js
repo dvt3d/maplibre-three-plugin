@@ -1,5 +1,5 @@
 import maplibregl from 'maplibre-gl'
-import config from './config.js'
+import config from './config/index.js'
 
 const map = new maplibregl.Map({
   container: 'map-container',

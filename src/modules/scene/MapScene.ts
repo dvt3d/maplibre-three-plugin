@@ -6,12 +6,15 @@ import {
   EventDispatcher,
   Box3,
   Vector3,
+  NormalBlending,
 } from 'three'
+import { EffectComposer, RenderPass, ShaderPass, Pass } from 'three/addons'
 import type { Light, Object3D } from 'three'
 import ThreeLayer from '../layer/ThreeLayer'
 import { WORLD_SIZE } from '../constants'
 import Util from '../utils/Util'
 import SceneTransform from '../transform/SceneTransform'
+import { CustomOutputShader } from '../shaders/CustomOutputShader'
 
 const DEF_OPTS = {
   scene: null,
@@ -19,6 +22,7 @@ const DEF_OPTS = {
   renderer: null,
   renderLoop: null,
   preserveDrawingBuffer: false,
+  enablePostProcessing: false,
 }
 
 const DEF_LAYER_ID = 'map_scene_layer'
@@ -53,8 +57,21 @@ interface IMapSceneOptions {
   renderer: null | WebGLRenderer
   /** Custom render loop function (optional) */
   renderLoop: null | ((mapScene: MapScene) => void)
-  /** Whether to preserve the drawing buffer (optional) */
+  /**
+   * Whether to preserve the drawing buffer.
+   * When enabled, the canvas content will be retained after rendering,
+   * which is useful for screenshots or readPixels operations.
+   * Note: Enabling this may have a performance impact.
+   */
   preserveDrawingBuffer: boolean
+  /**
+   * Whether to enable post-processing rendering.
+   * When enabled, Three.js content will be rendered through
+   * an offscreen render target before being composited onto the map.
+   * When disabled, Three.js renders directly into the shared MapLibre canvas
+   * for maximum performance and stability.
+   */
+  enablePostProcessing: boolean
 }
 
 /**
@@ -112,7 +129,11 @@ export class MapScene {
   private readonly _renderer: WebGLRenderer
   private readonly _lights: Group
   private readonly _world: Group
+  private readonly _composer: EffectComposer | undefined
+  private readonly _renderPass: RenderPass | undefined
+  private readonly _customOutPass: ShaderPass | undefined
   private _event: EventDispatcher<IMapSceneEvent>
+
   constructor(map: IMap, options: Partial<IMapSceneOptions> = {}) {
     if (!map) {
       throw 'missing  map'
@@ -161,6 +182,28 @@ export class MapScene {
     this._world.position.set(WORLD_SIZE / 2, WORLD_SIZE / 2, 0)
     this._world.matrixAutoUpdate = false
     this._scene.add(this._world)
+
+    if (this._options.enablePostProcessing) {
+      //init the composer
+      this._composer = new EffectComposer(this._renderer)
+      this._composer.setSize(
+        this._canvas.clientWidth,
+        this._canvas.clientHeight
+      )
+      this._composer.renderTarget1.depthBuffer = true
+      this._composer.renderTarget2.depthBuffer = true
+      this._renderPass = new RenderPass(this._scene, this._camera)
+      this._renderer.setClearColor(0x000000, 0)
+      this._composer.addPass(this._renderPass)
+
+      this._customOutPass = new ShaderPass(CustomOutputShader)
+      this._customOutPass.renderToScreen = true
+      this._customOutPass.material.transparent = true
+      this._customOutPass.material.blending = NormalBlending
+      this._customOutPass.clear = false
+      this._composer.addPass(this._customOutPass)
+    }
+
     this._map.on('render', this._onMapRender.bind(this))
     this._event = new EventDispatcher()
   }
@@ -191,6 +234,18 @@ export class MapScene {
 
   get renderer() {
     return this._renderer
+  }
+
+  get composer() {
+    return this._composer
+  }
+
+  get renderPass() {
+    return this._renderPass
+  }
+
+  get customOutPass() {
+    return this._customOutPass
   }
 
   /**
@@ -230,7 +285,11 @@ export class MapScene {
         type: 'preRender',
         frameState,
       })
-      this.renderer.render(this._scene, this._camera)
+      if (this._composer) {
+        this._composer.render()
+      } else {
+        this._renderer.render(this._scene, this._camera)
+      }
       this._event.dispatchEvent({
         type: 'postRender',
         frameState,
@@ -447,9 +506,44 @@ export class MapScene {
   /**
    *
    * @param beforeId
+   * @returns {MapScene}
    */
   layerBeforeTo(beforeId?: String): MapScene {
     this._map.moveLayer(DEF_LAYER_ID, beforeId)
+    return this
+  }
+
+  /**
+   * @param pass
+   * @returns {MapScene}
+   */
+  addPass(pass: Pass): MapScene {
+    if (!this._options.enablePostProcessing || !pass || !this._composer) {
+      return this
+    }
+    const outPass = this._customOutPass
+    if (this._composer.passes.includes(pass)) {
+      return this
+    }
+    const outIndex = outPass ? this._composer.passes.indexOf(outPass) : -1
+    if (outIndex >= 0) {
+      this._composer.insertPass(pass, outIndex)
+    } else {
+      this._composer.addPass(pass)
+    }
+    return this
+  }
+
+  /**
+   *
+   * @param pass
+   * @returns {MapScene}
+   */
+  removePass(pass: Pass): MapScene {
+    if (!this._options.enablePostProcessing || !pass || !this._composer) {
+      return this
+    }
+    this._composer.removePass(pass)
     return this
   }
 }

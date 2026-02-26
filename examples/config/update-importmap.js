@@ -3,7 +3,7 @@ import path from 'node:path'
 
 const ROOT = process.cwd()
 const PAGES_DIR = path.join(ROOT, 'examples')
-const IMPORTMAP_JSON = path.join(ROOT, 'examples', 'importmap.json')
+const IMPORTMAP_JSON = path.join(ROOT, 'examples', 'config', 'importmap.json')
 
 const IMPORTMAP_RE =
   /<script\b[^>]*\btype\s*=\s*(['"])importmap\1[^>]*>[\s\S]*?<\/script>/i

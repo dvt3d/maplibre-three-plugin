@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
-import config from './config.js'
+import config from './config/index.js'
 import { SplatWorker } from '@dvt3d/splat-mesh'
 import { Tileset } from './src/index.js'
 
