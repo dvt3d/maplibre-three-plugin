@@ -3,7 +3,6 @@ import { Scene, PerspectiveCamera, WebGLRenderer, Group, Light, Object3D, Vector
 
 interface IMap {
     transform: any;
-    painter: any;
     on(type: string, listener: () => any): any;
     getCanvas(): HTMLCanvasElement;
     getLayer(id: string): any;
@@ -20,6 +19,7 @@ interface IMap {
         pitch: number;
         duration: number;
     }): void;
+    moveLayer(id: String, beforeId?: String): void;
 }
 /**
  * Configuration options for initializing a MapScene
@@ -86,10 +86,6 @@ declare class MapScene {
     get lights(): Group<three.Object3DEventMap>;
     get world(): Group<three.Object3DEventMap>;
     get renderer(): WebGLRenderer;
-    /**
-     *
-     */
-    _onMapAfterTranslucent(): void;
     /**
      *
      * @private
@@ -189,6 +185,11 @@ declare class MapScene {
      * @returns {MapScene}
      */
     off(type: string, callback: () => void): MapScene;
+    /**
+     *
+     * @param beforeId
+     */
+    layerBeforeTo(beforeId?: String): MapScene;
 }
 
 declare class SceneTransform {

@@ -1,10 +1,18 @@
 {
   "name": "@dvt3d/maplibre-three-plugin",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "repository": "https://github.com/dvt3d/maplibre-three-plugin.git",
   "author": "cavencj <cavencj@gmail.com>",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "type": "module",
+  "keywords": [
+    "maplibre",
+    "three",
+    "three.js",
+    "map",
+    "3D",
+    "gltf"
+  ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
