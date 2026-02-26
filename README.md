@@ -25,7 +25,7 @@ yarn add @dvt3d/maplibre-three-plugin
 
 import maplibregl from 'maplibre-gl'
 import * as THREE from 'three'
-import {GLTFLoader} from 'three/addons'
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
 
 const map = new maplibregl.Map({
