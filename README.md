@@ -215,8 +215,8 @@ These hooks are only triggered when using the internal render loop.
 
     - params
         - `{THREE.Object3D | CustomObject} target `
-        - `{Function} completed `:
-        - `{Number} duration `:
+        - `{Function} completed `
+        - `{Number} duration `
     - returns
         - `this`
 
@@ -226,7 +226,7 @@ These hooks are only triggered when using the internal render loop.
 
     - params
         - `{Ojbect} target `
-        - `{Function} completed `:
+        - `{Function} completed `
     - returns
         - `this`
 
@@ -236,7 +236,7 @@ These hooks are only triggered when using the internal render loop.
 
     - params
         - `{String} type `
-        - `{Function} callback `:
+        - `{Function} callback `
     - returns
         - `this`
 
@@ -246,7 +246,7 @@ These hooks are only triggered when using the internal render loop.
 
     - params
         - `{String} type `
-        - `{Function} callback `:
+        - `{Function} callback `
     - returns
         - `this`
 
@@ -331,7 +331,7 @@ const sun = new Sun()
 
 - `{THREE.Group} delegate ` : `readonly`
 - `{Boolean} castShadow `
-- `{Date || String} currentTime `
+- `{Date | String} currentTime `
 - `{THREE.DirectionalLight} sunLight` : `readonly`
 - `{THREE.HemisphereLight} hemiLight`: `readonly`
 
