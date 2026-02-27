@@ -1,5 +1,5 @@
 import * as THREE from 'three'
-import { CSS3DRenderer } from 'three/addons'
+import { CSS3DRenderer } from 'three/addons/renderers/CSS3DRenderer.js'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
 import { DivIcon } from './src/index.js'
 

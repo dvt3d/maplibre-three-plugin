@@ -250,7 +250,8 @@ var ThreeLayer = class {
   onAdd() {
     this._cameraSync.syncCamera(true);
   }
-  render() {
+  render(gl) {
+    gl.enable(gl.DEPTH_TEST);
     this._mapScene.render();
   }
   onRemove() {
@@ -364,8 +365,8 @@ var DEF_OPTS = {
   scene: null,
   camera: null,
   renderer: null,
-  renderLoop: null,
   preserveDrawingBuffer: false,
+  renderLoop: null,
   enablePostProcessing: false
 };
 var DEF_LAYER_ID = "map_scene_layer";
@@ -1070,12 +1071,9 @@ var Creator = class {
     group.name = "rtc";
     group.position.copy(SceneTransform_default.lngLatToVector3(center));
     if (rotation) {
-      group.rotateX(rotation[0] || 0);
-      group.rotateY(rotation[1] || 0);
-      group.rotateZ(rotation[2] || 0);
+      group.rotation.set(rotation[0] || 0, rotation[1] || 0, rotation[2] || 0);
     } else {
-      group.rotateX(Math.PI / 2);
-      group.rotateY(Math.PI);
+      group.rotation.set(Math.PI / 2, Math.PI, 0);
     }
     if (scale) {
       group.scale.set(scale[0] || 1, scale[1] || 1, scale[2] || 1);
@@ -1095,8 +1093,17 @@ var Creator = class {
    * @param scale
    */
   static createMercatorRTCGroup(center, rotation, scale) {
-    const group = this.createRTCGroup(center, rotation, scale);
-    if (!scale) {
+    const group = new Group3();
+    group.name = "rtc";
+    group.position.copy(SceneTransform_default.lngLatToVector3(center));
+    if (rotation) {
+      group.rotation.set(rotation[0] || 0, rotation[1] || 0, rotation[2] || 0);
+    } else {
+      group.rotation.set(Math.PI / 2, Math.PI, 0);
+    }
+    if (scale) {
+      group.scale.set(scale[0] || 1, scale[1] || 1, scale[2] || 1);
+    } else {
       let lat_scale = 1;
       let mercator_scale = SceneTransform_default.projectedMercatorUnitsPerMeter();
       if (Array.isArray(center)) {
