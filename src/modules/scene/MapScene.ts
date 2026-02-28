@@ -11,13 +11,12 @@ import {
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js'
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js'
 import { Pass } from 'three/addons/postprocessing/Pass.js'
-import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js'
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js'
 import type { Light, Object3D } from 'three'
 import ThreeLayer from '../layer/ThreeLayer'
 import { WORLD_SIZE } from '../constants'
 import Util from '../utils/Util'
 import SceneTransform from '../transform/SceneTransform'
-import { CustomOutputShader } from '../shaders/CustomOutputShader'
 
 const DEF_OPTS = {
   scene: null,
@@ -134,7 +133,7 @@ export class MapScene {
   private readonly _world: Group
   private readonly _composer: EffectComposer | undefined
   private readonly _renderPass: RenderPass | undefined
-  private readonly _customOutPass: ShaderPass | undefined
+  private readonly _outputPass: OutputPass | undefined
   private _event: EventDispatcher<IMapSceneEvent>
 
   constructor(map: IMap, options: Partial<IMapSceneOptions> = {}) {
@@ -199,12 +198,12 @@ export class MapScene {
       this._renderer.setClearColor(0x000000, 0)
       this._composer.addPass(this._renderPass)
 
-      this._customOutPass = new ShaderPass(CustomOutputShader)
-      this._customOutPass.renderToScreen = true
-      this._customOutPass.material.transparent = true
-      this._customOutPass.material.blending = NormalBlending
-      this._customOutPass.clear = false
-      this._composer.addPass(this._customOutPass)
+      this._outputPass = new OutputPass()
+      this._outputPass.renderToScreen = true
+      this._outputPass.material.transparent = true
+      this._outputPass.material.blending = NormalBlending
+      this._outputPass.clear = false
+      this._composer.addPass(this._outputPass)
     }
 
     this._map.on('render', this._onMapRender.bind(this))
@@ -247,8 +246,8 @@ export class MapScene {
     return this._renderPass
   }
 
-  get customOutPass() {
-    return this._customOutPass
+  get outputPass() {
+    return this._outputPass
   }
 
   /**
@@ -521,14 +520,23 @@ export class MapScene {
    * @returns {MapScene}
    */
   addPass(pass: Pass): MapScene {
-    if (!this._options.enablePostProcessing || !pass || !this._composer) {
+    if (!this._options.enablePostProcessing) {
+      console.warn('[MapScene] PostProcessing is disabled.')
       return this
     }
-    const outPass = this._customOutPass
+
+    if (!pass || !this._composer) {
+      return this
+    }
+
     if (this._composer.passes.includes(pass)) {
       return this
     }
-    const outIndex = outPass ? this._composer.passes.indexOf(outPass) : -1
+
+    const outIndex = this._outputPass
+      ? this._composer.passes.indexOf(this._outputPass)
+      : -1
+
     if (outIndex >= 0) {
       this._composer.insertPass(pass, outIndex)
     } else {
@@ -543,7 +551,11 @@ export class MapScene {
    * @returns {MapScene}
    */
   removePass(pass: Pass): MapScene {
-    if (!this._options.enablePostProcessing || !pass || !this._composer) {
+    if (!this._options.enablePostProcessing) {
+      console.warn('[MapScene] PostProcessing is disabled.')
+      return this
+    }
+    if (!pass || !this._composer) {
       return this
     }
     this._composer.removePass(pass)

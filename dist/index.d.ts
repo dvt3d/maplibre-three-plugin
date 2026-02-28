@@ -3,7 +3,7 @@ import { Scene, PerspectiveCamera, WebGLRenderer, Group, Light, Object3D, Vector
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { Pass } from 'three/addons/postprocessing/Pass.js';
-import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
 interface IMap {
     transform: any;
@@ -108,7 +108,7 @@ declare class MapScene {
     get renderer(): WebGLRenderer;
     get composer(): EffectComposer | undefined;
     get renderPass(): RenderPass | undefined;
-    get customOutPass(): ShaderPass | undefined;
+    get customOutPass(): OutputPass | undefined;
     /**
      *
      * @private

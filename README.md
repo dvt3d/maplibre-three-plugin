@@ -25,17 +25,17 @@ yarn add @dvt3d/maplibre-three-plugin
 
 import maplibregl from 'maplibre-gl'
 import * as THREE from 'three'
-import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js'
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import * as MTP from '@dvt3d/maplibre-three-plugin'
 
 const map = new maplibregl.Map({
-    container: 'map-container', // container id
-    style: 'https://api.maptiler.com/maps/basic-v2/style.json?key=get_access_key',
-    zoom: 18,
-    center: [148.9819, -35.3981],
-    pitch: 60,
-    canvasContextAttributes: {antialias: true},
-    maxPitch: 85,
+  container: 'map-container', // container id
+  style: 'https://api.maptiler.com/maps/basic-v2/style.json?key=get_access_key',
+  zoom: 18,
+  center: [148.9819, -35.3981],
+  pitch: 60,
+  canvasContextAttributes: { antialias: true },
+  maxPitch: 85,
 })
 
 //init three scene
@@ -48,9 +48,9 @@ mapScene.addLight(new THREE.AmbientLight())
 const glTFLoader = new GLTFLoader()
 
 glTFLoader.load('./assets/34M_17/34M_17.gltf', (gltf) => {
-    let rtcGroup = MTP.Creator.createRTCGroup([148.9819, -35.39847])
-    rtcGroup.add(gltf.scene)
-    mapScene.addObject(rtcGroup)
+  let rtcGroup = MTP.Creator.createRTCGroup([148.9819, -35.39847])
+  rtcGroup.add(gltf.scene)
+  mapScene.addObject(rtcGroup)
 })
 ```
 
@@ -84,67 +84,67 @@ const mapScene = new MapScene(map)
 ```js
 // config
 Object({
-    /**
-     * Existing THREE.Scene instance.
-     * If not provided, an internal default scene will be created.
-     */
-    scene: null,
+  /**
+   * Existing THREE.Scene instance.
+   * If not provided, an internal default scene will be created.
+   */
+  scene: null,
 
-    /**
-     * Existing THREE.Camera instance.
-     * If not provided, an internal default camera will be created.
-     */
-    camera: null,
+  /**
+   * Existing THREE.Camera instance.
+   * If not provided, an internal default camera will be created.
+   */
+  camera: null,
 
-    /**
-     * Existing THREE.WebGLRenderer instance.
-     * If not provided, an internal default renderer will be created.
-     */
-    renderer: null,
+  /**
+   * Existing THREE.WebGLRenderer instance.
+   * If not provided, an internal default renderer will be created.
+   */
+  renderer: null,
 
-    /**
-     * Whether to preserve the drawing buffer.
-     * When enabled, the canvas content will be retained after rendering,
-     * which is useful for screenshots or readPixels operations.
-     * Note: Enabling this may have a performance impact.
-     */
-    preserveDrawingBuffer: false,
+  /**
+   * Whether to preserve the drawing buffer.
+   * When enabled, the canvas content will be retained after rendering,
+   * which is useful for screenshots or readPixels operations.
+   * Note: Enabling this may have a performance impact.
+   */
+  preserveDrawingBuffer: false,
 
-    /**
-     * Whether to enable post-processing rendering.
-     * When enabled, Three.js content will be rendered through
-     * an offscreen render target before being composited onto the map.
-     * When disabled, Three.js renders directly into the shared MapLibre canvas
-     * for maximum performance and stability.
-     */
-    enablePostProcessing: false,
+  /**
+   * Whether to enable post-processing rendering.
+   * When enabled, Three.js content will be rendered through
+   * an offscreen render target before being composited onto the map.
+   * When disabled, Three.js renders directly into the shared MapLibre canvas
+   * for maximum performance and stability.
+   */
+  enablePostProcessing: false,
 
-    /**
-     * Custom frame render loop.
-     *
-     * This function will be called every frame.
-     * If not provided, the internal default render loop will be used.
-     *
-     * ⚠️ Note:
-     * Providing a custom renderLoop means you take full control
-     * of the render lifecycle. The built-in rendering pipeline
-     * will be bypassed.
-     *
-     * As a result, the following internal event hooks will
-     * NOT be triggered automatically:
-     *
-     * - preReset
-     * - postReset
-     * - preRender
-     * - postRender
-     *
-     * If needed, you must manually call the corresponding logic
-     * inside your custom renderLoop.
-     *
-     * @param {MapScene} ins - The current MapScene instance
-     */
-    renderLoop: (ins) => {
-    }
+  /**
+   * Custom frame render loop.
+   *
+   * This function will be called every frame.
+   * If not provided, the internal default render loop will be used.
+   *
+   * ⚠️ Note:
+   * Providing a custom renderLoop means you take full control
+   * of the render lifecycle. The built-in rendering pipeline
+   * will be bypassed.
+   *
+   * As a result, the following internal event hooks will
+   * NOT be triggered automatically:
+   *
+   * - preReset
+   * - postReset
+   * - preRender
+   * - postRender
+   *
+   * If needed, you must manually call the corresponding logic
+   * inside your custom renderLoop.
+   *
+   * @param {MapScene} ins - The current MapScene instance
+   */
+  renderLoop: (ins) => {
+  }
 })
 ```
 
@@ -168,7 +168,7 @@ These hooks are only triggered when using the internal render loop.
 - `{THREE.WebGLRenderer} renderer` : `readonly`
 - `{EffectComposer} composer` : `readonly`
 - `{RenderPass} renderPass` : `readonly`
-- `{ShaderPass} customOutPass` : `readonly`
+- `{OutputPass} outputPass` : `readonly`
 
 #### methods
 

@@ -12,7 +12,7 @@ import {
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import "three/addons/postprocessing/Pass.js";
-import { ShaderPass } from "three/addons/postprocessing/ShaderPass.js";
+import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 
 // src/modules/constants/index.ts
 var WORLD_SIZE = 512 * 2e3;
@@ -250,8 +250,7 @@ var ThreeLayer = class {
   onAdd() {
     this._cameraSync.syncCamera(true);
   }
-  render(gl) {
-    gl.enable(gl.DEPTH_TEST);
+  render() {
     this._mapScene.render();
   }
   onRemove() {
@@ -328,38 +327,6 @@ var SceneTransform = class {
 };
 var SceneTransform_default = SceneTransform;
 
-// src/modules/shaders/CustomOutputShader.ts
-var CustomOutputShader = {
-  name: "CustomOutputShader",
-  uniforms: {
-    tDiffuse: { value: null }
-  },
-  vertexShader: (
-    /* glsl */
-    `
-		precision highp float;
-		varying vec2 vUv;
-		void main() {
-			vUv = uv;
-			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
-
-		}`
-  ),
-  fragmentShader: (
-    /* glsl */
-    `
-    precision highp float;
-		uniform sampler2D tDiffuse;
-    varying vec2 vUv;
-    void main() {
-     vec4 color = texture2D(tDiffuse, vUv);
-     color.rgb = pow(color.rgb, vec3(1.0/2.2));
-     color.rgb *= color.a;
-     gl_FragColor = color;
-    }`
-  )
-};
-
 // src/modules/scene/MapScene.ts
 var DEF_OPTS = {
   scene: null,
@@ -434,7 +401,7 @@ var MapScene = class {
       this._renderPass = new RenderPass(this._scene, this._camera);
       this._renderer.setClearColor(0, 0);
       this._composer.addPass(this._renderPass);
-      this._customOutPass = new ShaderPass(CustomOutputShader);
+      this._customOutPass = new OutputPass();
       this._customOutPass.renderToScreen = true;
       this._customOutPass.material.transparent = true;
       this._customOutPass.material.blending = NormalBlending;

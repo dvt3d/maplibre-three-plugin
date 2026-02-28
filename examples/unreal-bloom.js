@@ -21,8 +21,9 @@ const bloomPass = new UnrealBloomPass(
   0.85
 )
 bloomPass.threshold = 0
-bloomPass.strength = 1
+bloomPass.strength = 1.5
 bloomPass.radius = 0.5
+
 mapScene.addPass(bloomPass)
 Model.fromGltfAsync({
   url: './assets/PrimaryIonDrive.glb',
