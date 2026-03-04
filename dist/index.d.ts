@@ -52,6 +52,8 @@ interface IMapSceneOptions {
      * for maximum performance and stability.
      */
     enablePostProcessing: boolean;
+    /** Wheter to synchronize the camera on move. */
+    updateProjectionOnMove: boolean;
 }
 /**
  * Frame state information passed to event listeners
@@ -225,6 +227,11 @@ declare class MapScene {
      * @returns {MapScene}
      */
     removePass(pass: Pass): MapScene;
+    /**
+     * Gets the option, if the projection matrix should be updated during camera synchronion when moved.
+     * @returns {boolean}
+     */
+    updateProjectionOnMove(): boolean;
 }
 
 declare class SceneTransform {

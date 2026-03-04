@@ -12,7 +12,8 @@ class ThreeLayer {
     this._cameraSync = new CameraSync(
       this._mapScene.map,
       this._mapScene.world,
-      this._mapScene.camera
+      this._mapScene.camera,
+      this._mapScene.updateProjectionOnMove()
     )
   }
 

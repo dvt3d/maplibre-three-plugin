@@ -25,6 +25,7 @@ const DEF_OPTS = {
   preserveDrawingBuffer: false,
   renderLoop: null,
   enablePostProcessing: false,
+  updateProjectionOnMove: false,
 }
 
 const DEF_LAYER_ID = 'map_scene_layer'
@@ -73,7 +74,9 @@ interface IMapSceneOptions {
    * When disabled, Three.js renders directly into the shared MapLibre canvas
    * for maximum performance and stability.
    */
-  enablePostProcessing: boolean
+  enablePostProcessing: boolean,
+  /** Wheter to synchronize the camera on move. */
+  updateProjectionOnMove: boolean,
 }
 
 /**
@@ -560,5 +563,13 @@ export class MapScene {
     }
     this._composer.removePass(pass)
     return this
+  }
+
+  /**
+   * Gets the option, if the projection matrix should be updated during camera synchronion when moved.
+   * @returns {boolean}
+   */
+  updateProjectionOnMove(): boolean {
+    return this._options.updateProjectionOnMove;
   }
 }
