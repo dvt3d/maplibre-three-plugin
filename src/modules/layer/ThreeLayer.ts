@@ -1,19 +1,18 @@
 import CameraSync from '../camera/CameraSync'
-import type {MapScene} from '../scene/MapScene'
+import type { MapScene } from '../scene/MapScene'
 
 class ThreeLayer {
   private readonly _id: string
   private _mapScene: MapScene | null
   private _cameraSync: CameraSync | null
 
-  constructor(id:string, mapScene:MapScene) {
+  constructor(id: string, mapScene: MapScene) {
     this._id = id
     this._mapScene = mapScene
     this._cameraSync = new CameraSync(
       this._mapScene.map,
       this._mapScene.world,
-      this._mapScene.camera,
-      this._mapScene.updateProjectionOnMove()
+      this._mapScene.camera
     )
   }
 
@@ -30,7 +29,7 @@ class ThreeLayer {
   }
 
   onAdd() {
-    this._cameraSync!.syncCamera(true)
+    this._cameraSync!.syncCamera()
   }
 
   render() {

@@ -16,9 +16,8 @@ class CameraSync {
   private _camera: PerspectiveCamera
   private _translateCenter: Matrix4
   private readonly _worldSizeRatio: number
-  private readonly _updateProjMatrixOnMove: boolean
 
-  constructor(map: IMap, world: Group, camera: PerspectiveCamera, updateOnMove?: boolean) {
+  constructor(map: IMap, world: Group, camera: PerspectiveCamera) {
     this._map = map
     this._world = world
     this._camera = camera
@@ -28,44 +27,41 @@ class CameraSync {
       0
     )
     this._worldSizeRatio = TILE_SIZE / WORLD_SIZE
-    this._updateProjMatrixOnMove = updateOnMove ?? false
     this._map.on('move', () => {
-      this.syncCamera(this._updateProjMatrixOnMove)
+      this.syncCamera()
     })
     this._map.on('resize', () => {
-      this.syncCamera(true)
+      this.syncCamera()
     })
   }
 
   /**
    *
    */
-  syncCamera(updateProjectionMatrix: boolean) {
+  syncCamera() {
     const transform = this._map.transform
 
     const pitchInRadians = transform.pitch * DEG2RAD
     const bearingInRadians = transform.bearing * DEG2RAD
 
-    if (updateProjectionMatrix) {
-      const fovInRadians = transform.fov * DEG2RAD
-      const centerOffset = transform.centerOffset || new Vector3()
-      this._camera.aspect = transform.width / transform.height
+    const fovInRadians = transform.fov * DEG2RAD
+    const centerOffset = transform.centerOffset || new Vector3()
+    this._camera.aspect = transform.width / transform.height
 
-      // set camera projection matrix
-      // @ts-ignore
-      projectionMatrix.elements = Util.makePerspectiveMatrix(
-        fovInRadians,
-        this._camera.aspect,
-        transform.height / 50,
-        transform.farZ
-      )
-      this._camera.projectionMatrix = projectionMatrix
+    // set camera projection matrix
+    // @ts-ignore
+    projectionMatrix.elements = Util.makePerspectiveMatrix(
+      fovInRadians,
+      this._camera.aspect,
+      transform.height / 50,
+      transform.farZ
+    )
+    this._camera.projectionMatrix = projectionMatrix
 
-      this._camera.projectionMatrix.elements[8] =
-        (-centerOffset.x * 2) / transform.width
-      this._camera.projectionMatrix.elements[9] =
-        (centerOffset.y * 2) / transform.height
-    }
+    this._camera.projectionMatrix.elements[8] =
+      (-centerOffset.x * 2) / transform.width
+    this._camera.projectionMatrix.elements[9] =
+      (centerOffset.y * 2) / transform.height
 
     //set camera world Matrix
     cameraTranslateZ.makeTranslation(0, 0, transform.cameraToCenterDistance)

@@ -74,9 +74,7 @@ interface IMapSceneOptions {
    * When disabled, Three.js renders directly into the shared MapLibre canvas
    * for maximum performance and stability.
    */
-  enablePostProcessing: boolean,
-  /** Wheter to synchronize the camera on move. */
-  updateProjectionOnMove: boolean,
+  enablePostProcessing: boolean
 }
 
 /**
@@ -563,13 +561,5 @@ export class MapScene {
     }
     this._composer.removePass(pass)
     return this
-  }
-
-  /**
-   * Gets the option, if the projection matrix should be updated during camera synchronion when moved.
-   * @returns {boolean}
-   */
-  updateProjectionOnMove(): boolean {
-    return this._options.updateProjectionOnMove;
   }
 }
