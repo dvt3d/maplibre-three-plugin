@@ -16,8 +16,9 @@ class CameraSync {
   private _camera: PerspectiveCamera
   private _translateCenter: Matrix4
   private readonly _worldSizeRatio: number
+  private readonly _updateProjMatrixOnMove: boolean
 
-  constructor(map: IMap, world: Group, camera: PerspectiveCamera) {
+  constructor(map: IMap, world: Group, camera: PerspectiveCamera, updateOnMove?: boolean) {
     this._map = map
     this._world = world
     this._camera = camera
@@ -27,8 +28,9 @@ class CameraSync {
       0
     )
     this._worldSizeRatio = TILE_SIZE / WORLD_SIZE
+    this._updateProjMatrixOnMove = updateOnMove ?? false
     this._map.on('move', () => {
-      this.syncCamera(false)
+      this.syncCamera(this._updateProjMatrixOnMove)
     })
     this._map.on('resize', () => {
       this.syncCamera(true)

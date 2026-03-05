@@ -52,6 +52,8 @@ interface IMapSceneOptions {
      * for maximum performance and stability.
      */
     enablePostProcessing: boolean;
+    /** Wheter to synchronize the camera on move. */
+    updateProjectionOnMove: boolean;
 }
 /**
  * Frame state information passed to event listeners
@@ -96,7 +98,7 @@ declare class MapScene {
     private readonly _world;
     private readonly _composer;
     private readonly _renderPass;
-    private readonly _customOutPass;
+    private readonly _outputPass;
     private _event;
     constructor(map: IMap, options?: Partial<IMapSceneOptions>);
     get map(): IMap;
@@ -108,7 +110,7 @@ declare class MapScene {
     get renderer(): WebGLRenderer;
     get composer(): EffectComposer | undefined;
     get renderPass(): RenderPass | undefined;
-    get customOutPass(): OutputPass | undefined;
+    get outputPass(): OutputPass | undefined;
     /**
      *
      * @private
@@ -225,6 +227,11 @@ declare class MapScene {
      * @returns {MapScene}
      */
     removePass(pass: Pass): MapScene;
+    /**
+     * Gets the option, if the projection matrix should be updated during camera synchronion when moved.
+     * @returns {boolean}
+     */
+    updateProjectionOnMove(): boolean;
 }
 
 declare class SceneTransform {
