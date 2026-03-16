@@ -17,6 +17,7 @@ import ThreeLayer from '../layer/ThreeLayer'
 import { WORLD_SIZE } from '../constants'
 import Util from '../utils/Util'
 import SceneTransform from '../transform/SceneTransform'
+import CameraSync from '../camera/CameraSync'
 
 const DEF_OPTS = {
   scene: null,
@@ -30,14 +31,25 @@ const DEF_OPTS = {
 
 const DEF_LAYER_ID = 'map_scene_layer'
 
+type Listener = (a: any) => any
+
 export interface IMap {
   transform: any
-  on(type: string, listener: () => any): any
+
+  on(type: string, listener: Listener): any
+
+  off(type: string, listener: Listener): any
+
   getCanvas(): HTMLCanvasElement
+
   getLayer(id: string): any
+
   addLayer(options: any): any
+
   getCenter(): { lng: number; lat: number }
+
   once(type: string, completed: any): void
+
   flyTo(param: {
     center: any[]
     zoom: number
@@ -45,6 +57,7 @@ export interface IMap {
     pitch: number
     duration: number
   }): void
+
   moveLayer(id: String, beforeId?: String): void
 }
 
@@ -135,6 +148,7 @@ export class MapScene {
   private readonly _composer: EffectComposer | undefined
   private readonly _renderPass: RenderPass | undefined
   private readonly _outputPass: OutputPass | undefined
+  private readonly _cameraSync: CameraSync
   private _event: EventDispatcher<IMapSceneEvent>
 
   constructor(map: IMap, options: Partial<IMapSceneOptions> = {}) {
@@ -207,7 +221,10 @@ export class MapScene {
       this._composer.addPass(this._outputPass)
     }
 
+    this._cameraSync = new CameraSync(this._map, this._world, this._camera)
+
     this._map.on('render', this._onMapRender.bind(this))
+
     this._event = new EventDispatcher()
   }
 
@@ -237,6 +254,10 @@ export class MapScene {
 
   get renderer() {
     return this._renderer
+  }
+
+  get cameraSync() {
+    return this._cameraSync
   }
 
   get composer() {

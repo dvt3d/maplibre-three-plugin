@@ -14,6 +14,35 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import "three/addons/postprocessing/Pass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 
+// src/modules/layer/ThreeLayer.ts
+var ThreeLayer = class {
+  _id;
+  _mapScene;
+  constructor(id, mapScene) {
+    this._id = id;
+    this._mapScene = mapScene;
+  }
+  get id() {
+    return this._id;
+  }
+  get type() {
+    return "custom";
+  }
+  get renderingMode() {
+    return "3d";
+  }
+  onAdd() {
+    this._mapScene.cameraSync.syncCamera();
+  }
+  render() {
+    this._mapScene.render();
+  }
+  onRemove() {
+    this._mapScene = null;
+  }
+};
+var ThreeLayer_default = ThreeLayer;
+
 // src/modules/constants/index.ts
 var WORLD_SIZE = 512 * 2e3;
 var EARTH_RADIUS = 63710088e-1;
@@ -148,120 +177,8 @@ var Util = class {
 };
 var Util_default = Util;
 
-// src/modules/camera/CameraSync.ts
-import { Matrix4, Vector3 } from "three";
-var projectionMatrix = new Matrix4();
-var cameraTranslateZ = new Matrix4();
-var MAX_VALID_LATITUDE = 85.051129;
-var CameraSync = class {
-  _map;
-  _world;
-  _camera;
-  _translateCenter;
-  _worldSizeRatio;
-  constructor(map, world, camera) {
-    this._map = map;
-    this._world = world;
-    this._camera = camera;
-    this._translateCenter = new Matrix4().makeTranslation(
-      WORLD_SIZE / 2,
-      -WORLD_SIZE / 2,
-      0
-    );
-    this._worldSizeRatio = TILE_SIZE / WORLD_SIZE;
-    this._map.on("move", () => {
-      this.syncCamera(false);
-    });
-    this._map.on("resize", () => {
-      this.syncCamera(true);
-    });
-  }
-  /**
-   *
-   */
-  syncCamera(updateProjectionMatrix) {
-    const transform = this._map.transform;
-    const pitchInRadians = transform.pitch * DEG2RAD;
-    const bearingInRadians = transform.bearing * DEG2RAD;
-    if (updateProjectionMatrix) {
-      const fovInRadians = transform.fov * DEG2RAD;
-      const centerOffset = transform.centerOffset || new Vector3();
-      this._camera.aspect = transform.width / transform.height;
-      projectionMatrix.elements = Util_default.makePerspectiveMatrix(
-        fovInRadians,
-        this._camera.aspect,
-        transform.height / 50,
-        transform.farZ
-      );
-      this._camera.projectionMatrix = projectionMatrix;
-      this._camera.projectionMatrix.elements[8] = -centerOffset.x * 2 / transform.width;
-      this._camera.projectionMatrix.elements[9] = centerOffset.y * 2 / transform.height;
-    }
-    cameraTranslateZ.makeTranslation(0, 0, transform.cameraToCenterDistance);
-    const cameraWorldMatrix = new Matrix4().premultiply(cameraTranslateZ).premultiply(new Matrix4().makeRotationX(pitchInRadians)).premultiply(new Matrix4().makeRotationZ(-bearingInRadians));
-    if (transform.elevation) {
-      cameraWorldMatrix.elements[14] = transform.cameraToCenterDistance * Math.cos(pitchInRadians);
-    }
-    this._camera.matrixWorld.copy(cameraWorldMatrix);
-    const zoomPow = transform.scale * this._worldSizeRatio;
-    const scale = new Matrix4().makeScale(zoomPow, zoomPow, zoomPow);
-    let x = transform.x;
-    let y = transform.y;
-    if (!x || !y) {
-      const center = transform.center;
-      const lat = Util_default.clamp(
-        center.lat,
-        -MAX_VALID_LATITUDE,
-        MAX_VALID_LATITUDE
-      );
-      x = Util_default.mercatorXFromLng(center.lng) * transform.worldSize;
-      y = Util_default.mercatorYFromLat(lat) * transform.worldSize;
-    }
-    const translateMap = new Matrix4().makeTranslation(-x, y, 0);
-    const rotateMap = new Matrix4().makeRotationZ(Math.PI);
-    this._world.matrix = new Matrix4().premultiply(rotateMap).premultiply(this._translateCenter).premultiply(scale).premultiply(translateMap);
-  }
-};
-var CameraSync_default = CameraSync;
-
-// src/modules/layer/ThreeLayer.ts
-var ThreeLayer = class {
-  _id;
-  _mapScene;
-  _cameraSync;
-  constructor(id, mapScene) {
-    this._id = id;
-    this._mapScene = mapScene;
-    this._cameraSync = new CameraSync_default(
-      this._mapScene.map,
-      this._mapScene.world,
-      this._mapScene.camera
-    );
-  }
-  get id() {
-    return this._id;
-  }
-  get type() {
-    return "custom";
-  }
-  get renderingMode() {
-    return "3d";
-  }
-  onAdd() {
-    this._cameraSync.syncCamera(true);
-  }
-  render() {
-    this._mapScene.render();
-  }
-  onRemove() {
-    this._cameraSync = null;
-    this._mapScene = null;
-  }
-};
-var ThreeLayer_default = ThreeLayer;
-
 // src/modules/transform/SceneTransform.ts
-import { Vector3 as Vector32 } from "three";
+import { Vector3 } from "three";
 var SceneTransform = class {
   /**
    *
@@ -308,7 +225,7 @@ var SceneTransform = class {
         v.push(alt * this.projectedUnitsPerMeter(lat || 0));
       }
     }
-    return new Vector32(v[0], v[1], v[2]);
+    return new Vector3(v[0], v[1], v[2]);
   }
   /**
    *
@@ -327,6 +244,79 @@ var SceneTransform = class {
 };
 var SceneTransform_default = SceneTransform;
 
+// src/modules/camera/CameraSync.ts
+import { Matrix4, Vector3 as Vector32 } from "three";
+var projectionMatrix = new Matrix4();
+var cameraTranslateZ = new Matrix4();
+var MAX_VALID_LATITUDE = 85.051129;
+var CameraSync = class {
+  _map;
+  _world;
+  _camera;
+  _translateCenter;
+  _worldSizeRatio;
+  constructor(map, world, camera) {
+    this._map = map;
+    this._world = world;
+    this._camera = camera;
+    this._translateCenter = new Matrix4().makeTranslation(
+      WORLD_SIZE / 2,
+      -WORLD_SIZE / 2,
+      0
+    );
+    this._worldSizeRatio = TILE_SIZE / WORLD_SIZE;
+    this._map.on("move", this.syncCamera.bind(this));
+    this._map.on("resize", this.syncCamera.bind(this));
+  }
+  syncCamera() {
+    const transform = this._map.transform;
+    const pitchInRadians = transform.pitch * DEG2RAD;
+    const bearingInRadians = transform.bearing * DEG2RAD;
+    const fovInRadians = transform.fov * DEG2RAD;
+    const centerOffset = transform.centerOffset || new Vector32();
+    this._camera.aspect = transform.width / transform.height;
+    projectionMatrix.elements = Util_default.makePerspectiveMatrix(
+      fovInRadians,
+      this._camera.aspect,
+      transform.height / 50,
+      transform.farZ
+    );
+    this._camera.projectionMatrix = projectionMatrix;
+    this._camera.projectionMatrix.elements[8] = -centerOffset.x * 2 / transform.width;
+    this._camera.projectionMatrix.elements[9] = centerOffset.y * 2 / transform.height;
+    cameraTranslateZ.makeTranslation(0, 0, transform.cameraToCenterDistance);
+    const cameraWorldMatrix = new Matrix4().premultiply(cameraTranslateZ).premultiply(new Matrix4().makeRotationX(pitchInRadians)).premultiply(new Matrix4().makeRotationZ(-bearingInRadians));
+    if (transform.elevation) {
+      cameraWorldMatrix.elements[14] = transform.cameraToCenterDistance * Math.cos(pitchInRadians);
+    }
+    this._camera.matrixWorld.copy(cameraWorldMatrix);
+    const zoomPow = transform.scale * this._worldSizeRatio;
+    const scale = new Matrix4().makeScale(zoomPow, zoomPow, zoomPow);
+    let x = transform.x;
+    let y = transform.y;
+    if (!x || !y) {
+      const center = transform.center;
+      const lat = Util_default.clamp(
+        center.lat,
+        -MAX_VALID_LATITUDE,
+        MAX_VALID_LATITUDE
+      );
+      x = Util_default.mercatorXFromLng(center.lng) * transform.worldSize;
+      y = Util_default.mercatorYFromLat(lat) * transform.worldSize;
+    }
+    const translateMap = new Matrix4().makeTranslation(-x, y, 0);
+    const rotateMap = new Matrix4().makeRotationZ(Math.PI);
+    this._world.matrix = new Matrix4().premultiply(rotateMap).premultiply(this._translateCenter).premultiply(scale).premultiply(translateMap);
+  }
+  dispose() {
+    if (this._map) {
+      this._map.off("move", this.syncCamera.bind(this));
+      this._map.off("resize", this.syncCamera.bind(this));
+    }
+  }
+};
+var CameraSync_default = CameraSync;
+
 // src/modules/scene/MapScene.ts
 var DEF_OPTS = {
   scene: null,
@@ -334,7 +324,8 @@ var DEF_OPTS = {
   renderer: null,
   preserveDrawingBuffer: false,
   renderLoop: null,
-  enablePostProcessing: false
+  enablePostProcessing: false,
+  updateProjectionOnMove: false
 };
 var DEF_LAYER_ID = "map_scene_layer";
 var MapScene = class {
@@ -348,7 +339,8 @@ var MapScene = class {
   _world;
   _composer;
   _renderPass;
-  _customOutPass;
+  _outputPass;
+  _cameraSync;
   _event;
   constructor(map, options = {}) {
     if (!map) {
@@ -401,13 +393,14 @@ var MapScene = class {
       this._renderPass = new RenderPass(this._scene, this._camera);
       this._renderer.setClearColor(0, 0);
       this._composer.addPass(this._renderPass);
-      this._customOutPass = new OutputPass();
-      this._customOutPass.renderToScreen = true;
-      this._customOutPass.material.transparent = true;
-      this._customOutPass.material.blending = NormalBlending;
-      this._customOutPass.clear = false;
-      this._composer.addPass(this._customOutPass);
+      this._outputPass = new OutputPass();
+      this._outputPass.renderToScreen = true;
+      this._outputPass.material.transparent = true;
+      this._outputPass.material.blending = NormalBlending;
+      this._outputPass.clear = false;
+      this._composer.addPass(this._outputPass);
     }
+    this._cameraSync = new CameraSync_default(this._map, this._world, this._camera);
     this._map.on("render", this._onMapRender.bind(this));
     this._event = new EventDispatcher();
   }
@@ -432,14 +425,17 @@ var MapScene = class {
   get renderer() {
     return this._renderer;
   }
+  get cameraSync() {
+    return this._cameraSync;
+  }
   get composer() {
     return this._composer;
   }
   get renderPass() {
     return this._renderPass;
   }
-  get customOutPass() {
-    return this._customOutPass;
+  get outputPass() {
+    return this._outputPass;
   }
   /**
    *
@@ -661,14 +657,17 @@ var MapScene = class {
    * @returns {MapScene}
    */
   addPass(pass) {
-    if (!this._options.enablePostProcessing || !pass || !this._composer) {
+    if (!this._options.enablePostProcessing) {
+      console.warn("[MapScene] PostProcessing is disabled.");
       return this;
     }
-    const outPass = this._customOutPass;
+    if (!pass || !this._composer) {
+      return this;
+    }
     if (this._composer.passes.includes(pass)) {
       return this;
     }
-    const outIndex = outPass ? this._composer.passes.indexOf(outPass) : -1;
+    const outIndex = this._outputPass ? this._composer.passes.indexOf(this._outputPass) : -1;
     if (outIndex >= 0) {
       this._composer.insertPass(pass, outIndex);
     } else {
@@ -682,7 +681,11 @@ var MapScene = class {
    * @returns {MapScene}
    */
   removePass(pass) {
-    if (!this._options.enablePostProcessing || !pass || !this._composer) {
+    if (!this._options.enablePostProcessing) {
+      console.warn("[MapScene] PostProcessing is disabled.");
+      return this;
+    }
+    if (!pass || !this._composer) {
       return this;
     }
     this._composer.removePass(pass);

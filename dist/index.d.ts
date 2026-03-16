@@ -1,13 +1,26 @@
 import * as three from 'three';
-import { Scene, PerspectiveCamera, WebGLRenderer, Group, Light, Object3D, Vector3, DirectionalLight, HemisphereLight, Mesh } from 'three';
+import { Group, PerspectiveCamera, Scene, WebGLRenderer, Light, Object3D, Vector3, DirectionalLight, HemisphereLight, Mesh } from 'three';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { Pass } from 'three/addons/postprocessing/Pass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 
+declare class CameraSync {
+    private readonly _map;
+    private _world;
+    private _camera;
+    private _translateCenter;
+    private readonly _worldSizeRatio;
+    constructor(map: IMap, world: Group, camera: PerspectiveCamera);
+    syncCamera(): void;
+    dispose(): void;
+}
+
+type Listener = (a: any) => any;
 interface IMap {
     transform: any;
-    on(type: string, listener: () => any): any;
+    on(type: string, listener: Listener): any;
+    off(type: string, listener: Listener): any;
     getCanvas(): HTMLCanvasElement;
     getLayer(id: string): any;
     addLayer(options: any): any;
@@ -52,8 +65,6 @@ interface IMapSceneOptions {
      * for maximum performance and stability.
      */
     enablePostProcessing: boolean;
-    /** Wheter to synchronize the camera on move. */
-    updateProjectionOnMove: boolean;
 }
 /**
  * Frame state information passed to event listeners
@@ -99,6 +110,7 @@ declare class MapScene {
     private readonly _composer;
     private readonly _renderPass;
     private readonly _outputPass;
+    private readonly _cameraSync;
     private _event;
     constructor(map: IMap, options?: Partial<IMapSceneOptions>);
     get map(): IMap;
@@ -108,6 +120,7 @@ declare class MapScene {
     get lights(): Group<three.Object3DEventMap>;
     get world(): Group<three.Object3DEventMap>;
     get renderer(): WebGLRenderer;
+    get cameraSync(): CameraSync;
     get composer(): EffectComposer | undefined;
     get renderPass(): RenderPass | undefined;
     get outputPass(): OutputPass | undefined;
@@ -227,11 +240,6 @@ declare class MapScene {
      * @returns {MapScene}
      */
     removePass(pass: Pass): MapScene;
-    /**
-     * Gets the option, if the projection matrix should be updated during camera synchronion when moved.
-     * @returns {boolean}
-     */
-    updateProjectionOnMove(): boolean;
 }
 
 declare class SceneTransform {

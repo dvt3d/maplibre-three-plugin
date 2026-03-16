@@ -11,7 +11,7 @@ const cameraTranslateZ = new Matrix4()
 const MAX_VALID_LATITUDE = 85.051129
 
 class CameraSync {
-  private _map: IMap
+  private readonly _map: IMap
   private _world: Group
   private _camera: PerspectiveCamera
   private _translateCenter: Matrix4
@@ -27,18 +27,11 @@ class CameraSync {
       0
     )
     this._worldSizeRatio = TILE_SIZE / WORLD_SIZE
-    this._map.on('move', () => {
-      this.syncCamera()
-    })
-    this._map.on('resize', () => {
-      this.syncCamera()
-    })
+    this._map.on('move', this.syncCamera.bind(this))
+    this._map.on('resize', this.syncCamera.bind(this))
   }
 
-  /**
-   *
-   */
-  syncCamera() {
+  syncCamera(): void {
     const transform = this._map.transform
 
     const pitchInRadians = transform.pitch * DEG2RAD
@@ -101,6 +94,13 @@ class CameraSync {
       .premultiply(this._translateCenter)
       .premultiply(scale)
       .premultiply(translateMap)
+  }
+
+  dispose(): void {
+    if (this._map) {
+      this._map.off('move', this.syncCamera.bind(this))
+      this._map.off('resize', this.syncCamera.bind(this))
+    }
   }
 }
 
