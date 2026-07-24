@@ -18,7 +18,7 @@ declare class CameraSync {
 
 type Listener = (a: any) => any;
 interface IMap {
-    transform: any;
+    painter: any;
     on(type: string, listener: Listener): any;
     off(type: string, listener: Listener): any;
     getCanvas(): HTMLCanvasElement;

@@ -1,4 +1,4 @@
-import maplibregl from 'maplibre-gl'
+import * as maplibregl from 'maplibre-gl'
 import config from './config/index.js'
 
 const map = new maplibregl.Map({

@@ -32,8 +32,7 @@ class CameraSync {
   }
 
   syncCamera(): void {
-    const transform = this._map.transform
-
+    const transform = this._map.painter.transform
     const pitchInRadians = transform.pitch * DEG2RAD
     const bearingInRadians = transform.bearing * DEG2RAD
 

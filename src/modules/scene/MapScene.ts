@@ -34,22 +34,14 @@ const DEF_LAYER_ID = 'map_scene_layer'
 type Listener = (a: any) => any
 
 export interface IMap {
-  transform: any
-
+  painter: any
   on(type: string, listener: Listener): any
-
   off(type: string, listener: Listener): any
-
   getCanvas(): HTMLCanvasElement
-
   getLayer(id: string): any
-
   addLayer(options: any): any
-
   getCenter(): { lng: number; lat: number }
-
   once(type: string, completed: any): void
-
   flyTo(param: {
     center: any[]
     zoom: number
@@ -57,7 +49,6 @@ export interface IMap {
     pitch: number
     duration: number
   }): void
-
   moveLayer(id: String, beforeId?: String): void
 }
 
@@ -165,8 +156,8 @@ export class MapScene {
     this._camera =
       this._options.camera ||
       new PerspectiveCamera(
-        this._map.transform.fov,
-        this._map.transform.width / this._map.transform.height,
+        this._map.painter.transform.fov,
+        this._map.painter.transform.width / this._map.painter.transform.height,
         0.001,
         1e21
       )
@@ -199,7 +190,6 @@ export class MapScene {
     this._world.position.set(WORLD_SIZE / 2, WORLD_SIZE / 2, 0)
     this._world.matrixAutoUpdate = false
     this._scene.add(this._world)
-
     if (this._options.enablePostProcessing) {
       //init the composer
       this._composer = new EffectComposer(this._renderer)
@@ -385,7 +375,7 @@ export class MapScene {
    * @returns {{position: *[], heading: *, pitch}}
    */
   getViewPosition(): { position: number[]; heading: number; pitch: number } {
-    const transform = this._map.transform
+    const transform = this._map.painter.transform
     const center = transform.center
     return {
       position: [
@@ -429,7 +419,7 @@ export class MapScene {
         new Box3().setFromObject(target.delegate || target, true).getSize(size)
       }
       const viewInfo = Util.getViewInfo(
-        this._map.transform,
+        this._map.painter.transform,
         SceneTransform.vector3ToLngLat(target.position),
         size
       )
@@ -476,7 +466,7 @@ export class MapScene {
     this._map.flyTo({
       center: [position[0], position[1]],
       zoom: Util.getZoomByHeight(
-        this._map.transform,
+        this._map.painter.transform,
         position[2],
         position[1],
         hpr[1] || 0

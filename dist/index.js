@@ -269,7 +269,7 @@ var CameraSync = class {
     this._map.on("resize", this.syncCamera.bind(this));
   }
   syncCamera() {
-    const transform = this._map.transform;
+    const transform = this._map.painter.transform;
     const pitchInRadians = transform.pitch * DEG2RAD;
     const bearingInRadians = transform.bearing * DEG2RAD;
     const fovInRadians = transform.fov * DEG2RAD;
@@ -354,8 +354,8 @@ var MapScene = class {
     this._canvas = map.getCanvas();
     this._scene = this._options.scene || new Scene();
     this._camera = this._options.camera || new PerspectiveCamera(
-      this._map.transform.fov,
-      this._map.transform.width / this._map.transform.height,
+      this._map.painter.transform.fov,
+      this._map.painter.transform.width / this._map.painter.transform.height,
       1e-3,
       1e21
     );
@@ -538,7 +538,7 @@ var MapScene = class {
    * @returns {{position: *[], heading: *, pitch}}
    */
   getViewPosition() {
-    const transform = this._map.transform;
+    const transform = this._map.painter.transform;
     const center = transform.center;
     return {
       position: [
@@ -573,7 +573,7 @@ var MapScene = class {
         new Box3().setFromObject(target.delegate || target, true).getSize(size);
       }
       const viewInfo = Util_default.getViewInfo(
-        this._map.transform,
+        this._map.painter.transform,
         SceneTransform_default.vector3ToLngLat(target.position),
         size
       );
@@ -605,7 +605,7 @@ var MapScene = class {
     this._map.flyTo({
       center: [position[0], position[1]],
       zoom: Util_default.getZoomByHeight(
-        this._map.transform,
+        this._map.painter.transform,
         position[2],
         position[1],
         hpr[1] || 0
