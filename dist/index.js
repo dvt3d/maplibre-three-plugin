@@ -505,6 +505,22 @@ var MapScene = class {
   /**
    *
    * @param object
+   */
+  addSceneObject(object) {
+    this._scene.add(object);
+    return this;
+  }
+  /**
+   *
+   * @param object
+   */
+  removeSceneObject(object) {
+    this._scene.remove(object);
+    return this;
+  }
+  /**
+   *
+   * @param object
    * @returns {MapScene}
    */
   addObject(object) {

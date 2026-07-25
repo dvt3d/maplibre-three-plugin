@@ -334,6 +334,25 @@ export class MapScene {
   /**
    *
    * @param object
+   */
+  addSceneObject(object: Object3D) {
+    this._scene.add(object)
+    return this
+  }
+
+
+  /**
+   *
+   * @param object
+   */
+  removeSceneObject(object: Object3D): this {
+    this._scene.remove(object)
+    return this
+  }
+
+  /**
+   *
+   * @param object
    * @returns {MapScene}
    */
   addObject(object: IObject3D | Object3D): MapScene {

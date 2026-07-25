@@ -1,6 +1,6 @@
 {
   "name": "@dvt3d/maplibre-three-plugin",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "repository": "https://github.com/dvt3d/maplibre-three-plugin.git",
   "author": "cavencj <cavencj@gmail.com>",
   "license": "Apache-2.0",
@@ -11,7 +11,9 @@
     "three.js",
     "map",
     "3D",
-    "gltf"
+    "gltf",
+    "3DGS",
+    "3D-Tiles"
   ],
   "exports": {
     ".": {

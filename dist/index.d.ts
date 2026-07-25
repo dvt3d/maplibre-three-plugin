@@ -148,6 +148,16 @@ declare class MapScene {
     /**
      *
      * @param object
+     */
+    addSceneObject(object: Object3D): this;
+    /**
+     *
+     * @param object
+     */
+    removeSceneObject(object: Object3D): this;
+    /**
+     *
+     * @param object
      * @returns {MapScene}
      */
     addObject(object: IObject3D | Object3D): MapScene;
