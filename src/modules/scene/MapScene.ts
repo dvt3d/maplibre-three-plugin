@@ -278,11 +278,7 @@ export class MapScene {
     }
   }
 
-  /**
-   *
-   * @returns {MapScene}
-   */
-  render(): MapScene {
+  render(): this {
     if (this._options.renderLoop) {
       this._options.renderLoop(this)
     } else {
@@ -319,36 +315,35 @@ export class MapScene {
   }
 
   /**
-   *
    * @param light
    * @returns {MapScene}
    */
-  addLight(light: ILight): MapScene {
+  addLight(light: ILight): this {
     this._lights.add(light.delegate || light)
     return this
   }
 
   /**
-   *
    * @param light
+   * @returns {MapScene}
    */
-  removeLight(light: ILight) {
+  removeLight(light: ILight): this {
     this._lights.remove(light.delegate || light)
     return this
   }
 
   /**
-   *
    * @param object
+   * @returns {MapScene}
    */
-  addSceneObject(object: Object3D) {
+  addSceneObject(object: Object3D): this {
     this._scene.add(object)
     return this
   }
 
   /**
-   *
    * @param object
+   * @returns {MapScene}
    */
   removeSceneObject(object: Object3D): this {
     this._scene.remove(object)
@@ -356,23 +351,21 @@ export class MapScene {
   }
 
   /**
-   *
    * @param object
    * @returns {MapScene}
    */
-  addObject(object: IObject3D | Object3D): MapScene {
-    let obj = 'delegate' in object ? object.delegate : object
+  addObject(object: IObject3D | Object3D): this {
+    const obj = 'delegate' in object ? object.delegate : object
     this._world.add(obj)
     return this
   }
 
   /**
-   *
    * @param object
    * @returns {MapScene}
    */
-  removeObject(object: IObject3D | Object3D): MapScene {
-    let obj = 'delegate' in object ? object.delegate : object
+  removeObject(object: IObject3D | Object3D): this {
+    const obj = 'delegate' in object ? object.delegate : object
     this._world.remove(obj)
     obj.traverse((child: any) => {
       // @ts-ignore
@@ -432,7 +425,7 @@ export class MapScene {
     },
     duration?: number,
     completed?: () => void
-  ): MapScene {
+  ): this {
     if (target && target.position) {
       if (completed) {
         this._map.once('moveend', completed)
@@ -470,7 +463,7 @@ export class MapScene {
       delegate?: any
     },
     completed?: () => void
-  ): MapScene {
+  ): this {
     return this.flyTo(target, 0, completed)
   }
 
@@ -483,7 +476,7 @@ export class MapScene {
     hpr: number[] = [0, 0, 0],
     completed?: () => void,
     duration: number = 3
-  ): MapScene {
+  ): this {
     if (completed) {
       this._map.once('moveend', completed)
     }
@@ -506,11 +499,7 @@ export class MapScene {
    *
    * @returns {MapScene}
    */
-  zoomToPosition(
-    position: any,
-    hpr = [0, 0, 0],
-    completed?: () => void
-  ): MapScene {
+  zoomToPosition(position: any, hpr = [0, 0, 0], completed?: () => void): this {
     return this.flyToPosition(position, hpr, completed, 0)
   }
 
@@ -523,7 +512,7 @@ export class MapScene {
   on(
     type: string,
     callback: (event: { frameState: IFrameState }) => void
-  ): MapScene {
+  ): this {
     // @ts-ignore
     this._event.addEventListener(type, callback)
     return this
@@ -535,7 +524,7 @@ export class MapScene {
    * @param callback
    * @returns {MapScene}
    */
-  off(type: string, callback: () => void): MapScene {
+  off(type: string, callback: () => void): this {
     // @ts-ignore
     this._event.removeEventListener(type, callback)
     return this
@@ -546,7 +535,7 @@ export class MapScene {
    * @param beforeId
    * @returns {MapScene}
    */
-  layerBeforeTo(beforeId?: String): MapScene {
+  layerBeforeTo(beforeId?: String): this {
     this._map.moveLayer(DEF_LAYER_ID, beforeId)
     return this
   }
@@ -555,7 +544,7 @@ export class MapScene {
    * @param pass
    * @returns {MapScene}
    */
-  addPass(pass: Pass): MapScene {
+  addPass(pass: Pass): this {
     if (!this._options.enablePostProcessing) {
       console.warn('[MapScene] PostProcessing is disabled.')
       return this
@@ -586,7 +575,7 @@ export class MapScene {
    * @param pass
    * @returns {MapScene}
    */
-  removePass(pass: Pass): MapScene {
+  removePass(pass: Pass): this {
     if (!this._options.enablePostProcessing) {
       console.warn('[MapScene] PostProcessing is disabled.')
       return this
