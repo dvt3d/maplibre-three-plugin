@@ -124,10 +124,6 @@ declare class MapScene {
     get composer(): EffectComposer | undefined;
     get renderPass(): RenderPass | undefined;
     get outputPass(): OutputPass | undefined;
-    /**
-     *
-     * @private
-     */
     _onMapRender(): void;
     _onResize(): void;
     /**
