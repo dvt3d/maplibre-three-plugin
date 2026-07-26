@@ -2,21 +2,19 @@
  * @author Caven Chen
  */
 import { Group } from 'three'
-import { SpzLoader } from '3dgs-loader'
-import { SplatMesh } from '@dvt3d/splat-mesh'
-
+import { SplatMesh } from '@sparkjsdev/spark'
+const KHR_SPZ_GAUSSIAN_SPLATS_COMPRESSION =
+  'KHR_spz_gaussian_splats_compression'
 class GLTFSpzGaussianSplattingExtension {
-  constructor(parser, worker) {
+  constructor(parser) {
     this.parser = parser
-    this.worker = worker
-    this.name = 'KHR_spz_gaussian_splats_compression'
-    this.spzLoader = new SpzLoader()
+    this.name = KHR_SPZ_GAUSSIAN_SPLATS_COMPRESSION
   }
 
   /**
    *
    * @param meshIndex
-   * @returns {Promise<Awaited<unknown>[]>}
+   * @returns {Promise<Group<Object3DEventMap>>}
    */
   loadMesh(meshIndex) {
     const parser = this.parser
@@ -25,26 +23,28 @@ class GLTFSpzGaussianSplattingExtension {
     if (!extensionsUsed || !extensionsUsed.includes(this.name)) {
       return null
     }
-
     const meshDef = json.meshes[meshIndex]
     const primitives = meshDef.primitives
     const pending = []
     pending.push(this.loadBufferViews(primitives))
-    return Promise.all(pending).then(async (results) => {
+    return Promise.all(pending).then((results) => {
       const group = new Group()
+      if (!results) {
+        return group
+      }
       const bufferViews = results[0]
-      const data = bufferViews[0]
-      const mesh = new SplatMesh()
-      mesh.attachWorker(this.worker)
-      mesh.setVertexCount(data.numSplats)
-      await mesh.setDataFromBuffer(data.buffer)
+      if (!bufferViews) {
+        return group
+      }
+      const mesh = new SplatMesh({ fileBytes: bufferViews[0], fileType: 'spz' })
+      group.add(mesh)
       return group
     })
   }
   /**
    *
    * @param primitives
-   * @returns {*[]}
+   * @returns {Promise<Array<Awaited<*>>>}
    */
   loadBufferViews(primitives) {
     const parser = this.parser
@@ -54,17 +54,11 @@ class GLTFSpzGaussianSplattingExtension {
       const extensions = primitive.extensions
       if (extensions[this.name]) {
         pendingBufferViews.push(
-          parser
-            .getDependency('bufferView', extensions[this.name].bufferView)
-            .then((bufferView) =>
-              this.spzLoader.parseAsSplat(new Uint8Array(bufferView))
-            )
+          parser.getDependency('bufferView', extensions[this.name].bufferView)
         )
       }
     }
-    return Promise.all(pendingBufferViews).then((bufferViews) => {
-      return bufferViews
-    })
+    return Promise.all(pendingBufferViews)
   }
 }
 

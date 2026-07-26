@@ -29,7 +29,6 @@ rtc.position.copy(
     200
   )
 )
-
 rtc.rotateX(-Math.PI / 2)
 rtc.rotateY(Math.PI / 2)
 

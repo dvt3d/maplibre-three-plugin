@@ -402,6 +402,7 @@ var MapScene = class {
     }
     this._cameraSync = new CameraSync_default(this._map, this._world, this._camera);
     this._map.on("render", this._onMapRender.bind(this));
+    this._map.on("resize", this._onResize.bind(this));
     this._event = new EventDispatcher();
   }
   get map() {
@@ -444,6 +445,15 @@ var MapScene = class {
   _onMapRender() {
     if (!this._map.getLayer(DEF_LAYER_ID)) {
       this._map.addLayer(new ThreeLayer_default(DEF_LAYER_ID, this));
+    }
+  }
+  _onResize() {
+    const width = this._canvas.clientWidth;
+    const height = this._canvas.clientHeight;
+    this._renderer.setPixelRatio(window.devicePixelRatio);
+    this._renderer.setSize(width, height);
+    if (this._composer) {
+      this._composer.setSize(width, height);
     }
   }
   /**

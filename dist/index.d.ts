@@ -129,6 +129,7 @@ declare class MapScene {
      * @private
      */
     _onMapRender(): void;
+    _onResize(): void;
     /**
      *
      * @returns {MapScene}

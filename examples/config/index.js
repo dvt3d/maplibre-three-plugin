@@ -1,8 +1,8 @@
 const config = {
-  maptiler_key: 'get_your_own_OpIi9ZULNHzrESv6T2vL',
-  // maptiler_key: 'GhNJDabtJW2KhnZWhdq0',
+  // maptiler_key: 'get_your_own_OpIi9ZULNHzrESv6T2vL',
+  maptiler_key: 'GhNJDabtJW2KhnZWhdq0',
   cesium_key:
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlZWVkZjhjNC01NjdhLTQwNTctOTExMy02MThlYjIxM2U4OTkiLCJpZCI6MjU5LCJpYXQiOjE3NzAwNTUxOTV9.aJTRjsRlsJwPC0Nfcq4xscYc2lPJcGFku_PVxp1ZPyQ',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIzNzRjZTkzNC05M2UwLTRlNDItOWU0My1hYjk5YjFiNTNhYTMiLCJpZCI6MjU5LCJzdWIiOiJDZXNpdW1KUyIsImlzcyI6Imh0dHBzOi8vYXBpLmNlc2l1bS5jb20iLCJhdWQiOiIxLjE0MyBSZWxlYXNlIC0gRGVsZXRlIG9uIFNlcHRlbWJlciAxLCAyMDI2IiwiaWF0IjoxNzgyMzY4NzY4fQ.kDcFqK7jTTloOcBbwb-epSQGd1Lu12_hRuqk1XRE_H8',
 }
 
 export default config

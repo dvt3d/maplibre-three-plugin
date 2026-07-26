@@ -44,8 +44,6 @@ const DEF_OPTS = {
   useUnload: false,
   useFade: false,
   useUpdate: false,
-  splatThreshold: -0.0001,
-  splatWorker: null,
 }
 
 class Tileset extends Overlay {
@@ -57,29 +55,14 @@ class Tileset extends Overlay {
     this._url = url
     this._options = options
     this._renderer = new TilesRenderer(this._url)
-
-    this._splatWorker = this._options.splatWorker
     this._renderer.registerPlugin(
       new GLTFExtensionsPlugin({
         dracoLoader: options.dracoLoader,
         ktxLoader: options.ktxLoader,
         plugins: [
-          ...(this._splatWorker
-            ? [
-                (parser) =>
-                  new GLTFGaussianSplattingExtension(parser, this._splatWorker),
-                (parser) =>
-                  new GLTFSpzGaussianSplattingExtension(
-                    parser,
-                    this._splatWorker
-                  ),
-                (parser) =>
-                  new GLTFSpz2GaussianSplattingExtension(
-                    parser,
-                    this._splatWorker
-                  ),
-              ]
-            : []),
+          (parser) => new GLTFGaussianSplattingExtension(parser),
+          (parser) => new GLTFSpzGaussianSplattingExtension(parser),
+          (parser) => new GLTFSpz2GaussianSplattingExtension(parser),
           (parser) => new GLTFKtx2TextureInspectorPlugin(parser),
         ],
       })
@@ -87,10 +70,7 @@ class Tileset extends Overlay {
     if (options.ktxLoader) {
       this._renderer.manager.addHandler(/.ktx2/, options.ktxLoader)
     }
-
-    this._renderer.registerPlugin(
-      new GaussianSplattingTilesetPlugin(options.splatThreshold)
-    )
+    this._renderer.registerPlugin(new GaussianSplattingTilesetPlugin())
 
     if (options.cesiumIon && options.cesiumIon.apiToken) {
       this._renderer.registerPlugin(

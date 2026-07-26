@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8"/>
+    <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+    />
+    <title>CesiumWidget 1.143</title>
+
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.143/Build/Cesium/Cesium.js"></script>
+
+    <link rel="stylesheet"
+          href="https://cesium.com/downloads/cesiumjs/releases/1.143/Build/Cesium/Widgets/widgets.css"
+    />
+
+    <style>
+        html,
+        body,
+        #cesiumContainer {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+<div id="cesiumContainer"></div>
+
+<script>
+    const widget = new Cesium.CesiumWidget('cesiumContainer', {
+        baseLayer: false,
+
+    })
+    widget.scene.globe.show = false
+
+    const {scene, camera} = widget
+
+
+    scene.globe.depthTestAgainstTerrain = true
+    scene.globe.enableLighting = false
+
+
+    camera.setView({
+        destination: Cesium.Cartesian3.fromDegrees(
+            120.5853,
+            31.2989,
+            15000
+        ),
+        orientation: {
+            heading: Cesium.Math.toRadians(0),
+            pitch: Cesium.Math.toRadians(-45),
+            roll: 0,
+        },
+    })
+
+
+    // 加载 3D Tiles
+    async function loadTileset() {
+
+        const tileset = await Cesium.Cesium3DTileset.fromUrl(
+            'http://localhost:8080/3d-tiles-ggy/tileset.json',
+            {
+                maximumScreenSpaceError: 16,
+                maximumMemoryUsage: 1024,
+            }
+        )
+        const center = tileset.boundingSphere.center
+        const transform = Cesium.Matrix4.multiply(
+            Cesium.Matrix4.fromTranslation(center),
+            Cesium.Matrix4.fromRotationTranslation(
+                Cesium.Matrix3.fromRotationX(
+                    Cesium.Math.toRadians(90)
+                )
+            ),
+            new Cesium.Matrix4()
+        )
+        const inverse = Cesium.Matrix4.fromTranslation(
+            Cesium.Cartesian3.negate(
+                center,
+                new Cesium.Cartesian3()
+            )
+        )
+        // tileset.modelMatrix = Cesium.Matrix4.multiply(
+        //     transform,
+        //     inverse,
+        //     new Cesium.Matrix4()
+        // )
+        scene.primitives.add(tileset)
+        await widget.flyTo(tileset)
+        window.tileset = tileset
+    }
+
+
+    loadTileset()
+        .catch(error => {
+            console.error(
+                '3D Tiles 加载失败:',
+                error
+            )
+        })
+
+    window.cesiumWidget = widget
+
+</script>
+</body>
+</html>

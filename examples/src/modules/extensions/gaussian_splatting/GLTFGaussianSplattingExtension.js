@@ -2,19 +2,19 @@
  * @author Caven Chen
  */
 import { Group } from 'three'
-import { SplatMesh } from '@dvt3d/splat-mesh'
+const KHR_GAUSSIAN_SPLATTING = 'KHR_gaussian_splatting'
+const KHR_GAUSSIAN_SPLATTING_COMPRESSION_SPZ_2 =
+  'KHR_gaussian_splatting_compression_spz_2'
 
 class GLTFGaussianSplattingExtension {
-  constructor(parser, worker) {
+  constructor(parser) {
     this.parser = parser
-    this.worker = worker
-    this.name = 'KHR_gaussian_splatting'
+    this.name = KHR_GAUSSIAN_SPLATTING
   }
 
   /**
-   *
    * @param meshIndex
-   * @returns {Promise<Awaited<unknown>[]>}
+   * @returns {Promise<Group<Object3DEventMap>>}
    */
   loadMesh(meshIndex) {
     const parser = this.parser
@@ -23,7 +23,7 @@ class GLTFGaussianSplattingExtension {
     if (
       !extensionsUsed ||
       !extensionsUsed.includes(this.name) ||
-      extensionsUsed.includes('KHR_gaussian_splatting_compression_spz_2')
+      extensionsUsed.includes(KHR_GAUSSIAN_SPLATTING_COMPRESSION_SPZ_2)
     ) {
       return null
     }
@@ -31,15 +31,10 @@ class GLTFGaussianSplattingExtension {
     const primitives = meshDef.primitives
     const pending = []
     pending.push(parser.loadGeometries(primitives))
-    return Promise.all(pending).then(async (results) => {
+    return Promise.all(pending).then((results) => {
       const group = new Group()
       const geometries = results[0]
       const geometry = geometries[0]
-      const mesh = new SplatMesh()
-      mesh.attachWorker(this.worker)
-      mesh.setVertexCount(geometry.attributes.position.count)
-      await mesh.setDataFromGeometry(geometry)
-      group.add(mesh)
       return group
     })
   }
