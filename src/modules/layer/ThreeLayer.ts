@@ -1,8 +1,8 @@
 import type { MapScene } from '../scene/MapScene'
 
 class ThreeLayer {
-  private readonly _id: string
-  private _mapScene: MapScene | null
+  _id: string
+  _mapScene: MapScene | null
 
   constructor(id: string, mapScene: MapScene) {
     this._id = id

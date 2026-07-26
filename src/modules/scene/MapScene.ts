@@ -128,19 +128,19 @@ interface IObject3D {
 }
 
 export class MapScene {
-  private readonly _map: IMap
-  private _options: IMapSceneOptions
-  private readonly _canvas: HTMLCanvasElement
-  private readonly _scene: Scene
-  private readonly _camera: PerspectiveCamera
-  private readonly _renderer: WebGLRenderer
-  private readonly _lights: Group
-  private readonly _world: Group
-  private readonly _composer: EffectComposer | undefined
-  private readonly _renderPass: RenderPass | undefined
-  private readonly _outputPass: OutputPass | undefined
-  private readonly _cameraSync: CameraSync
-  private _event: EventDispatcher<IMapSceneEvent>
+  _map: IMap
+  _options: IMapSceneOptions
+  _canvas: HTMLCanvasElement
+  _scene: Scene
+  _camera: PerspectiveCamera
+  _renderer: WebGLRenderer
+  _lights: Group
+  _world: Group
+  _composer: EffectComposer | undefined
+  _renderPass: RenderPass | undefined
+  _outputPass: OutputPass | undefined
+  _cameraSync: CameraSync
+  _event: EventDispatcher<IMapSceneEvent>
 
   constructor(map: IMap, options: Partial<IMapSceneOptions> = {}) {
     if (!map) {

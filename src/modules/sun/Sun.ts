@@ -21,10 +21,10 @@ interface ShadowOptions {
  *
  */
 class Sun {
-  private readonly _delegate: Group
-  private readonly _sunLight: DirectionalLight
-  private readonly _hemiLight: HemisphereLight
-  private _currentTime: string | number | Date
+  _delegate: Group
+  _sunLight: DirectionalLight
+  _hemiLight: HemisphereLight
+  _currentTime: string | number | Date
 
   constructor() {
     this._delegate = new Group()

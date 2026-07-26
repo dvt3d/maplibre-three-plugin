@@ -11,11 +11,11 @@ const cameraTranslateZ = new Matrix4()
 const MAX_VALID_LATITUDE = 85.051129
 
 class CameraSync {
-  private readonly _map: IMap
-  private _world: Group
-  private _camera: PerspectiveCamera
-  private _translateCenter: Matrix4
-  private readonly _worldSizeRatio: number
+  _map: IMap
+  _world: Group
+  _camera: PerspectiveCamera
+  _translateCenter: Matrix4
+  _worldSizeRatio: number
 
   constructor(map: IMap, world: Group, camera: PerspectiveCamera) {
     this._map = map
