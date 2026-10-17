@@ -1,6 +1,66 @@
-import { DEG2RAD, EARTH_CIRCUMFERENCE } from '../constants'
+import { DEG2RAD, EARTH_CIRCUMFERENCE, TILE_SIZE } from '../constants'
+import type { IMap } from '../scene/MapScene'
+
+// MapLibre's default vertical field of view, for versions without getVerticalFieldOfView
+const DEFAULT_FOV = 36.86989764584402
+
+/**
+ * The map's camera, read through MapLibre's public API
+ */
+export interface ICameraState {
+  center: { lng: number; lat: number }
+  zoom: number
+  maxZoom: number
+  pitch: number
+  bearing: number
+  /** Vertical field of view in degrees */
+  fov: number
+  width: number
+  height: number
+  /** Offset of the padded center from the canvas center, in pixels */
+  centerOffset: { x: number; y: number }
+  cameraToCenterDistance: number
+  tileSize: number
+  worldSize: number
+  scale: number
+  elevation: number
+}
 
 class Util {
+  /**
+   * Reads the camera through the map's public API.
+   * @param map
+   * @returns {ICameraState}
+   */
+  static getCameraState(map: IMap): ICameraState {
+    const canvas = map.getCanvas()
+    const width = canvas.clientWidth
+    const height = canvas.clientHeight
+    const fov = map.getVerticalFieldOfView?.() ?? DEFAULT_FOV
+    const padding = map.getPadding()
+    const zoom = map.getZoom()
+    const scale = Math.pow(2, zoom)
+    return {
+      center: map.getCenter(),
+      zoom,
+      maxZoom: map.getMaxZoom(),
+      pitch: map.getPitch(),
+      bearing: map.getBearing(),
+      fov,
+      width,
+      height,
+      centerOffset: {
+        x: (padding.left - padding.right) / 2,
+        y: (padding.top - padding.bottom) / 2,
+      },
+      cameraToCenterDistance: (0.5 / Math.tan((fov * DEG2RAD) / 2)) * height,
+      tileSize: TILE_SIZE,
+      worldSize: TILE_SIZE * scale,
+      scale,
+      elevation: map.getCenterElevation?.() ?? 0,
+    }
+  }
+
   /**
    *
    * @param n

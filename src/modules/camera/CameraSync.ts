@@ -3,7 +3,7 @@
  */
 import { DEG2RAD, TILE_SIZE, WORLD_SIZE } from '../constants'
 import Util from '../utils/Util'
-import { type Group, Matrix4, type PerspectiveCamera, Vector3 } from 'three'
+import { type Group, Matrix4, type PerspectiveCamera } from 'three'
 import type { IMap } from '../scene/MapScene'
 
 const projectionMatrix = new Matrix4()
@@ -16,6 +16,9 @@ class CameraSync {
   _camera: PerspectiveCamera
   _translateCenter: Matrix4
   _worldSizeRatio: number
+  _nearZ: number | undefined
+  _farZ: number | undefined
+  _onMapChange: () => void
 
   constructor(map: IMap, world: Group, camera: PerspectiveCamera) {
     this._map = map
@@ -27,26 +30,37 @@ class CameraSync {
       0
     )
     this._worldSizeRatio = TILE_SIZE / WORLD_SIZE
-    this._map.on('move', this.syncCamera.bind(this))
-    this._map.on('resize', this.syncCamera.bind(this))
+    this._onMapChange = () => this.syncCamera()
+    this._map.on('move', this._onMapChange)
+    this._map.on('resize', this._onMapChange)
   }
 
-  syncCamera(): void {
-    const transform = this._map.painter.transform
+  /**
+   * @param frame The near and far planes of the frame MapLibre is drawing, from the custom layer's render call.
+   * Between frames the last ones are kept.
+   */
+  syncCamera(frame?: { nearZ: number; farZ: number }): void {
+    const transform = Util.getCameraState(this._map)
     const pitchInRadians = transform.pitch * DEG2RAD
     const bearingInRadians = transform.bearing * DEG2RAD
 
     const fovInRadians = transform.fov * DEG2RAD
-    const centerOffset = transform.centerOffset || new Vector3()
+    const centerOffset = transform.centerOffset
     this._camera.aspect = transform.width / transform.height
+
+    if (frame) {
+      this._nearZ = frame.nearZ
+      this._farZ = frame.farZ
+    }
 
     // set camera projection matrix
     // @ts-ignore
     projectionMatrix.elements = Util.makePerspectiveMatrix(
       fovInRadians,
       this._camera.aspect,
-      transform.height / 50,
-      transform.farZ
+      this._nearZ ?? transform.height / 50,
+      // before the first frame, a far plane well beyond the map center
+      this._farZ ?? transform.cameraToCenterDistance * 100
     )
     this._camera.projectionMatrix = projectionMatrix
 
@@ -73,18 +87,10 @@ class CameraSync {
     // Handle scaling and translation of objects in the map in the world's matrix transform, not the camera
     const zoomPow = transform.scale * this._worldSizeRatio
     const scale = new Matrix4().makeScale(zoomPow, zoomPow, zoomPow)
-    let x = transform.x
-    let y = transform.y
-    if (!x || !y) {
-      const center = transform.center
-      const lat = Util.clamp(
-        center.lat,
-        -MAX_VALID_LATITUDE,
-        MAX_VALID_LATITUDE
-      )
-      x = Util.mercatorXFromLng(center.lng) * transform.worldSize
-      y = Util.mercatorYFromLat(lat) * transform.worldSize
-    }
+    const center = transform.center
+    const lat = Util.clamp(center.lat, -MAX_VALID_LATITUDE, MAX_VALID_LATITUDE)
+    const x = Util.mercatorXFromLng(center.lng) * transform.worldSize
+    const y = Util.mercatorYFromLat(lat) * transform.worldSize
 
     const translateMap = new Matrix4().makeTranslation(-x, y, 0)
     const rotateMap = new Matrix4().makeRotationZ(Math.PI)
@@ -97,8 +103,8 @@ class CameraSync {
 
   dispose(): void {
     if (this._map) {
-      this._map.off('move', this.syncCamera.bind(this))
-      this._map.off('resize', this.syncCamera.bind(this))
+      this._map.off('move', this._onMapChange)
+      this._map.off('resize', this._onMapChange)
     }
   }
 }
