@@ -25,7 +25,11 @@ class ThreeLayer {
     this._mapScene!.cameraSync.syncCamera()
   }
 
-  render() {
+  render(
+    _gl: WebGL2RenderingContext,
+    options: { nearZ: number; farZ: number }
+  ) {
+    this._mapScene!.cameraSync.syncCamera(options)
     this._mapScene!.render()
   }
 
